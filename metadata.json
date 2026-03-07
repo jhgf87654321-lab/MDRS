@@ -1,0 +1,7 @@
+{
+  "name": "AXON Future Fashion",
+  "description": "A futuristic techwear fashion application featuring AI-powered virtual wardrobe, real-time scanning try-ons, and digital avatar biometric creation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
