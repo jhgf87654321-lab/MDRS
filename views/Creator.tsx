@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
 
 type AuthMode = 'signIn' | 'signUp';
 type Category = 'Body' | 'Skin' | 'Style' | 'Design';
@@ -103,8 +102,6 @@ const Creator: React.FC = () => {
   const generateNFT = async () => {
     setIsGenerating(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
       // Randomize traits for high variety
       const randomTheme = themes[Math.floor(Math.random() * themes.length)];
       const randomMaterial = materials[Math.floor(Math.random() * materials.length)];
@@ -112,13 +109,11 @@ const Creator: React.FC = () => {
       const rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
       const randomRarity = rarities[Math.floor(Math.random() * rarities.length)];
 
-      // Color palettes to break the monochrome bias
       const colorPalettes = ['Neon Pink & Cyan', 'Blood Orange & Slate', 'Electric Blue & Silver', 'Acid Green & Charcoal', 'Crimson & Gold', 'Lavender & Mint', 'Cyber Yellow & Black'];
       const randomColor = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
 
       setNftMetadata({ theme: randomTheme, rarity: randomRarity });
 
-      // Map UI parameters to prompt instructions
       const colorStyle = params.chromaticity > 70 ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.` : params.chromaticity < 30 ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.' : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
@@ -144,22 +139,20 @@ const Creator: React.FC = () => {
       Skin tone: ${selectedSkinColor}. 
       Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture. 
       The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean and modern.`;
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [{ text: prompt }],
-        },
-      });
 
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          const base64EncodeString = part.inlineData.data;
-          const imgData = `data:image/png;base64,${base64EncodeString}`;
-          setGeneratedNFT(imgData);
-          localStorage.setItem('generatedNFT', imgData);
-          break;
-        }
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Generation failed');
+      }
+      if (data.image) {
+        setGeneratedNFT(data.image);
+        localStorage.setItem('generatedNFT', data.image);
       }
     } catch (error) {
       console.error("Error generating NFT:", error);
