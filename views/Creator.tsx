@@ -87,7 +87,7 @@ const Creator: React.FC = () => {
       case 'Style':
         return [
           { label: 'Chromaticity', key: 'chromaticity', value: params.chromaticity },
-          { label: 'Era (90s Runway -> Modern Surreal)', key: 'era', value: params.era },
+          { label: 'Era (Classic -> Modern)', key: 'era', value: params.era },
           { label: 'Thickness (Sexy -> Heavy)', key: 'thickness', value: params.thickness },
         ];
       default:
@@ -115,7 +115,7 @@ const Creator: React.FC = () => {
       setNftMetadata({ theme: randomTheme, rarity: randomRarity });
 
       const colorStyle = params.chromaticity > 70 ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.` : params.chromaticity < 30 ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.' : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
-      const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, surrealist clothing, cutting-edge avant-garde' : params.era < 30 ? '90s high fashion runway shows, gorgeous runway clothing, reminiscent of vintage DIOR, Maison Margiela, Chanel' : 'a blend of contemporary and classic styles';
+      const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? '90s high fashion runway shows, gorgeous runway clothing, reminiscent of vintage DIOR, Maison Margiela, Chanel' : 'a blend of contemporary and classic styles';
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
       const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
@@ -183,7 +183,7 @@ const Creator: React.FC = () => {
           }}
           className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
         >
-          <img src="/images/avatar-axon.jpg" alt="User" className="w-14 h-14 rounded-full object-cover" />
+          <img src="https://picsum.photos/100/100?seed=axon_prime" alt="User" className="w-14 h-14 rounded-full object-cover" />
         </button>
       </header>
 

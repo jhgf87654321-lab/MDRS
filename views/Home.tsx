@@ -51,7 +51,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
       {/* Background Ambient Glows */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[50%] bg-primary/5 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom_[10%] left-[-10%] w-[50%] h-[40%] bg-accent/5 blur-[100px] rounded-full"></div>
+        <div className="absolute bottom-[10%] left-[-10%] w-[50%] h-[40%] bg-accent/5 blur-[100px] rounded-full"></div>
         <div className="absolute inset-0 grid-bg opacity-10"></div>
       </div>
 
@@ -63,7 +63,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
           </div>
           <div className="text-[72px] font-black tracking-[-0.3em] leading-[0.55] flex items-end">
             <span className="inline-block transform -skew-x-[20deg] origin-bottom">A</span>
-            <span className="inline-block transform skew-x_[20deg] origin-bottom -ml-5">X</span>
+            <span className="inline-block transform skew-x-[20deg] origin-bottom -ml-5">X</span>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
 
       {/* Hero Visual Section - Share Platform Entry */}
       <main className="relative z-10 flex flex-col px-8 mt-10">
-        <div className="relative w-full aspect_[4/5] mb-12 cursor-pointer group" onClick={onEnter}>
+        <div className="relative w-full aspect-[4/5] mb-12 cursor-pointer group" onClick={onEnter}>
           {/* Main Container with Dynamic Frame */}
           <div className="absolute inset-0 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group-hover:border-primary/50 transition-colors duration-500">
              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10"></div>
@@ -97,7 +97,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
              </div>
 
              <div className="absolute bottom-12 left-8 flex flex-col items-start gap-2">
-                <span className="text-[10px] font-bold text-primary uppercase tracking_[0.5em]">Global Network</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.5em]">Global Network</span>
                 <span className="text-5xl font-display font-black text-white leading-none">DISCOVER<br/>& TRADE</span>
              </div>
           </div>
@@ -110,7 +110,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
           </div>
 
           {/* Floating Stats Pin */}
-          <div className="absolute right-6 top_[40%]">
+          <div className="absolute right-6 top-[40%]">
             <div className="w-20 h-20 glass rounded-full flex flex-col items-center justify-center border border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
               <span className="material-icons-round text-white/60 text-lg mb-1">trending_up</span>
               <span className="text-2xl font-black tracking-tighter leading-none">24K</span>
@@ -221,7 +221,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
 
                 <form onSubmit={handleAuthSubmit} className="space-y-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking_[0.3em]">Address</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Address</label>
                     <input 
                       required
                       type="email" 
@@ -230,7 +230,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking_[0.3em]">Key</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Key</label>
                     <input 
                       required
                       type="password" 
@@ -240,7 +240,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
                   </div>
                   <button 
                     type="submit"
-                    className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking_[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
+                    className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking-[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
                   >
                     <span>{authMode === 'signIn' ? 'Initiate' : 'Establish'}</span>
                     <div className="bg-primary p-3 rounded-2xl text-black group-hover:scale-110 transition-transform">
@@ -251,7 +251,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
 
                 <button 
                   onClick={toggleMode} 
-                  className="mt-12 text-[10px] text-white/30 uppercase tracking_[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
+                  className="mt-12 text-[10px] text-white/30 uppercase tracking-[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
                 >
                   {authMode === 'signIn' ? "Request Protocol access" : "Node already active?"}
                 </button>
