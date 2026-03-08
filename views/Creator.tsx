@@ -130,10 +130,10 @@ const Creator: React.FC = () => {
 
       const prompt = `A professional ${randomStyle} for a high-end fashion NFT. 
       Theme: ${randomTheme}. 
-      The composition is a sophisticated graphic design layout, resembling a premium fashion magazine or a modern streetwear lookbook. 
+      The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots.
       Background: Clean, minimalist studio setting (white, light grey, or soft neutral tones) with large, bold, artistic typography. The typography words and font style perfectly match the character's outfit vibe and the ${randomTheme} theme.
       Graphic Elements: Overlay the image with technical UI details, barcodes, fine technical text, cross-hairs, and minimalist graphic annotations. 
-      Character: ${characterDesc}
+      Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).
       ${outfitDesc}
       Colors & Textures: ${colorStyle}. The aesthetic era is ${eraStyle}. The clothing layering and amount is ${thicknessStyle}.
       Skin tone: ${selectedSkinColor}. 
