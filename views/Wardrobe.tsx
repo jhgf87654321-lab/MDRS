@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 type AuthMode = 'signIn' | 'signUp';
@@ -15,7 +14,7 @@ interface WardrobeItem {
   image: string;
   purchaseDate: string;
   priceHistory: PriceHistory[];
-  color?: string; // CSS Filter string
+  color?: string;
   colorName?: string;
 }
 
@@ -26,6 +25,31 @@ const Wardrobe: React.FC = () => {
   const [customizingId, setCustomizingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const leaderboardProducts = [
+    { 
+      id: 'Cyber Nomad #01', 
+      name: 'Cyber Nomad #01',
+      likes: 12450, 
+      type: 'User NFT',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBaOKSjB2d9dKh6KOhkyXPq088wpSrv9uRrrQqJgnsAPSrk1GuXd6kPz1Vvk_-ziM5HXxbuSUtZPySyztFo6OBXQt_YvWZKvU8jLlEJDBgqhwYj8ZvdQ2eQuItMuahDt-BtBOHVb7Y-cUPgkfG_rxcs-Ma2d46RdD2nfXqV311B-QwJBA89uc8hauO03Bs8gmg6nyaOEGvHKz7isEhAFOCdbPBUMgNAbZ6yckmJ9zBMpQ9UO7G7kn5Wu1sRmuIsh4cgQTAYZzRF-2ZH' 
+    },
+    { 
+      id: 'Neon Beast #42', 
+      name: 'Neon Beast #42',
+      likes: 9820, 
+      type: 'User NFT',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAoATIVSbrj9vO-WA5HbmZE18PtqpvOej5R9OwCauCnD-sEkqdhez4ikIfLujc0cYKoXsvnlFGp3YyAV-3gwWOVvGje_a6XL4e6XFQe76QLTsekVJFS0aRkEJCGONhnaA08hhyNrk0qw5B7zo6koIDb_RTE_11ewuIih8km6wNmjDAxrnCI9F7Oon8tZP1QhK7kA-d8sl1wlT2gNxKFvu9fW2TXZ9yIXpUEIIGmdBx7KtpKot0p6Yl2kF0vkSkyNoKF-e7_SK0CnrTT' 
+    },
+    {
+      id: 'Chrome Angel #07',
+      name: 'Chrome Angel #07',
+      likes: 8500,
+      type: 'User NFT',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7EiJ_hhLJf-3T-E0UgXeAz6trCapwiGJ84ObO6-z-gvVifDsOqxOaTck0RXXTU9Yke84Te_E52cOrV4thgrqhLjS9gjzgJ-nnvkndpvptlJO42_dBEs8BQP7cs32gAhPu2mMQCi2j2huJF4FrH37r5SEC4NY2D-ldbp4Nutcw_ustrhw6104cNAB89YE0uHB2CRWaqPzeN8-G3-1sjECcFEmKQbfw1wjOweqocYpon-mT3R-28Bhic_G__hKzOG8SMf66nuzpNwF6'
+    }
+  ];
 
   React.useEffect(() => {
     const storedNFT = localStorage.getItem('generatedNFT');
@@ -34,12 +58,19 @@ const Wardrobe: React.FC = () => {
     }
   }, []);
 
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % leaderboardProducts.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [leaderboardProducts.length]);
+
   const [items, setItems] = useState<WardrobeItem[]>([
     { 
       id: '#FL-22', 
       name: 'Neon Pulse Runners', 
       price: 420, 
-      image: '/images/wardrobe-look-1.jpg',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCiEQCORVh-kLhp7NqmkpZ5HoOtxiVu4RhVvexm7jzjha_PPv68KVc_6CZjD5j4H9-IQBYqUWhiHWDqHgrEnNRDWagTRNXhjjt2pJ-sylQoTie7ASgZ_6m-VA3P0TG0s6MNwdHoLK33prSYM7Sdzmip7OBqpOxXu2MPOhsCe92UTT7dtqqS5LU2_KYbScFHF2hgeCVnhUJtKKywrRluBFqJi8_VRUUKkJl7kcyV658iG4d8u6IqCvNYX-zczx4bRuWS-4JRUgxsC4Xt',
       purchaseDate: '2024.11.12',
       priceHistory: [
         { date: '2024.11.12', price: 420 },
@@ -51,7 +82,7 @@ const Wardrobe: React.FC = () => {
       id: '#VS-89', 
       name: 'Holo-Vision Visor', 
       price: 1150, 
-      image: '/images/wardrobe-look-2.jpg',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAs0wGqI14i14Ax0ibu-oMdY0Qz0UMDGcy_wXhieO_nRGkaJ6w40Z7WPMqwoSKNcXPZ8eOpynERFt1QAgIw2RhJKFAfD-mj5gZEqJkblenGa143ioE3C_Kh1jt51A5pIrzxqT9O-Lak3g8to6rHbsJylBsrVIiLxqej-De-5Nl5EfVaYSF-y1jrF12VX2_waLd9ebJlewzcpRoBOxHbQrxo0VhBMp92HnbJlC7upA34pwgNJm12rudcdmYlJQO603QmXHfAiAJZUgKx',
       purchaseDate: '2025.01.20',
       priceHistory: [
         { date: '2025.01.20', price: 1150 },
@@ -63,7 +94,7 @@ const Wardrobe: React.FC = () => {
       id: '#JK-04', 
       name: 'Carbon Shell Parka', 
       price: 890, 
-      image: '/images/wardrobe-look-3.jpg',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDw-AF6WJahwTXtwsOjJQL3IGfFWY0wwQgLx0szhnLrn3pKOXbflWaoZiuw2y_-ftITIVFMGgCIsGMmQ7ZdnES4lwuinSOKb3KBk0umLF1v8Sw3fEreOJReAq9L941kg4p_JsHEGaxPyx8OBuCAp7SxVJi9DC4Zjc7r2L_HuYCwQAMYUDwKH2fk3xBtN8mPeD6yXAw8EqU7bxgSEMaMFNTxHYQIHSRz7HjY8RS3N_c_HxrqX0DlqujqeMVnVHxCaErwWmBz4Lw3Qt2d',
       purchaseDate: '2024.09.15',
       priceHistory: [
         { date: '2024.09.15', price: 890 },
@@ -102,7 +133,7 @@ const Wardrobe: React.FC = () => {
 
   if (selectedItem) {
     return (
-      <div className="relative min-h-screen flex flex-col bg-black animate-in fade-in duration-500">
+      <div className="relative min-h-screen flex flex-col bg_black animate-in fade-in duration-500">
         <div className="absolute inset-0 grid-bg pointer-events-none opacity-5"></div>
         
         <header className="relative z-20 px-8 pt-12 flex justify-between items-center">
@@ -148,9 +179,9 @@ const Wardrobe: React.FC = () => {
             </div>
 
             <div className="glass rounded-[2rem] p-6 space-y-6 border border-white/5">
-              <div className="flex justify-between items-center">
+              <div className="flex justify_between items-center">
                 <div>
-                  <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em] mb-1">Acquisition Date</p>
+                  <p className="text-[9px] font-bold text-white/30 uppercase tracking_[0.3em] mb-1">Acquisition Date</p>
                   <p className="text-lg font-display font-black text-white">{selectedItem.purchaseDate}</p>
                 </div>
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -164,7 +195,7 @@ const Wardrobe: React.FC = () => {
                 <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em] mb-4">Value Trajectory</p>
                 <div className="space-y-4">
                   {selectedItem.priceHistory.map((history, idx) => (
-                    <div key={idx} className="flex justify-between items-center group">
+                    <div key={idx} className="flex justify_between items-center group">
                       <div className="flex items-center gap-3">
                         <div className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-primary shadow-[0_0_8px_#D4FF00]' : 'bg-white/20'}`}></div>
                         <span className={`text-xs font-bold font-space ${idx === 0 ? 'text-white' : 'text-white/40'}`}>{history.date}</span>
@@ -183,7 +214,7 @@ const Wardrobe: React.FC = () => {
               </div>
             </div>
             
-            <button className="w-full py-5 rounded-2xl glass border border-white/10 flex items-center justify-center gap-2 active:scale-95 transition-all text-white/60 font-bold uppercase tracking-widest text-[10px]">
+            <button className="w-full py-5 rounded-2xl glass border border-white/10 flex items_center justify-center gap-2 active:scale-95 transition-all text-white/60 font-bold uppercase tracking-widest text-[10px]">
               <span className="material-icons-round text-sm">history_edu</span>
               View Ownership Ledger
             </button>
@@ -195,9 +226,9 @@ const Wardrobe: React.FC = () => {
 
   return (
     <div className="min-h-full flex flex-col">
-      <header className="relative z-50 px-8 pt-12 flex justify-between items-center mb-10">
+      <header className="relative z-50 px-8 pt-12 flex justify_between items-center mb-10">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] font-space text-white/50 leading-none mb-2">Virtual Vault</p>
+          <p className="text-[10px] uppercase tracking_[0.3em] font-space text_white/50 leading-none mb-2">Virtual Vault</p>
           <h2 className="text-3xl font-future font-black tracking-tighter leading-none">WARD<br/>ROBE</h2>
         </div>
         <button 
@@ -207,111 +238,118 @@ const Wardrobe: React.FC = () => {
           }}
           className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
         >
-          <img src="/images/avatar-axon.jpg" alt="Avatar" className="w-14 h-14 rounded-full object-cover" />
+          <img src="https://picsum.photos/100/100?seed=axon_prime" alt="Avatar" className="w-14 h-14 rounded-full object-cover" />
         </button>
       </header>
 
       <div className="px-8 pb-32">
-        {/* Hero Showcase */}
-        <div className="bg-white/5 rounded-[2.5rem] p-6 mb-8 relative overflow-hidden border border-white/10 group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
-          <div className="flex justify-between items-start mb-4">
+        {/* Leaderboard Hero Showcase */}
+        <div className="mb-8 relative">
+          <div className="flex justify_between items-end mb-4">
             <div>
-              <span className="inline-block px-3 py-1 bg-primary text-black text-[10px] font-bold uppercase rounded-full mb-2">S-384X</span>
-              <h3 className="text-3xl font-future font-black">X-TYPE<br/>CHROME</h3>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold font-display">158</p>
-              <p className="text-[8px] opacity-60 uppercase tracking-widest">Arollie</p>
+              <h3 className="font-display text-2xl font-black italic uppercase leading-none">Leaderboard</h3>
+              <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">This Week's Hottest NFTs</p>
             </div>
           </div>
-          <div className="h-64 flex items-center justify-center">
-             <img 
-              src={generatedNFT || "/images/hero-model.jpg"} 
-              alt="Hero Jacket"
-              className="max-h-full object-contain filter drop-shadow-2xl group-hover:scale-110 transition-transform duration-700"
-            />
-          </div>
-          <div className="absolute bottom-6 right-6 flex flex-col gap-2">
-             <button 
-               onClick={() => alert('Generate NFT specific clothing')}
-               className="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center shadow-lg active:scale-90 transition-transform"
-             >
-               <span className="material-icons-round">add</span>
-             </button>
-          </div>
-        </div>
-
-        <div className="flex gap-3 overflow-x-auto no-scrollbar mb-6">
-          <button className="px-6 py-2 rounded-full bg-primary text-black font-bold text-xs uppercase">All</button>
-          <button className="px-6 py-2 rounded-full glass text-white/60 font-bold text-xs uppercase whitespace-nowrap">Outerwear</button>
-          <button className="px-6 py-2 rounded-full glass text-white/60 font-bold text-xs uppercase whitespace-nowrap">Footwear</button>
-          <button className="px-6 py-2 rounded-full glass text-white/60 font-bold text-xs uppercase whitespace-nowrap">Tech</button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {items.map(item => (
-            <div key={item.id} className="glass rounded-[2rem] p-4 flex flex-col group relative">
-              <div className="h-32 mb-4 flex items-center justify-center relative">
-                <img 
-                  src={item.image} 
-                  alt={item.name} 
-                  style={{ filter: item.color || 'none' }}
-                  className="max-h-full object-contain group-hover:scale-110 transition-all duration-500" 
-                />
-                <button 
-                  onClick={() => setSelectedItem(item)}
-                  className="absolute top-0 right-0 text-white/20 hover:text-primary active:scale-90 transition-all"
-                >
-                  <span className="material-icons-round text-lg">info</span>
-                </button>
-              </div>
-              
-              <div className="flex justify-between items-start mb-1">
-                <p className="text-[9px] text-primary font-bold uppercase tracking-widest">ID: {item.id}</p>
-                {item.colorName && item.colorName !== 'Default' && (
-                  <span className="text-[8px] bg-white/10 text-white/60 px-2 py-0.5 rounded-full uppercase font-bold tracking-tighter">
-                    {item.colorName}
-                  </span>
-                )}
-              </div>
-              
-              <h4 className="font-display text-xs uppercase font-bold leading-tight mb-3">{item.name}</h4>
-              
-              <div className="flex justify-between items-center mt-auto">
-                <span className="font-bold text-sm">${item.price}</span>
-                
-                <div className="relative">
-                  {customizingId === item.id && (
-                    <div className="absolute bottom-12 right-0 glass p-2 rounded-2xl flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-300 z-50 shadow-2xl border border-primary/20">
-                      {colorOptions.map(color => (
-                        <button
-                          key={color.name}
-                          onClick={() => applyColor(item.id, color)}
-                          className="w-8 h-8 rounded-full border border-white/10 transition-transform active:scale-75"
-                          style={{ backgroundColor: color.hex }}
-                          title={color.name}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  
-                  <button 
-                    onClick={() => setCustomizingId(customizingId === item.id ? null : item.id)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${customizingId === item.id ? 'bg-primary text-black' : 'bg-white text-black hover:bg-primary'}`}
-                  >
-                    <span className="material-icons-round text-sm">palette</span>
-                  </button>
+          <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 group h-80">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
+            
+            {leaderboardProducts.map((product, index) => (
+              <div 
+                key={product.id}
+                className={`absolute inset-0 p-6 transition-opacity duration-1000 flex flex-col ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+              >
+                <div className="flex justify-between items-start mb-4 z-20">
+                  <div>
+                    <span className="inline-block px-3 py-1 bg-primary text-black text-[10px] font-bold uppercase rounded-full mb-2">Rank #{index + 1}</span>
+                    <h3 className="text-2xl font-future font-black">{product.name}</h3>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <span className="font-display font-black text-xl flex items-center gap-1 text-primary">
+                      <span className="material-icons-round text-sm">favorite</span>
+                      {product.likes.toLocaleString()}
+                    </span>
+                    <p className="text-[8px] opacity-60 uppercase tracking-widest mt-1">{product.type}</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center relative z-10">
+                   <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="max-h-full object-contain filter drop-shadow-2xl group-hover:scale-110 transition-transform duration-700"
+                  />
                 </div>
               </div>
+            ))}
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {leaderboardProducts.map((_, idx) => (
+                <div key={idx} className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-primary w-6' : 'bg-white/30'}`} />
+              ))}
             </div>
-          ))}
+          </div>
+        </div>
+
+        {/* My Cyber Collection Section */}
+        <div className="mb-6">
+          <div className="flex justify_between items-end mb-4">
+            <div>
+              <h3 className="font-display text-2xl font-black italic uppercase leading-none">My Cyber Collection</h3>
+              <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">Your Generated Assets</p>
+            </div>
+          </div>
           
-          <div className="border-2 border-dashed border-white/10 rounded-[2rem] p-4 flex flex-col items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
-            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
-              <span className="material-icons-round">add</span>
-            </div>
-            <span className="text-[10px] font-display font-bold uppercase">Import NFT</span>
+          <div className="grid grid-cols-2 gap-4">
+            {generatedNFT ? (
+              <div className="glass rounded-[2rem] p-4 flex flex-col group relative">
+                <div className="h-40 mb-4 flex items-center justify-center relative rounded-xl overflow-hidden border border-white/10">
+                  <img 
+                    src={generatedNFT} 
+                    alt="My Avatar NFT" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
+                  />
+                  <div className="absolute top-2 right-2 bg-primary text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase">
+                    Minted
+                  </div>
+                </div>
+                <h4 className="font-display text-xs uppercase font-bold leading-tight mb-1">Genesis Avatar</h4>
+                <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">ID: #GEN-01</p>
+                <button 
+                  onClick={() => alert('Uploaded to Share Platform successfully!')}
+                  className="w-full py-2 bg-white/10 hover:bg-primary hover:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1"
+                >
+                  <span className="material-icons-round text-sm">public</span>
+                  Share
+                </button>
+              </div>
+            ) : (
+              <div className="col-span-2 border-2 border-dashed border-white/10 rounded-[2rem] p-8 flex flex-col items-center justify-center gap-4 opacity-50">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
+                  <span className="material-icons-round text-2xl">person_outline</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-sm font-display font-bold uppercase block mb-1">No Assets Found</span>
+                  <span className="text-[10px] text-white/60 uppercase tracking-widest">Generate an Avatar in the Creator tab</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Upload to Share Platform Button */}
+            <button 
+              onClick={() => {
+                if (generatedNFT) {
+                  alert('Uploaded to Share Platform successfully!');
+                } else {
+                  alert('Please generate an Avatar NFT first.');
+                }
+              }}
+              className="col-span-2 border-2 border-dashed border-primary/30 bg-primary/5 rounded-[2rem] p-4 flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors active:scale-95 mt-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <span className="material-icons-round">cloud_upload</span>
+              </div>
+              <span className="text-[10px] font-display font-bold uppercase text-center text-primary">Upload to<br/>Share Platform</span>
+            </button>
           </div>
         </div>
       </div>

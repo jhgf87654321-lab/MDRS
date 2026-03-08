@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface HomeProps {
@@ -52,7 +51,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
       {/* Background Ambient Glows */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[50%] bg-primary/5 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[10%] left-[-10%] w-[50%] h-[40%] bg-accent/5 blur-[100px] rounded-full"></div>
+        <div className="absolute bottom_[10%] left-[-10%] w-[50%] h-[40%] bg-accent/5 blur-[100px] rounded-full"></div>
         <div className="absolute inset-0 grid-bg opacity-10"></div>
       </div>
 
@@ -64,7 +63,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
           </div>
           <div className="text-[72px] font-black tracking-[-0.3em] leading-[0.55] flex items-end">
             <span className="inline-block transform -skew-x-[20deg] origin-bottom">A</span>
-            <span className="inline-block transform skew-x-[20deg] origin-bottom -ml-5">X</span>
+            <span className="inline-block transform skew-x_[20deg] origin-bottom -ml-5">X</span>
           </div>
         </div>
 
@@ -76,50 +75,46 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
             }}
             className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
           >
-            <img src="/images/avatar-axon.jpg" alt="User" className="w-14 h-14 rounded-full object-cover" />
+            <img src="https://picsum.photos/100/100?seed=axon_prime" alt="User" className="w-14 h-14 rounded-full object-cover" />
           </button>
         </div>
       </header>
 
-      {/* Hero Visual Section */}
+      {/* Hero Visual Section - Share Platform Entry */}
       <main className="relative z-10 flex flex-col px-8 mt-10">
-        <div className="relative w-full aspect-[4/5] mb-12">
-          {/* Main Character with Dynamic Frame */}
-          <div className="absolute top-[10%] right-0 left-[20%] bottom-0 bg-white/5 backdrop-blur-3xl rounded-l-[5rem] border-l border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)]">
-             <div className="absolute inset-0 opacity-[0.03] select-none flex items-center justify-center">
-                <h1 className="text-[200px] font-black leading-none text-center">20<br/>99</h1>
-             </div>
+        <div className="relative w-full aspect_[4/5] mb-12 cursor-pointer group" onClick={onEnter}>
+          {/* Main Container with Dynamic Frame */}
+          <div className="absolute inset-0 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group-hover:border-primary/50 transition-colors duration-500">
+             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10"></div>
              
              {/* Tech Overlay Elements */}
-             <div className="absolute top-12 right-12 flex flex-col items-end gap-4">
+             <div className="absolute top-8 right-8 flex flex-col items-end gap-4">
                 <div className="flex gap-2">
                    <div className="w-8 h-1.5 bg-primary/60 rounded-full shadow-[0_0_10px_#D4FF00]"></div>
                    <div className="w-1.5 h-1.5 bg-white/10 rounded-full"></div>
                 </div>
-                <span className="text-2xl font-black text-white/80 tracking-tighter uppercase">S-384x_PRIME</span>
+                <span className="text-xl font-black text-white/80 tracking-tighter uppercase">SHARE_HUB</span>
              </div>
 
-             <div className="absolute bottom-16 right-10 flex flex-col items-end gap-2">
-                <span className="text-[8px] font-bold text-primary uppercase tracking-[0.5em]">Global Market</span>
-                <span className="text-4xl font-display font-black text-white">$14.2K</span>
+             <div className="absolute bottom-12 left-8 flex flex-col items-start gap-2">
+                <span className="text-[10px] font-bold text-primary uppercase tracking_[0.5em]">Global Network</span>
+                <span className="text-5xl font-display font-black text-white leading-none">DISCOVER<br/>& TRADE</span>
              </div>
           </div>
 
-          {/* Character Image */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center translate-y-6">
-            <img 
-              src="/images/hero-model.jpg" 
-              alt="Fashion Model"
-              className="h-full object-contain scale-[1.2] drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
-            />
+          {/* Central Icon */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center -translate-y-8">
+            <div className="w-40 h-40 rounded-full bg-primary/20 flex items-center justify-center backdrop-blur-md border border-primary/30 shadow-[0_0_50px_rgba(212,255,0,0.2)] group-hover:scale-110 transition-transform duration-500">
+              <span className="material-icons-round text-7xl text-primary">public</span>
+            </div>
           </div>
 
-          {/* Floating Identity Pin */}
-          <div className="absolute left-0 top-[15%]">
-            <div className="w-24 h-24 glass rounded-full flex flex-col items-center justify-center border-2 border-primary/20 shadow-[0_0_30px_rgba(212,255,0,0.1)]">
-              <span className="material-icons-round text-primary/60 text-xl">biotech</span>
-              <span className="text-[32px] font-black tracking-tighter leading-none mt-1">158</span>
-              <span className="text-[6px] font-bold opacity-40 uppercase tracking-widest -mt-1">Biometric</span>
+          {/* Floating Stats Pin */}
+          <div className="absolute right-6 top_[40%]">
+            <div className="w-20 h-20 glass rounded-full flex flex-col items-center justify-center border border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+              <span className="material-icons-round text-white/60 text-lg mb-1">trending_up</span>
+              <span className="text-2xl font-black tracking-tighter leading-none">24K</span>
+              <span className="text-[6px] font-bold opacity-40 uppercase tracking-widest mt-1">Active</span>
             </div>
           </div>
         </div>
@@ -131,7 +126,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
             className="group relative bg-white text-black px-12 py-5 rounded-full flex items-center gap-16 overflow-hidden shadow-[0_30px_60px_rgba(212,255,0,0.1)] active:scale-95 transition-all"
           >
             <div className="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">Enter The Vault</span>
+            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">Enter Platform</span>
             <div className="relative z-10 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:bg-black transition-colors">
               <span className="material-icons-round text-lg group-hover:translate-x-1 transition-transform">east</span>
             </div>
@@ -226,7 +221,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
 
                 <form onSubmit={handleAuthSubmit} className="space-y-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Address</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking_[0.3em]">Address</label>
                     <input 
                       required
                       type="email" 
@@ -235,7 +230,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Key</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking_[0.3em]">Key</label>
                     <input 
                       required
                       type="password" 
@@ -245,7 +240,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
                   </div>
                   <button 
                     type="submit"
-                    className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking-[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
+                    className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking_[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
                   >
                     <span>{authMode === 'signIn' ? 'Initiate' : 'Establish'}</span>
                     <div className="bg-primary p-3 rounded-2xl text-black group-hover:scale-110 transition-transform">
@@ -256,7 +251,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
 
                 <button 
                   onClick={toggleMode} 
-                  className="mt-12 text-[10px] text-white/30 uppercase tracking-[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
+                  className="mt-12 text-[10px] text-white/30 uppercase tracking_[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
                 >
                   {authMode === 'signIn' ? "Request Protocol access" : "Node already active?"}
                 </button>
