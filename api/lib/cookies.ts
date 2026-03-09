@@ -27,4 +27,3 @@ export function buildSetCookie(options: {
   if (options.secure) segs.push('Secure');
   return segs.join('; ');
 }
-

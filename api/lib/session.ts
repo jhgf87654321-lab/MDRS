@@ -65,4 +65,3 @@ export function getSessionFromRequest(req: { headers?: Record<string, string | s
   if (!token) return null;
   return verifySessionToken(token);
 }
-

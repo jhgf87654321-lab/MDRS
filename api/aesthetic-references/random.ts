@@ -1,4 +1,4 @@
-import { getAdminDb } from '../_lib/firebaseAdmin';
+import { getAdminDb } from '../lib/firebaseAdmin';
 
 function toInt(value: unknown, fallback: number) {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.floor(value);

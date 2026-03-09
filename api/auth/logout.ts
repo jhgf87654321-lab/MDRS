@@ -1,4 +1,4 @@
-import { buildSetCookie } from '../_lib/cookies';
+import { buildSetCookie } from '../lib/cookies';
 
 export default async function handler(
   req: { method?: string },
