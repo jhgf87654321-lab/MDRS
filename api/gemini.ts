@@ -4,8 +4,60 @@ export const config = {
   maxDuration: 60,
 };
 
+type InlineDataPart = { inlineData: { data: string; mimeType: string } };
+type TextPart = { text: string };
+type GeminiPart = InlineDataPart | TextPart;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function parseParts(body: unknown): { parts: GeminiPart[] } | { error: string; status: number } {
+  if (!isRecord(body)) return { error: 'Invalid JSON body', status: 400 };
+
+  const rawParts = body.parts;
+  const rawPrompt = body.prompt;
+
+  if (Array.isArray(rawParts)) {
+    const parts: GeminiPart[] = [];
+    for (const p of rawParts) {
+      if (!isRecord(p)) return { error: 'Invalid parts[] element', status: 400 };
+
+      if ('text' in p) {
+        if (!isNonEmptyString(p.text)) return { error: 'Invalid parts[] text', status: 400 };
+        parts.push({ text: p.text });
+        continue;
+      }
+
+      if ('inlineData' in p) {
+        const inlineData = p.inlineData;
+        if (!isRecord(inlineData)) return { error: 'Invalid parts[] inlineData', status: 400 };
+        if (!isNonEmptyString(inlineData.data)) return { error: 'Invalid inlineData.data', status: 400 };
+        if (!isNonEmptyString(inlineData.mimeType)) return { error: 'Invalid inlineData.mimeType', status: 400 };
+        parts.push({ inlineData: { data: inlineData.data, mimeType: inlineData.mimeType } });
+        continue;
+      }
+
+      return { error: 'parts[] element must contain text or inlineData', status: 400 };
+    }
+
+    if (parts.length === 0) return { error: 'parts[] must not be empty', status: 400 };
+    return { parts };
+  }
+
+  if (isNonEmptyString(rawPrompt)) {
+    return { parts: [{ text: rawPrompt }] };
+  }
+
+  return { error: 'Missing prompt or parts[]', status: 400 };
+}
+
 export default async function handler(
-  req: { method?: string; body?: { prompt?: string } },
+  req: { method?: string; body?: unknown },
   res: {
     setHeader: (name: string, value: string) => void;
     status: (code: number) => { json: (data: object) => void; end: () => void };
@@ -28,9 +80,9 @@ export default async function handler(
     return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
   }
 
-  const { prompt } = req.body as { prompt?: string };
-  if (!prompt || typeof prompt !== 'string') {
-    return res.status(400).json({ error: 'Missing or invalid prompt' });
+  const parsed = parseParts(req.body);
+  if ('error' in parsed) {
+    return res.status(parsed.status).json({ error: parsed.error });
   }
 
   try {
@@ -38,7 +90,7 @@ export default async function handler(
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
-        parts: [{ text: prompt }],
+        parts: parsed.parts,
       },
     });
 

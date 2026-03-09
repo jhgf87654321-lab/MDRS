@@ -1,6 +1,9 @@
 
 import React, { useState } from 'react';
 
+import { getRandomAestheticReferences, type AestheticReference } from '../firebase';
+import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
+
 type AuthMode = 'signIn' | 'signUp';
 type Category = 'Body' | 'Skin' | 'Style' | 'Design';
 type Gender = 'Male' | 'Female' | 'Creature';
@@ -12,6 +15,14 @@ interface ParameterSet {
   key: string;
   value: number;
 }
+
+type CyberCollectionItem = {
+  image: string;
+  serialNumber: string;
+  isSpecial: boolean;
+  theme: string;
+  prompt: string;
+};
 
 const Creator: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category>('Body');
@@ -44,6 +55,7 @@ const Creator: React.FC = () => {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
+  const [nftData, setNftData] = useState<CyberCollectionItem | null>(null);
   const [nftMetadata, setNftMetadata] = useState<{ theme: string; rarity: string } | null>(null);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -128,11 +140,30 @@ const Creator: React.FC = () => {
         ? `Outfit consists of: Top - ${customDesign.top}, Bottom - ${customDesign.bottom}, Footwear - ${customDesign.shoes}.`
         : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
 
+      const isSpecial = Math.random() < 0.1;
+      let normalCount = parseInt(localStorage.getItem('normalMintCount') || '0', 10);
+      let specialCount = parseInt(localStorage.getItem('specialMintCount') || '0', 10);
+
+      let serialNumber = '';
+      if (isSpecial) {
+        specialCount += 1;
+        localStorage.setItem('specialMintCount', specialCount.toString());
+        serialNumber = `Sp.${specialCount.toString().padStart(5, '0')}`;
+      } else {
+        normalCount += 1;
+        localStorage.setItem('normalMintCount', normalCount.toString());
+        serialNumber = `No.${normalCount.toString().padStart(8, '0')}`;
+      }
+
+      const backgroundInstruction = isSpecial
+        ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
+        : `Clean, minimalist studio setting (white, light grey, or soft neutral tones) with large, bold, artistic typography. The typography words and font style perfectly match the character's outfit vibe and the ${randomTheme} theme.`;
+
       const prompt = `A professional ${randomStyle} for a high-end fashion NFT. 
       Theme: ${randomTheme}. 
-      The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots.
-      Background: Clean, minimalist studio setting (white, light grey, or soft neutral tones) with large, bold, artistic typography. The typography words and font style perfectly match the character's outfit vibe and the ${randomTheme} theme.
-      Graphic Elements: Overlay the image with technical UI details, barcodes, fine technical text, cross-hairs, and minimalist graphic annotations. 
+      The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
+      Background: ${backgroundInstruction}
+      Graphic Elements: Overlay the image with technical UI details, fine technical text, cross-hairs, and minimalist graphic annotations. Do NOT use QR codes.
       Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).
       ${outfitDesc}
       Colors & Textures: ${colorStyle}. The aesthetic era is ${eraStyle}. The clothing layering and amount is ${thicknessStyle}.
@@ -140,19 +171,53 @@ const Creator: React.FC = () => {
       Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture. 
       The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean and modern.`;
 
-      const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Generation failed');
+      let references: AestheticReference[] = [];
+      try {
+        references = await getRandomAestheticReferences(2);
+      } catch (e) {
+        console.error('Failed to fetch aesthetic references', e);
+        references = [];
       }
-      if (data.image) {
-        setGeneratedNFT(data.image);
-        localStorage.setItem('generatedNFT', data.image);
+
+      const parts: GeminiPart[] = [{ text: prompt }];
+      if (references.length > 0) {
+        parts.push({
+          text: 'Please use the following images as strong aesthetic and stylistic references for the lighting, composition, and overall vibe:',
+        });
+        for (const ref of references) {
+          if (!ref.imageUrl) continue;
+          const base64Data = ref.imageUrl.split(',')[1];
+          const mimeType = ref.imageUrl.split(';')[0].split(':')[1];
+          if (!base64Data || !mimeType) {
+            console.error('Invalid reference imageUrl format', { id: ref.id });
+            continue;
+          }
+          parts.push({ inlineData: { data: base64Data, mimeType } });
+        }
+      }
+
+      const imgData = await generateGeminiImage({ parts });
+
+      setGeneratedNFT(imgData);
+      localStorage.setItem('generatedNFT', imgData);
+
+      const nftDataObj: CyberCollectionItem = {
+        image: imgData,
+        serialNumber,
+        isSpecial,
+        theme: randomTheme,
+        prompt,
+      };
+      setNftData(nftDataObj);
+      localStorage.setItem('generatedNFTData', JSON.stringify(nftDataObj));
+
+      try {
+        const collectionStr = localStorage.getItem('myCyberCollection');
+        const collection = collectionStr ? (JSON.parse(collectionStr) as CyberCollectionItem[]) : [];
+        const next = [nftDataObj, ...collection];
+        localStorage.setItem('myCyberCollection', JSON.stringify(next));
+      } catch (e) {
+        console.error('Error saving to collection', e);
       }
     } catch (error) {
       console.error("Error generating NFT:", error);

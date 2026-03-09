@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "AestheticReference": {
+      "title": "Aesthetic Reference",
+      "description": "A high-quality generated image rated 5 stars by an admin, used as a reference for future generations.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "prompt": { "type": "string" },
+        "rating": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["id", "imageUrl", "prompt", "rating", "createdAt", "authorUid"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the application.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A user-generated post in the Share Hub.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "mediaUrls": { "type": "array", "items": { "type": "string" } },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "authorUid", "authorName", "authorAvatar", "mediaUrls", "title", "content", "likesCount", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/aesthetic_references/{referenceId}": {
+      "schema": { "$ref": "#/entities/AestheticReference" },
+      "description": "Stores high-quality images used as aesthetic references."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles and roles."
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Stores user-generated posts for the Share Hub."
+    }
+  }
+}
+

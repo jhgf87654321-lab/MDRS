@@ -10,10 +10,14 @@ import Store from './views/Store';
 import NewReleases from './views/NewReleases';
 import Cart from './views/Cart';
 import Collection from './views/Collection';
+import Admin from './views/Admin';
+import ShareHub from './views/ShareHub';
+import CreatePost from './views/CreatePost';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.HOME);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [shareMedia, setShareMedia] = useState<string[]>([]);
 
   const handleAddToCart = (product: Product) => {
     setCartItems(prev => {
@@ -47,8 +51,17 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case View.HOME: return <Home onEnter={() => setCurrentView(View.STORE)} />;
-      case View.WARDROBE: return <Wardrobe />;
+      case View.HOME:
+        return <Home onEnter={() => setCurrentView(View.SHARE_HUB)} onNavigate={setCurrentView} />;
+      case View.WARDROBE:
+        return (
+          <Wardrobe
+            onShare={(media) => {
+              setShareMedia([media]);
+              setCurrentView(View.CREATE_POST);
+            }}
+          />
+        );
       case View.TRY_ON: return <TryOn />;
       case View.CREATOR: return <Creator />;
       case View.STORE: return (
@@ -79,7 +92,20 @@ const App: React.FC = () => {
           onRemove={handleRemoveItem}
         />
       );
-      default: return <Home onEnter={() => setCurrentView(View.STORE)} />;
+      case View.ADMIN:
+        return <Admin />;
+      case View.SHARE_HUB:
+        return <ShareHub onNavigate={setCurrentView} />;
+      case View.CREATE_POST:
+        return (
+          <CreatePost
+            initialMedia={shareMedia}
+            onBack={() => setCurrentView(View.WARDROBE)}
+            onSuccess={() => setCurrentView(View.SHARE_HUB)}
+          />
+        );
+      default:
+        return <Home onEnter={() => setCurrentView(View.SHARE_HUB)} onNavigate={setCurrentView} />;
     }
   };
 

@@ -18,7 +18,11 @@ interface WardrobeItem {
   colorName?: string;
 }
 
-const Wardrobe: React.FC = () => {
+interface WardrobeProps {
+  onShare?: (mediaUrl: string) => void;
+}
+
+const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signIn');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -315,7 +319,13 @@ const Wardrobe: React.FC = () => {
                 <h4 className="font-display text-xs uppercase font-bold leading-tight mb-1">Genesis Avatar</h4>
                 <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">ID: #GEN-01</p>
                 <button 
-                  onClick={() => alert('Uploaded to Share Platform successfully!')}
+                  onClick={() => {
+                    if (generatedNFT && onShare) {
+                      onShare(generatedNFT);
+                      return;
+                    }
+                    alert('Uploaded to Share Platform successfully!');
+                  }}
                   className="w-full py-2 bg-white/10 hover:bg-primary hover:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1"
                 >
                   <span className="material-icons-round text-sm">public</span>
@@ -338,6 +348,10 @@ const Wardrobe: React.FC = () => {
             <button 
               onClick={() => {
                 if (generatedNFT) {
+                  if (onShare) {
+                    onShare(generatedNFT);
+                    return;
+                  }
                   alert('Uploaded to Share Platform successfully!');
                 } else {
                   alert('Please generate an Avatar NFT first.');

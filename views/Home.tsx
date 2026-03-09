@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 
+import { View } from '../types';
+
 interface HomeProps {
   onEnter: () => void;
+  onNavigate?: (view: View) => void;
 }
 
 type AuthMode = 'signIn' | 'signUp';
 
-const Home: React.FC<HomeProps> = ({ onEnter }) => {
+const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signIn');
@@ -27,23 +30,26 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
 
   const features = [
     {
-      title: 'Virtual Wardrobe',
-      desc: 'Secured NFT Asset Management',
-      icon: 'grid_view',
-      stats: '42+ ASSETS'
+      title: 'Genesis Creator',
+      desc: 'V.2 Biometric Identity Node',
+      icon: 'biotech',
+      stats: 'ACTIVE',
+      view: View.CREATOR,
     },
     {
       title: 'AI Scanned Try-On',
       desc: '98.5% Fit Precision Protocol',
       icon: 'view_in_ar',
-      stats: 'LIVE SYNC'
+      stats: 'LIVE SYNC',
+      view: View.TRY_ON,
     },
     {
-      title: 'Genesis Creator',
-      desc: 'V.2 Biometric Identity Node',
-      icon: 'biotech',
-      stats: 'ACTIVE'
-    }
+      title: 'Virtual Wardrobe',
+      desc: 'Secured NFT Asset Management',
+      icon: 'grid_view',
+      stats: '42+ ASSETS',
+      view: View.WARDROBE,
+    },
   ];
 
   return (
@@ -149,6 +155,7 @@ const Home: React.FC<HomeProps> = ({ onEnter }) => {
                 key={i}
                 onMouseEnter={() => setActiveFeature(i)}
                 onMouseLeave={() => setActiveFeature(null)}
+                onClick={() => onNavigate?.(f.view)}
                 className={`group relative p-8 rounded-[2.5rem] border transition-all duration-500 overflow-hidden ${activeFeature === i ? 'bg-primary border-primary' : 'bg-white/5 border-white/10'}`}
               >
                 <div className="relative z-10 flex justify-between items-center">

@@ -7,7 +7,10 @@ export enum View {
   STORE = 'store',
   NEW_RELEASES = 'new_releases',
   CART = 'cart',
-  COLLECTION = 'collection'
+  COLLECTION = 'collection',
+  ADMIN = 'admin',
+  SHARE_HUB = 'share_hub',
+  CREATE_POST = 'create_post'
 }
 
 export interface Product {
