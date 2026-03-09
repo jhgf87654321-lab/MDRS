@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/auth/me", "destination": "/api/auth?__path=me" },
     { "source": "/api/auth/login", "destination": "/api/auth?__path=login" },
     { "source": "/api/auth/signup", "destination": "/api/auth?__path=signup" },
     { "source": "/api/auth/logout", "destination": "/api/auth?__path=logout" },

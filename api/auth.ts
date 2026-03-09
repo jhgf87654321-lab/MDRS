@@ -58,16 +58,6 @@ export default async function handler(req: Req, res: Res) {
   const path = getPath(req);
   const secure = process.env.NODE_ENV === 'production';
 
-  if (path === 'me') {
-    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-    const session = getSessionFromRequest(req);
-    if (!session) return res.status(200).json({ ok: true, user: null });
-    return res.status(200).json({
-      ok: true,
-      user: { uid: session.uid, email: session.email, role: session.role },
-    });
-  }
-
   if (path === 'logout') {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     res.setHeader('Set-Cookie', buildSetCookie({ name: 'ax_session', value: '', maxAgeSeconds: 0, secure }));
