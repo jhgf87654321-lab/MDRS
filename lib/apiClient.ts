@@ -91,3 +91,17 @@ export async function saveAestheticReference(input: { imageUrl: string; prompt: 
   return data.id!;
 }
 
+export async function uploadImageToCloudBase(dataUrl: string) {
+  const res = await fetch('/api/upload-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUrl }),
+  });
+  const data = (await res.json()) as { ok?: boolean; url?: string; error?: string };
+  if (!res.ok || !data.url) {
+    throw new Error(data.error || 'Failed to upload image');
+  }
+  return data.url;
+}
+
+

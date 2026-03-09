@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { createPost, getMe } from '../../lib/apiClient';
+import { createPost, getMe, uploadImageToCloudBase } from '../../lib/apiClient';
 
 interface CreatePostProps {
   initialMedia?: string[];
@@ -54,7 +54,8 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
 
     setIsSubmitting(true);
     try {
-      await createPost({ mediaUrls, title: title.trim(), content: content.trim() });
+      const urls = await Promise.all(mediaUrls.map((m) => uploadImageToCloudBase(m)));
+      await createPost({ mediaUrls: urls, title: title.trim(), content: content.trim() });
       onSuccess();
     } catch (error) {
       console.error('Error creating post', error);

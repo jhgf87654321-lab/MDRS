@@ -9,9 +9,7 @@ export default function AdminModule() {
   const [authPassword, setAuthPassword] = useState('');
   const [authMode, setAuthMode] = useState<'signIn' | 'signUp'>('signIn');
 
-  const [prompt, setPrompt] = useState(
-    'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
-  );
+  const [prompt, setPrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +26,36 @@ export default function AdminModule() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  // Load latest Creator prompt and image so test images use identical parameters
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('generatedNFTData');
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as { prompt?: string } | null;
+      if (parsed && typeof parsed.prompt === 'string' && parsed.prompt.trim()) {
+        setPrompt(parsed.prompt);
+      }
+    } catch (e) {
+      console.error('Failed to read generatedNFTData for admin prompt', e);
+    }
+
+    try {
+      const storedImage = localStorage.getItem('generatedNFT');
+      if (storedImage) {
+        setGeneratedImage(storedImage);
+      }
+    } catch (e) {
+      console.error('Failed to read generatedNFT for admin cover', e);
+    }
+
+    // Fallback prompt when no avatar has been generated yet
+    if (!prompt) {
+      setPrompt(
+        'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
+      );
+    }
   }, []);
 
   const handleAuth = async () => {
