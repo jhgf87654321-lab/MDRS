@@ -27,7 +27,7 @@ const Creator: React.FC = () => {
   // NFT Themes and Traits for randomness
   const themes = ['High-Fashion Editorial', 'Urban Techwear', 'Minimalist Avant-Garde', 'Graphic Lookbook', 'Streetwear Culture', 'Avant-Garde Magazine', 'Modern Tech-Fashion'];
   const materials = ['Technical Nylon', 'Patterned Silk', 'Matte Polymer', 'Transparent Vinyl', 'Heavy Cotton', 'Reflective Fabric'];
-  const styles = ['Magazine Cover Layout', 'Fashion Lookbook Spread', 'Graphic Design Poster', 'Editorial Studio Portrait', 'Minimalist UI Overlay'];
+  const styles = ['Magazine Cover Layout', 'Editorial Studio Portrait', 'High-End Fashion Photography', 'Cinematic Character Shot', 'Futuristic Fashion Portrait'];
 
   // Parameter states for each category
   const [params, setParams] = useState<Record<string, number>>({
@@ -87,7 +87,7 @@ const Creator: React.FC = () => {
       case 'Style':
         return [
           { label: 'Chromaticity', key: 'chromaticity', value: params.chromaticity },
-          { label: 'Era (Classic -> Modern)', key: 'era', value: params.era },
+          { label: 'Era (Retro -> Modern)', key: 'era', value: params.era },
           { label: 'Thickness (Sexy -> Heavy)', key: 'thickness', value: params.thickness },
         ];
       default:
@@ -115,7 +115,7 @@ const Creator: React.FC = () => {
       setNftMetadata({ theme: randomTheme, rarity: randomRarity });
 
       const colorStyle = params.chromaticity > 70 ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.` : params.chromaticity < 30 ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.' : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
-      const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? '90s high fashion runway shows, gorgeous runway clothing, reminiscent of vintage DIOR, Maison Margiela, Chanel' : 'a blend of contemporary and classic styles';
+      const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
       const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
@@ -259,7 +259,7 @@ const Creator: React.FC = () => {
                   </div>
                 ) : (
                   <img 
-                    src={generatedNFT || "/images/hero-model.jpg"} 
+                    src={generatedNFT || "https://lh3.googleusercontent.com/aida-public/AB6AXuD--GjfU0623yeRTQGDPufUFR_AcyGbJCkDdfYQhfa33Z6nvca-1TOXhrwFVg2N5RiCHhhy3LLnHiNPE21vAD5DcA2Ybgp58Awi8kx4HgdooY_0bSzEqpbjpS_-iChDaVB9XFOMF0XySUyr9DnLfvAKLRMLpUF0--s_ZQjd6bE-PCd32yRsBhZZlVXDlRTVcQxdS8H7_Soy7rKtHqLCBYjz1d1plDnlgiynjzy3CuJtVjDwjEZDYaBtic2CIRWiQ6BOaehZHTtoXjrT"} 
                     alt="Detail Focus"
                     className={`w-full h-full object-cover transition-all duration-700 ${generatedNFT ? 'scale-100' : 'scale-[4] mix-blend-screen brightness-125 saturate-50'}`}
                     style={!generatedNFT ? { filter: `drop-shadow(0 0 10px ${selectedSkinColor})` } : {}}
