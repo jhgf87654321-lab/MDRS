@@ -50,6 +50,13 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       stats: '42+ ASSETS',
       view: View.WARDROBE,
     },
+    {
+      title: 'Admin Test',
+      desc: 'Aesthetic Training Node',
+      icon: 'admin_panel_settings',
+      stats: '5★ ONLY',
+      view: View.ADMIN,
+    },
   ];
 
   return (
