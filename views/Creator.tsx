@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 
-import { getRandomAestheticReferences, type AestheticReference } from '../firebase';
+import { getRandomAestheticReferences, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 
 type AuthMode = 'signIn' | 'signUp';

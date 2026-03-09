@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { auth, createPost } from '../../firebase';
+import { createPost, getMe } from '../../lib/apiClient';
 
 interface CreatePostProps {
   initialMedia?: string[];
@@ -38,7 +38,8 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
   };
 
   const submitPost = async () => {
-    if (!auth.currentUser) {
+    const me = await getMe();
+    if (!me) {
       alert('Please sign in to post.');
       return;
     }
@@ -53,7 +54,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
 
     setIsSubmitting(true);
     try {
-      await createPost(mediaUrls, title.trim(), content.trim());
+      await createPost({ mediaUrls, title: title.trim(), content: content.trim() });
       onSuccess();
     } catch (error) {
       console.error('Error creating post', error);

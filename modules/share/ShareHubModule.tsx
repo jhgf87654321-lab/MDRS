@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View } from '../../types';
-import { auth, getPosts, likePost, type Post } from '../../firebase';
+import { getMe, likePost, listPosts, type Post } from '../../lib/apiClient';
 
 interface ShareHubProps {
   onNavigate: (view: View) => void;
@@ -18,7 +18,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
       setIsLoading(true);
       setError(null);
       try {
-        const fetchedPosts = await getPosts(20);
+        const fetchedPosts = await listPosts();
         if (!isMounted) return;
         setPosts(fetchedPosts);
       } catch (e) {
@@ -38,7 +38,8 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
   }, []);
 
   const handleLike = async (postId: string) => {
-    if (!auth.currentUser) {
+    const me = await getMe();
+    if (!me) {
       alert('Please sign in to like posts.');
       return;
     }

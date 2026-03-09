@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth, checkIsAdmin, logout, saveAestheticReference, signInWithGoogle } from '../../firebase';
 import { generateGeminiImage } from '../../lib/geminiClient';
+import { getMe, saveAestheticReference, signIn, signOut, signUp, type SessionUser } from '../../lib/apiClient';
 
 export default function AdminModule() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authMode, setAuthMode] = useState<'signIn' | 'signUp'>('signIn');
 
   const [prompt, setPrompt] = useState(
     'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
@@ -16,28 +17,31 @@ export default function AdminModule() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-
-      if (currentUser) {
-        const adminStatus = await checkIsAdmin(currentUser.uid);
-        setIsAdmin(adminStatus);
-      } else {
-        setIsAdmin(false);
-      }
-
+    let mounted = true;
+    const run = async () => {
+      const me = await getMe();
+      if (!mounted) return;
+      setUser(me);
       setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    };
+    void run();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const handleLogin = async () => {
+  const handleAuth = async () => {
     try {
-      await signInWithGoogle();
+      if (authMode === 'signUp') {
+        const u = await signUp(authEmail, authPassword);
+        setUser(u);
+      } else {
+        const u = await signIn(authEmail, authPassword);
+        setUser(u);
+      }
     } catch (error) {
-      console.error('Login failed', error);
-      alert('Login failed. Check console for details.');
+      console.error('Auth failed', error);
+      alert(error instanceof Error ? error.message : 'Auth failed');
     }
   };
 
@@ -69,7 +73,7 @@ export default function AdminModule() {
 
     setIsSaving(true);
     try {
-      await saveAestheticReference(generatedImage, prompt);
+      await saveAestheticReference({ imageUrl: generatedImage, prompt });
       alert('Saved to Aesthetic Reference Library!');
       setGeneratedImage(null);
     } catch (error) {
@@ -84,7 +88,7 @@ export default function AdminModule() {
     return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user || !isAdmin) {
+  if (!user || user.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background-dark text-white p-8 flex flex-col items-center justify-center">
         <h1 className="text-3xl font-display font-black mb-4">Admin Access Required</h1>
@@ -95,14 +99,53 @@ export default function AdminModule() {
         {user ? (
           <div className="flex flex-col items-center gap-4">
             <p className="text-sm text-primary">Logged in as: {user.email} (Not Admin)</p>
-            <button onClick={() => void logout()} className="px-6 py-2 bg-white/10 rounded-full hover:bg-white/20">
+            <button onClick={() => void signOut()} className="px-6 py-2 bg-white/10 rounded-full hover:bg-white/20">
               Sign Out
             </button>
           </div>
         ) : (
-          <button onClick={() => void handleLogin()} className="px-8 py-3 bg-primary text-black font-bold rounded-full uppercase tracking-widest">
-            Sign In with Google
-          </button>
+          <div className="w-full max-w-sm space-y-4">
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setAuthMode('signIn')}
+                className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  authMode === 'signIn' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => setAuthMode('signUp')}
+                className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  authMode === 'signUp' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <input
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+              type="email"
+              placeholder="Email"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50"
+            />
+            <input
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              type="password"
+              placeholder="Password (min 8 chars)"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50"
+            />
+            <button
+              onClick={() => void handleAuth()}
+              className="w-full px-8 py-3 bg-primary text-black font-bold rounded-full uppercase tracking-widest"
+              disabled={!authEmail || !authPassword}
+            >
+              {authMode === 'signUp' ? 'Create Account' : 'Sign In'}
+            </button>
+          </div>
         )}
       </div>
     );
@@ -115,7 +158,7 @@ export default function AdminModule() {
           <h1 className="text-2xl font-display font-black uppercase tracking-tighter text-primary">Aesthetic Training</h1>
           <p className="text-[10px] text-white/40 uppercase tracking-widest">Admin Test Node</p>
         </div>
-        <button onClick={() => void logout()} className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white">
+        <button onClick={() => void signOut()} className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white">
           Sign Out
         </button>
       </div>
