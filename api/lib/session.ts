@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getCookieValue } from './cookies';
+import { getCookieValue } from './cookies.js';
 
 type SessionPayload = {
   uid: string;

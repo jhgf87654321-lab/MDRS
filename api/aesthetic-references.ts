@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
-import { getAdminDb } from './lib/firebaseAdmin';
-import { getSessionFromRequest } from './lib/session';
+import { getAdminDb } from './lib/firebaseAdmin.js';
+import { getSessionFromRequest } from './lib/session.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

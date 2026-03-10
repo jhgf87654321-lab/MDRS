@@ -1,4 +1,4 @@
-import { getSessionFromRequest } from '../lib/session';
+import { getSessionFromRequest } from '../lib/session.js';
 
 export default async function handler(
   req: { method?: string; headers?: Record<string, string | string[] | undefined> },
