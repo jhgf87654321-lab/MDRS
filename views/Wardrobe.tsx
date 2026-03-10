@@ -18,6 +18,14 @@ interface WardrobeItem {
   colorName?: string;
 }
 
+type CyberCollectionItem = {
+  image: string;
+  serialNumber: string;
+  isSpecial: boolean;
+  theme: string;
+  prompt: string;
+};
+
 interface WardrobeProps {
   onShare?: (mediaUrl: string) => void;
 }
@@ -29,6 +37,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
   const [customizingId, setCustomizingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
+  const [collection, setCollection] = useState<CyberCollectionItem[]>([]);
+  const [selectedNft, setSelectedNft] = useState<CyberCollectionItem | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const leaderboardProducts = [
@@ -56,9 +66,22 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
   ];
 
   React.useEffect(() => {
-    const storedNFT = localStorage.getItem('generatedNFT');
-    if (storedNFT) {
-      setGeneratedNFT(storedNFT);
+    try {
+      const collectionStr = localStorage.getItem('myCyberCollection');
+      if (collectionStr) {
+        const parsed = JSON.parse(collectionStr) as CyberCollectionItem[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCollection(parsed);
+          setGeneratedNFT(parsed[0]!.image);
+          return;
+        }
+      }
+      const storedNFT = localStorage.getItem('generatedNFT');
+      if (storedNFT) {
+        setGeneratedNFT(storedNFT);
+      }
+    } catch (e) {
+      console.error('Failed to load cyber collection', e);
     }
   }, []);
 
@@ -228,6 +251,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
     );
   }
 
+  const latestNft = collection[0];
+
   return (
     <div className="min-h-full flex flex-col">
       <header className="relative z-50 px-8 pt-12 flex justify_between items-center mb-10">
@@ -304,24 +329,33 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            {generatedNFT ? (
+            {latestNft ? (
               <div className="glass rounded-[2rem] p-4 flex flex-col group relative">
-                <div className="h-40 mb-4 flex items-center justify-center relative rounded-xl overflow-hidden border border-white/10">
-                  <img 
-                    src={generatedNFT} 
-                    alt="My Avatar NFT" 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
+                <button
+                  type="button"
+                  onClick={() => setSelectedNft(latestNft)}
+                  className="h-40 mb-4 flex items-center justify-center relative rounded-xl overflow-hidden border border-white/10 w-full"
+                >
+                  <img
+                    src={latestNft.image}
+                    alt={latestNft.theme || 'My Avatar NFT'}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                   />
                   <div className="absolute top-2 right-2 bg-primary text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase">
-                    Minted
+                    {latestNft.isSpecial ? 'Special' : 'Minted'}
                   </div>
-                </div>
-                <h4 className="font-display text-xs uppercase font-bold leading-tight mb-1">Genesis Avatar</h4>
-                <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">ID: #GEN-01</p>
-                <button 
+                </button>
+                <h4 className="font-display text-xs uppercase font-bold leading-tight mb-1">
+                  {latestNft.theme || 'Genesis Avatar'}
+                </h4>
+                <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">
+                  ID: {latestNft.serialNumber || '#GEN-01'}
+                </p>
+                <button
                   onClick={() => {
-                    if (generatedNFT && onShare) {
-                      onShare(generatedNFT);
+                    const img = latestNft.image || generatedNFT;
+                    if (img && onShare) {
+                      onShare(img);
                       return;
                     }
                     alert('Uploaded to Share Platform successfully!');
@@ -367,6 +401,62 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
           </div>
         </div>
       </div>
+
+      {selectedNft && (
+        <div className="fixed inset-0 z-[210] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="w-full max-w-md bg-card-dark rounded-[3rem] border border-white/10 p-6 relative">
+            <button
+              type="button"
+              onClick={() => setSelectedNft(null)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full glass flex items-center justify-center text-white/60 hover:text-white"
+            >
+              <span className="material-icons-round">close</span>
+            </button>
+            <div className="mb-4">
+              <p className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-1">
+                {selectedNft.isSpecial ? 'Special Edition NFT' : 'Standard NFT'}
+              </p>
+              <h3 className="text-xl font-display font-black uppercase tracking-tight">
+                {selectedNft.theme || 'Avatar NFT'}
+              </h3>
+              <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.3em] mt-1">
+                {selectedNft.serialNumber}
+              </p>
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-white/10 mb-4">
+              <img src={selectedNft.image} alt={selectedNft.theme} className="w-full h-full object-cover" />
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onShare) {
+                    onShare(selectedNft.image);
+                    return;
+                  }
+                  alert('Uploaded to Share Platform successfully!');
+                }}
+                className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1"
+              >
+                <span className="material-icons-round text-sm">public</span>
+                Share
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = collection.filter((c) => c.serialNumber !== selectedNft.serialNumber);
+                  setCollection(next);
+                  localStorage.setItem('myCyberCollection', JSON.stringify(next));
+                  setSelectedNft(null);
+                }}
+                className="w-28 py-3 rounded-2xl bg-red-500/10 border border-red-500/40 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/30"
+              >
+                Recycle
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isAuthOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-3xl animate-in fade-in duration-300">
