@@ -188,13 +188,20 @@ export default function TryOnModule() {
 
       const stylePrompt = getStylePromptFromLocalStorage();
       const prompt =
-        `Virtual try-on (single person, photorealistic).\n` +
-        `STRICT: Keep the person's face identity, hair, body pose, body shape, and background exactly the same. Do not change camera angle.\n` +
-        `Change ONLY their clothing.\n` +
-        `Clothing style must closely match the NFT fashion style described below AND the provided NFT reference image.\n` +
-        `Style prompt: ${stylePrompt}\n` +
-        `Make the new outfit highly realistic, premium materials, natural lighting, perfectly fitted.\n` +
-        `Do NOT add extra text, logos, UI overlays, or watermarks.`;
+        `Virtual try-on task.\n` +
+        `SOURCE PHOTO (first image): this is the REAL PERSON we must KEEP. STRICT:\n` +
+        `- Keep this person's face identity, hair, body pose, body shape, hands, and background exactly the same.\n` +
+        `- Do NOT change camera angle, lighting direction, or scene.\n` +
+        `- Do NOT change the person's body or face.\n\n` +
+        `NFT REFERENCE (second image): this shows the TARGET OUTFIT ONLY. STRICT:\n` +
+        `- Treat the NFT as a clothing design sheet.\n` +
+        `- Transfer the clothing (silhouette, layers, key materials, color blocking, details) from the NFT onto the real person.\n` +
+        `- Do NOT copy the NFT face, body, or background.\n\n` +
+        `GOAL:\n` +
+        `- Dress the real person in clothing that very closely matches the NFT outfit style and the following style description: ${stylePrompt}.\n` +
+        `- Outfit must look naturally worn on the real person's body, with correct perspective, folds, and shadows.\n` +
+        `- Keep it photorealistic, premium materials, natural lighting.\n` +
+        `- Do NOT add extra text, logos, QR codes, UI overlays, watermarks, or collages. Single, unified photo only.`;
 
       const parts: GeminiPart[] = [{ inlineData: { data: base64Data, mimeType } }];
 
