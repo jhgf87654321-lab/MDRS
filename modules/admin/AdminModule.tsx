@@ -30,12 +30,16 @@ export default function AdminModule() {
 
   // Load latest Creator prompt and image so test images use identical parameters
   useEffect(() => {
+    let hasAvatarPrompt = false;
+
     try {
       const stored = localStorage.getItem('generatedNFTData');
-      if (!stored) return;
-      const parsed = JSON.parse(stored) as { prompt?: string } | null;
-      if (parsed && typeof parsed.prompt === 'string' && parsed.prompt.trim()) {
-        setPrompt(parsed.prompt);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { prompt?: string } | null;
+        if (parsed && typeof parsed.prompt === 'string' && parsed.prompt.trim()) {
+          hasAvatarPrompt = true;
+          setPrompt(parsed.prompt);
+        }
       }
     } catch (e) {
       console.error('Failed to read generatedNFTData for admin prompt', e);
@@ -50,8 +54,8 @@ export default function AdminModule() {
       console.error('Failed to read generatedNFT for admin cover', e);
     }
 
-    // Fallback prompt when no avatar has been generated yet
-    if (!prompt) {
+    // Fallback prompt only when no avatar has been generated yet
+    if (!hasAvatarPrompt) {
       setPrompt(
         'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
       );
