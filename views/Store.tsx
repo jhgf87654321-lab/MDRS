@@ -58,7 +58,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     <div className="p-6 pb-32">
        <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg_white rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
             <span className="material-icons-round text-black text-xl">token</span>
           </div>
           <span className="font-display font-bold tracking-[0.2em] text-xl">AXON</span>
@@ -97,7 +97,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
       {/* Countdown Section - Limited Edition Blind Box */}
       <button 
         onClick={onOpenDrop}
-        className="w-full bg-primary rounded_[2.5rem] p-6 mb-10 text-left text-black shadow-[0_0_30px_rgba(212,255,0,0.3)] hover:scale_[1.02] active:scale_[0.98] transition-all relative overflow-hidden group"
+        className="w-full bg-primary rounded-[2.5rem] p-6 mb-10 text-left text-black shadow-[0_0_30px_rgba(212,255,0,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all relative overflow-hidden group"
       >
         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
            <span className="material-icons-round text-8xl">keyboard_double_arrow_right</span>
@@ -141,9 +141,9 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
       <div className="grid grid-cols-2 gap-4 mb-10">
         {blindBoxes.map(p => (
-          <div key={p.id} className="glass rounded_[2.5rem] p-3 flex flex-col group">
-            <div className="aspect_[4/5] bg-white/5 rounded_[2rem] overflow-hidden relative mb-4 flex flex-col items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
-               <span className="material-icons-round text-6xl text-primary/80 mb-2 drop-shadow_[0_0_15px_rgba(212,255,0,0.5)]">redeem</span>
+          <div key={p.id} className="glass rounded-[2.5rem] p-3 flex flex-col group">
+            <div className="aspect-[4/5] bg-white/5 rounded-[2rem] overflow-hidden relative mb-4 flex flex-col items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
+               <span className="material-icons-round text-6xl text-primary/80 mb-2 drop-shadow-[0_0_15px_rgba(212,255,0,0.5)]">redeem</span>
                <span className="absolute text-3xl font-display font-black text-black -mt-2">?</span>
                <button className="absolute top-3 right-3 w-8 h-8 glass rounded-full flex items-center justify-center">
                  <span className="material-icons-round text-primary text-sm">favorite</span>
@@ -159,7 +159,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
                  </span>
                  <button 
                   onClick={() => onAddToCart?.(p)}
-                  className="bg-primary text-black p-2 rounded-xl shadow-lg active:scale-90 transition-transform"
+                  className="bg-primary text-black p-2 rounded-2xl shadow-lg active:scale-90 transition-transform"
                  >
                    <span className="material-icons-round">add</span>
                  </button>
@@ -174,9 +174,9 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">My Collections</h3>
         <div className="flex flex-col gap-3">
           {userCollections.map(col => (
-            <button key={col.id} className="glass p-4 rounded-3xl flex items-center justify-between active:scale-[0.98] transition-transform">
+            <button key={col.id} className="glass p-4 rounded-[2rem] flex items-center justify-between active:scale-[0.98] transition-transform">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items_center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
                   <span className="material-icons-round text-white/60">collections</span>
                 </div>
                 <div className="text-left">

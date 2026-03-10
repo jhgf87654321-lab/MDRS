@@ -23,6 +23,46 @@ export default function AdminModule() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStage, setSaveStage] = useState<'idle' | 'uploading' | 'saving'>('idle');
 
+  async function compressDataUrlIfNeeded(dataUrl: string) {
+    if (!dataUrl.startsWith('data:')) return dataUrl;
+    // quick size heuristic: base64 chars ~ bytes * 1.37, so length is a rough proxy
+    if (dataUrl.length < 1_200_000) return dataUrl; // ~< 0.9MB
+
+    const img = new Image();
+    img.src = dataUrl;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load image for compression'));
+    });
+
+    const maxDim = 1024;
+    const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+    const w = Math.max(1, Math.round((img.width || 1) * scale));
+    const h = Math.max(1, Math.round((img.height || 1) * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Prefer WebP for size; fall back to JPEG
+    try {
+      const webp = canvas.toDataURL('image/webp', 0.85);
+      if (webp && webp.length < dataUrl.length) return webp;
+    } catch {
+      // ignore
+    }
+    try {
+      const jpg = canvas.toDataURL('image/jpeg', 0.85);
+      if (jpg && jpg.length < dataUrl.length) return jpg;
+    } catch {
+      // ignore
+    }
+    return dataUrl;
+  }
+
   useEffect(() => {
     let mounted = true;
     const run = async () => {
@@ -115,7 +155,8 @@ export default function AdminModule() {
     setIsSaving(true);
     try {
       setSaveStage('uploading');
-      const imageUrl = generatedImage.startsWith('data:') ? await uploadImageToCloudBase(generatedImage) : generatedImage;
+      const prepared = await compressDataUrlIfNeeded(generatedImage);
+      const imageUrl = prepared.startsWith('data:') ? await uploadImageToCloudBase(prepared) : prepared;
       setSaveStage('saving');
       await saveAestheticReference({ imageUrl, prompt });
       alert('Saved to Aesthetic Reference Library!');

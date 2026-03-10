@@ -105,7 +105,17 @@ export default async function handler(
     return res.status(500).json({ error: 'No image generated' });
   } catch (err) {
     console.error('Gemini API error:', err);
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const anyErr = err as { status?: number; message?: string } | undefined;
+    const status = typeof anyErr?.status === 'number' ? anyErr.status : 500;
+    const message = err instanceof Error ? err.message : anyErr?.message || 'Unknown error';
+
+    if (status === 429 || message.includes('"status":"RESOURCE_EXHAUSTED"') || message.includes('RESOURCE_EXHAUSTED')) {
+      return res.status(429).json({
+        error:
+          'Generation failed: Gemini quota exhausted (429 RESOURCE_EXHAUSTED). Please wait and try again, or upgrade your plan/API quota.',
+      });
+    }
+
     return res.status(500).json({ error: `Generation failed: ${message}` });
   }
 }

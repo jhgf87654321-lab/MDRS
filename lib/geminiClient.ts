@@ -16,13 +16,23 @@ export async function generateGeminiImage(input: { prompt: string } | { parts: G
     body: JSON.stringify(input),
   });
 
-  const data = (await res.json()) as { image?: string; error?: string };
+  const text = await res.text();
+  let data: { image?: string; error?: string } = {};
+  try {
+    data = (text ? (JSON.parse(text) as { image?: string; error?: string }) : {}) ?? {};
+  } catch {
+    // non-JSON responses (e.g. Vercel 500 plaintext)
+    throw new Error(res.ok ? 'Generation failed: invalid response' : `Generation failed: ${text.slice(0, 120)}`);
+  }
+
   if (!res.ok) {
-    throw new Error(data.error || 'Generation failed');
+    const msg = data.error || 'Generation failed';
+    const e = new Error(msg);
+    (e as any).status = res.status;
+    throw e;
   }
-  if (!data.image) {
-    throw new Error('No image generated');
-  }
+
+  if (!data.image) throw new Error('No image generated');
   return data.image;
 }
 

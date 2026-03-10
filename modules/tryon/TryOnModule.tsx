@@ -37,6 +37,7 @@ export default function TryOnModule() {
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,6 +116,12 @@ export default function TryOnModule() {
   };
 
   const handleApplyStyle = async () => {
+    if (cooldownUntil && Date.now() < cooldownUntil) {
+      const secs = Math.ceil((cooldownUntil - Date.now()) / 1000);
+      alert(`Gemini quota is cooling down. Please try again in ~${secs}s.`);
+      return;
+    }
+
     let baseImage = uploadedImage;
     if (cameraMode !== 'off') baseImage = captureFrame();
 
@@ -148,7 +155,15 @@ export default function TryOnModule() {
       setCameraMode('off');
     } catch (error) {
       console.error('Error applying style', error);
-      alert('Failed to apply style.');
+      const msg = error instanceof Error ? error.message : String(error);
+      const status = (error as any)?.status as number | undefined;
+      if (status === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
+        // 60s client cooldown to prevent hammering
+        setCooldownUntil(Date.now() + 60_000);
+        alert('Gemini quota exhausted (429). Please wait 1-2 minutes and try again.');
+      } else {
+        alert('Failed to apply style.');
+      }
     } finally {
       setIsApplying(false);
     }
@@ -282,11 +297,13 @@ export default function TryOnModule() {
       <div className="bg-black glass p-4 pb-28 rounded-t-[3rem] border-t border-white/10 z-30 flex justify-center">
         <button
           onClick={() => void handleApplyStyle()}
-          disabled={isApplying}
+          disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
           className="w-full max-w-xs bg-primary/10 border border-primary/50 text-primary py-4 rounded-[2rem] flex items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(212,255,0,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className={`material-icons-round text-xl ${isApplying ? 'animate-spin' : ''}`}>{isApplying ? 'sync' : 'auto_awesome'}</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest">{isApplying ? 'Applying...' : 'Apply NFT Style'}</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest">
+            {isApplying ? 'Applying...' : cooldownUntil !== null && Date.now() < cooldownUntil ? 'Cooling down...' : 'Apply NFT Style'}
+          </span>
         </button>
       </div>
 

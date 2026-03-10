@@ -363,43 +363,33 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            {latestNft ? (
-              <div className="glass rounded-[2rem] p-4 flex flex-col group relative">
-                <button
-                  type="button"
-                  onClick={() => setSelectedNft(latestNft)}
-                  className="h-40 mb-4 flex items-center justify-center relative rounded-xl overflow-hidden border border-white/10 w-full"
-                >
-                  <img
-                    src={latestNft.image}
-                    alt={latestNft.theme || 'My Avatar NFT'}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
-                  />
-                  <div className="absolute top-2 right-2 bg-primary text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase">
-                    {latestNft.isSpecial ? 'Special' : 'Minted'}
+            {collection.length > 0 ? (
+              <>
+                {collection.slice(0, 8).map((item) => (
+                  <div key={item.serialNumber} className="glass rounded-[2rem] p-3 flex flex-col group relative">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedNft(item)}
+                      className="h-36 mb-3 flex items-center justify-center relative rounded-2xl overflow-hidden border border-white/10 w-full"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.theme || 'NFT'}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                      />
+                      <div className="absolute top-2 right-2 bg-primary text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase">
+                        {item.isSpecial ? 'Special' : 'Minted'}
+                      </div>
+                    </button>
+                    <h4 className="font-display text-[11px] uppercase font-bold leading-tight mb-1 line-clamp-1">
+                      {item.theme || 'Genesis Avatar'}
+                    </h4>
+                    <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">
+                      {item.serialNumber}
+                    </p>
                   </div>
-                </button>
-                <h4 className="font-display text-xs uppercase font-bold leading-tight mb-1">
-                  {latestNft.theme || 'Genesis Avatar'}
-                </h4>
-                <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">
-                  ID: {latestNft.serialNumber || '#GEN-01'}
-                </p>
-                <button
-                  onClick={() => {
-                    const img = latestNft.image || generatedNFT;
-                    if (img && onShare) {
-                      onShare(img);
-                      return;
-                    }
-                    alert('Uploaded to Share Platform successfully!');
-                  }}
-                  className="w-full py-2 bg-white/10 hover:bg-primary hover:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1"
-                >
-                  <span className="material-icons-round text-sm">public</span>
-                  Share
-                </button>
-              </div>
+                ))}
+              </>
             ) : (
               <div className="col-span-2 border-2 border-dashed border-white/10 rounded-[2rem] p-8 flex flex-col items-center justify-center gap-4 opacity-50">
                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
@@ -413,7 +403,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
             )}
             
             {/* Upload to Share Platform Button */}
-            <button 
+            <button
               onClick={() => {
                 if (generatedNFT) {
                   if (onShare) {
