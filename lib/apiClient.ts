@@ -9,10 +9,14 @@ async function parseJson<T>(res: Response): Promise<T> {
   }
 }
 
-export async function getMe() {
-  const res = await fetch('/api/auth/me', { method: 'GET' });
-  const data = await parseJson<{ ok: boolean; user: SessionUser | null }>(res);
-  return data.user;
+export async function getMe(): Promise<SessionUser | null> {
+  try {
+    const res = await fetch('/api/auth/me', { method: 'GET' });
+    const data = await parseJson<{ ok: boolean; user: SessionUser | null }>(res);
+    return data.user;
+  } catch {
+    return null;
+  }
 }
 
 export async function signUp(email: string, password: string) {
