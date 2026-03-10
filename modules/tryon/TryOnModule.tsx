@@ -195,7 +195,10 @@ export default function TryOnModule() {
         `- Do NOT change the person's body or face.\n\n` +
         `NFT REFERENCE (second image): this shows the TARGET OUTFIT ONLY. STRICT:\n` +
         `- Treat the NFT as a clothing design sheet.\n` +
-        `- Transfer the clothing (silhouette, layers, key materials, color blocking, details) from the NFT onto the real person.\n` +
+        `- Transfer ALL clothing pieces from the NFT onto the real person: outerwear, inner layers, tops, bottoms, footwear, and visible accessories. Do not omit layers.\n` +
+        `- CRITICAL: The outfit must be an exact 1:1 transfer of the NFT clothing. Do NOT redesign, restyle, simplify, modernize, or reinterpret.\n` +
+        `- Keep the same silhouettes, cuts, proportions, layering order, seams, pockets, trims, patterns, prints, logos/words (if present), colors, and materials as the NFT.\n` +
+        `- You may ONLY adapt perspective, folds, and shadows so it looks naturally worn on the real person.\n` +
         `- Do NOT copy the NFT face, body, or background.\n\n` +
         `GOAL:\n` +
         `- Dress the real person in clothing that very closely matches the NFT outfit style and the following style description: ${stylePrompt}.\n` +
