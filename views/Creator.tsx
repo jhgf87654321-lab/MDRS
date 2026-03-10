@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { getRandomAestheticReferences, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
@@ -85,6 +85,28 @@ const Creator: React.FC = () => {
   const toggleMode = () => {
     setAuthMode(authMode === 'signIn' ? 'signUp' : 'signIn');
   };
+
+  // Restore last generated NFT and metadata when returning to Creator
+  useEffect(() => {
+    try {
+      const storedImg = localStorage.getItem('generatedNFT');
+      if (storedImg) {
+        setGeneratedNFT(storedImg);
+      }
+      const storedData = localStorage.getItem('generatedNFTData');
+      if (storedData) {
+        const parsed = JSON.parse(storedData) as Partial<CyberCollectionItem> | null;
+        if (parsed && parsed.theme) {
+          setNftMetadata((prev) => ({
+            theme: parsed.theme || prev?.theme || 'High-Fashion Editorial',
+            rarity: prev?.rarity || 'Common',
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to restore Creator state', e);
+    }
+  }, []);
 
   // Define parameters based on active category
   const getActiveParams = (): ParameterSet[] => {
