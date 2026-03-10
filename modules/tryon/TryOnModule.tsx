@@ -186,26 +186,22 @@ export default function TryOnModule() {
         throw new Error('Invalid base image format');
       }
 
-      const stylePrompt = getStylePromptFromLocalStorage();
       const prompt =
-        `Virtual try-on task.\n` +
-        `SOURCE PHOTO (first image): this is the REAL PERSON we must KEEP. STRICT:\n` +
-        `- Keep this person's face identity, hair, body pose, body shape, hands, and background exactly the same.\n` +
-        `- Do NOT change camera angle, lighting direction, or scene.\n` +
-        `- Do NOT change the person's body or face.\n\n` +
-        `NFT REFERENCE (second image): this shows the TARGET OUTFIT ONLY. STRICT:\n` +
-        `- Treat the NFT as a clothing design sheet.\n` +
-        `- Transfer ALL clothing pieces from the NFT onto the real person: outerwear, inner layers, tops, bottoms, footwear, and visible accessories. Do not omit layers.\n` +
-        `- CRITICAL: Keep the outfit highly consistent with the NFT clothing. Do NOT redesign, restyle, simplify, modernize, or reinterpret.\n` +
-        `- Keep the same silhouettes, layering order, key materials, color blocking, patterns/prints, and visible logos/words (if present) from the NFT.\n` +
-        `- You MAY adapt garment fit to the real person's body (proportions, drape, folds, wrinkles, seams alignment) so it looks naturally worn.\n` +
-        `- Do NOT copy the NFT face, body, or background.\n\n` +
-        `GOAL:\n` +
-        `- FINAL IMAGE must look like the SOURCE PHOTO. Only the clothing changes.\n` +
-        `- Dress the real person in clothing that very closely matches the NFT outfit and the following style description: ${stylePrompt}.\n` +
-        `- Outfit must look naturally worn on the real person's body, with correct perspective, folds, and shadows.\n` +
-        `- Keep it photorealistic, premium materials, natural lighting.\n` +
-        `- Do NOT add extra text, logos, QR codes, UI overlays, watermarks, or collages. Single, unified photo only.`;
+        `Image edit / virtual try-on.\n` +
+        `IMAGE A (first image) = ORIGINAL. This is the person and background we must KEEP.\n` +
+        `STRICT:\n` +
+        `- Keep the ORIGINAL person's face identity, hair, skin tone, body shape, pose, hands, and background exactly the same.\n` +
+        `- Keep camera angle, framing, and scene unchanged.\n` +
+        `- Do NOT turn the ORIGINAL into the reference person.\n\n` +
+        `IMAGE B (second image) = REFERENCE OUTFIT. We want to take ONLY the clothing from this image.\n` +
+        `STRICT CLOTHING TRANSFER:\n` +
+        `- Put the REFERENCE OUTFIT clothing onto the ORIGINAL person.\n` +
+        `- Transfer ALL visible clothing pieces from IMAGE B: top/outerwear, inner layers, bottoms, footwear, and visible accessories.\n` +
+        `- Do NOT change design, materials, colors, patterns/prints, logos/words. No redesign or reinterpretation.\n` +
+        `- Allowed changes ONLY: perspective and folds/wrinkles to match the ORIGINAL pose/body.\n\n` +
+        `OUTPUT:\n` +
+        `- The final image must look like IMAGE A with clothing swapped from IMAGE B.\n` +
+        `- Photorealistic, natural lighting. No extra text, UI, watermarks, QR codes. Single, unified photo.`;
 
       const parts: GeminiPart[] = [{ inlineData: { data: base64Data, mimeType } }];
 
@@ -222,7 +218,7 @@ export default function TryOnModule() {
       }
       parts.push({ text: prompt });
 
-      const newImgData = await generateGeminiImage({ parts });
+      const newImgData = await generateGeminiImage({ parts, model: 'gemini-3.1-flash-image' });
       setUploadedImage(newImgData);
       localStorage.setItem('tryOnLastImage', newImgData);
       setViewMode('tryon');

@@ -7,6 +7,7 @@ export const config = {
 type InlineDataPart = { inlineData: { data: string; mimeType: string } };
 type TextPart = { text: string };
 type GeminiPart = InlineDataPart | TextPart;
+type SupportedGeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -16,11 +17,17 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function parseParts(body: unknown): { parts: GeminiPart[] } | { error: string; status: number } {
+function parseParts(
+  body: unknown,
+): { parts: GeminiPart[]; model?: SupportedGeminiImageModel } | { error: string; status: number } {
   if (!isRecord(body)) return { error: 'Invalid JSON body', status: 400 };
 
   const rawParts = body.parts;
   const rawPrompt = body.prompt;
+  const rawModel = body.model;
+
+  const model: SupportedGeminiImageModel | undefined =
+    rawModel === 'gemini-2.5-flash-image' || rawModel === 'gemini-3.1-flash-image' ? rawModel : undefined;
 
   if (Array.isArray(rawParts)) {
     const parts: GeminiPart[] = [];
@@ -46,11 +53,11 @@ function parseParts(body: unknown): { parts: GeminiPart[] } | { error: string; s
     }
 
     if (parts.length === 0) return { error: 'parts[] must not be empty', status: 400 };
-    return { parts };
+    return { parts, model };
   }
 
   if (isNonEmptyString(rawPrompt)) {
-    return { parts: [{ text: rawPrompt }] };
+    return { parts: [{ text: rawPrompt }], model };
   }
 
   return { error: 'Missing prompt or parts[]', status: 400 };
@@ -88,7 +95,7 @@ export default async function handler(
   try {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: parsed.model ?? 'gemini-2.5-flash-image',
       contents: {
         parts: parsed.parts,
       },

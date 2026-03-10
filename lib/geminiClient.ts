@@ -9,7 +9,9 @@ export type GeminiPart =
       inlineData: GeminiInlineData;
     };
 
-export async function generateGeminiImage(input: { prompt: string } | { parts: GeminiPart[] }) {
+export type GeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image';
+
+export async function generateGeminiImage(input: { prompt: string; model?: GeminiImageModel } | { parts: GeminiPart[]; model?: GeminiImageModel }) {
   const res = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
