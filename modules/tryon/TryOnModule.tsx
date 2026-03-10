@@ -62,6 +62,7 @@ export default function TryOnModule() {
   const [myCyberCollection, setMyCyberCollection] = useState<CyberCollectionItem[]>([]);
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'tryon' | 'nft'>('tryon');
   const [isApplying, setIsApplying] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
 
@@ -78,6 +79,12 @@ export default function TryOnModule() {
       setMyCyberCollection(parsed.value);
     } else if (storedCollection) {
       console.error('Failed to parse myCyberCollection', parsed);
+    }
+
+    const storedTryOn = localStorage.getItem('tryOnLastImage');
+    if (storedTryOn) {
+      setUploadedImage(storedTryOn);
+      setViewMode('tryon');
     }
   }, []);
 
@@ -125,6 +132,7 @@ export default function TryOnModule() {
       } catch {
         setUploadedImage(result);
       }
+      setViewMode('tryon');
       setCameraMode('off');
     };
     reader.onerror = (err) => {
@@ -179,15 +187,34 @@ export default function TryOnModule() {
       }
 
       const stylePrompt = getStylePromptFromLocalStorage();
-      const prompt = `Keep the person's face, body pose, and background exactly the same. Change ONLY their clothing to match this style: ${stylePrompt}. Make it look highly realistic and perfectly fitted to their body.`;
+      const prompt =
+        `Virtual try-on (single person, photorealistic).\n` +
+        `STRICT: Keep the person's face identity, hair, body pose, body shape, and background exactly the same. Do not change camera angle.\n` +
+        `Change ONLY their clothing.\n` +
+        `Clothing style must closely match the NFT fashion style described below AND the provided NFT reference image.\n` +
+        `Style prompt: ${stylePrompt}\n` +
+        `Make the new outfit highly realistic, premium materials, natural lighting, perfectly fitted.\n` +
+        `Do NOT add extra text, logos, UI overlays, or watermarks.`;
 
-      const parts: GeminiPart[] = [
-        { inlineData: { data: base64Data, mimeType } },
-        { text: prompt },
-      ];
+      const parts: GeminiPart[] = [{ inlineData: { data: base64Data, mimeType } }];
+
+      // Add NFT reference image (helps reduce style drift)
+      if (generatedNFT?.startsWith('data:')) {
+        const nftBase64 = generatedNFT.split(',')[1];
+        const nftMime = generatedNFT.split(';')[0].split(':')[1];
+        if (nftBase64 && nftMime) {
+          parts.push({
+            text: 'NFT style reference image (use as clothing style inspiration only; do not change the person/background):',
+          });
+          parts.push({ inlineData: { data: nftBase64, mimeType: nftMime } });
+        }
+      }
+      parts.push({ text: prompt });
 
       const newImgData = await generateGeminiImage({ parts });
       setUploadedImage(newImgData);
+      localStorage.setItem('tryOnLastImage', newImgData);
+      setViewMode('tryon');
       setCameraMode('off');
     } catch (error) {
       console.error('Error applying style', error);
@@ -220,7 +247,14 @@ export default function TryOnModule() {
       </header>
 
       <div className="flex-1 relative flex items-center justify-center overflow-hidden py-10">
-        <div className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10">
+        <button
+          type="button"
+          onClick={() => {
+            if (!uploadedImage || !generatedNFT) return;
+            setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
+          }}
+          className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10 text-left"
+        >
           {cameraMode !== 'off' ? (
             <video
               ref={videoRef}
@@ -232,7 +266,7 @@ export default function TryOnModule() {
           ) : (
             <img
               src={
-                uploadedImage ||
+                (viewMode === 'nft' ? generatedNFT : uploadedImage) ||
                 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45'
               }
               alt="Portrait"
@@ -242,14 +276,22 @@ export default function TryOnModule() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
           <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#D4FF00] animate-scan z-20"></div>
-          <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none">
-            <div className="text-6xl font-display font-black text-white/20 leading-none">
-              TECH
-              <br />
-              WEAR
+          {!uploadedImage && cameraMode === 'off' && (
+            <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none">
+              <div className="text-6xl font-display font-black text-white/20 leading-none">
+                TECH
+                <br />
+                WEAR
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+
+          {uploadedImage && generatedNFT && cameraMode === 'off' && (
+            <div className="absolute top-4 left-4 z-30 px-3 py-1 rounded-full bg-black/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70">
+              Tap to toggle: {viewMode === 'tryon' ? 'Try-on' : 'NFT'}
+            </div>
+          )}
+        </button>
 
         <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 glass rounded-full z-30">
           <button
