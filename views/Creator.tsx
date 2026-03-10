@@ -236,7 +236,9 @@ const Creator: React.FC = () => {
       try {
         const collectionStr = localStorage.getItem('myCyberCollection');
         const collection = collectionStr ? (JSON.parse(collectionStr) as CyberCollectionItem[]) : [];
-        const next = [nftDataObj, ...collection];
+        const MAX_ITEMS = 8;
+        const trimmed = collection.slice(0, MAX_ITEMS - 1);
+        const next = [nftDataObj, ...trimmed];
         localStorage.setItem('myCyberCollection', JSON.stringify(next));
       } catch (e) {
         console.error('Error saving to collection', e);

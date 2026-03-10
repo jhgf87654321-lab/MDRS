@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { generateGeminiImage } from '../../lib/geminiClient';
-import { getMe, saveAestheticReference, signIn, signOut, signUp, type SessionUser } from '../../lib/apiClient';
+import {
+  getMe,
+  saveAestheticReference,
+  signIn,
+  signOut,
+  signUp,
+  uploadImageToCloudBase,
+  type SessionUser,
+} from '../../lib/apiClient';
 
 export default function AdminModule() {
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -105,7 +113,9 @@ export default function AdminModule() {
 
     setIsSaving(true);
     try {
-      await saveAestheticReference({ imageUrl: generatedImage, prompt });
+      const imageUrl =
+        generatedImage.startsWith('data:') ? await uploadImageToCloudBase(generatedImage) : generatedImage;
+      await saveAestheticReference({ imageUrl, prompt });
       alert('Saved to Aesthetic Reference Library!');
       setGeneratedImage(null);
     } catch (error) {

@@ -1,4 +1,4 @@
-import cloudbase from '@cloudbase/node-sdk';
+import COS from 'cos-nodejs-sdk-v5';
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -17,6 +17,13 @@ function getExtension(mimeType: string) {
   if (mimeType === 'image/png') return 'png';
   if (mimeType === 'image/webp') return 'webp';
   return 'bin';
+}
+
+function getCosClient() {
+  const SecretId = process.env.COS_SECRET_ID;
+  const SecretKey = process.env.COS_SECRET_KEY;
+  if (!SecretId || !SecretKey) throw new Error('COS_SECRET_ID or COS_SECRET_KEY is not configured');
+  return new COS({ SecretId, SecretKey });
 }
 
 export default async function handler(
@@ -43,49 +50,35 @@ export default async function handler(
   if (!parsed) return res.status(400).json({ error: 'Invalid data URL format' });
 
   try {
-    const envId = process.env.CLOUDBASE_ENV_ID;
-    if (!envId) throw new Error('CLOUDBASE_ENV_ID is not configured');
-
-    const app: any = cloudbase.init({
-      envId,
-      secretId: process.env.CLOUDBASE_SECRET_ID,
-      secretKey: process.env.CLOUDBASE_SECRET_KEY,
-    });
+    const Bucket = process.env.COS_BUCKET;
+    const Region = process.env.COS_REGION;
+    if (!Bucket || !Region) throw new Error('COS_BUCKET or COS_REGION is not configured');
 
     const buffer = Buffer.from(parsed.base64, 'base64');
     const ext = getExtension(parsed.mimeType);
-    const prefix = process.env.CLOUDBASE_UPLOAD_PREFIX || 'share-posts/';
+    const prefix = process.env.COS_UPLOAD_PREFIX || 'share-posts/';
     const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`;
-    const cloudPath = `${prefix}${fileName}`;
+    const Key = `${prefix}${fileName}`;
 
-    const storage = app.storage();
-    const uploadRes: any = await storage.uploadFile({
-      cloudPath,
-      fileContent: buffer,
-    });
-
-    const fileId: string | undefined = uploadRes.fileID || uploadRes.fileId;
-    if (!fileId) {
-      console.error('CloudBase uploadFile missing fileID', uploadRes);
-      return res.status(500).json({ error: 'Upload failed (no fileID returned)' });
-    }
-
-    const urlRes: any = await storage.getTempFileURL({
-      fileList: [
+    const cos = getCosClient();
+    await new Promise<void>((resolve, reject) => {
+      cos.putObject(
         {
-          fileID: fileId,
-          maxAge: 3600 * 24 * 365, // 1 year
+          Bucket,
+          Region,
+          Key,
+          Body: buffer,
+          ContentType: parsed.mimeType,
         },
-      ],
+        (err) => {
+          if (err) return reject(err);
+          resolve();
+        },
+      );
     });
 
-    const tempUrl: string | undefined = urlRes.fileList?.[0]?.tempFileURL;
-    if (!tempUrl) {
-      console.error('CloudBase getTempFileURL missing tempFileURL', urlRes);
-      return res.status(500).json({ error: 'Failed to get file URL' });
-    }
-
-    return res.status(200).json({ ok: true, url: tempUrl });
+    const url = `https://${Bucket}.cos.${Region}.myqcloud.com/${Key}`;
+    return res.status(200).json({ ok: true, url });
   } catch (e) {
     console.error('Upload image failed', e);
     const message = e instanceof Error ? e.message : 'Unknown error';
