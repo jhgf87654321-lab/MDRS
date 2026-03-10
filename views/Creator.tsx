@@ -280,9 +280,10 @@ const Creator: React.FC = () => {
           text: 'Please use the following images as strong aesthetic and stylistic references for the lighting, composition, and overall vibe:',
         });
         for (const ref of references) {
-          if (!ref.imageUrl) continue;
-          const base64Data = ref.imageUrl.split(',')[1];
-          const mimeType = ref.imageUrl.split(';')[0].split(':')[1];
+          const imgUrl = (ref.imageDataUrl && typeof ref.imageDataUrl === 'string' ? ref.imageDataUrl : ref.imageUrl) || '';
+          if (!imgUrl || !imgUrl.startsWith('data:')) continue;
+          const base64Data = imgUrl.split(',')[1];
+          const mimeType = imgUrl.split(';')[0].split(':')[1];
           if (!base64Data || !mimeType) {
             console.error('Invalid reference imageUrl format', { id: ref.id });
             continue;
@@ -293,11 +294,43 @@ const Creator: React.FC = () => {
 
       const imgData = await generateGeminiImage({ parts });
 
-      setGeneratedNFT(imgData);
-      localStorage.setItem('generatedNFT', imgData);
+      const compressForStorage = async (dataUrl: string) => {
+        try {
+          if (!dataUrl.startsWith('data:')) return dataUrl;
+          const img = new Image();
+          img.src = dataUrl;
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('load failed'));
+          });
+          const maxDim = 768;
+          const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+          const w = Math.max(1, Math.round((img.width || 1) * scale));
+          const h = Math.max(1, Math.round((img.height || 1) * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return dataUrl;
+          ctx.drawImage(img, 0, 0, w, h);
+          try {
+            const webp = canvas.toDataURL('image/webp', 0.82);
+            if (webp) return webp;
+          } catch {
+            // ignore
+          }
+          return canvas.toDataURL('image/jpeg', 0.82);
+        } catch {
+          return dataUrl;
+        }
+      };
+
+      const storedImg = await compressForStorage(imgData);
+      setGeneratedNFT(storedImg);
+      localStorage.setItem('generatedNFT', storedImg);
 
       const nftDataObj: CyberCollectionItem = {
-        image: imgData,
+        image: storedImg,
         serialNumber,
         isSpecial,
         theme: randomTheme,

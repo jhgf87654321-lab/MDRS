@@ -85,7 +85,7 @@ export async function createPost(input: { mediaUrls: string[]; title: string; co
   return data.id!;
 }
 
-export type AestheticReference = { id: string; imageUrl?: string; prompt?: string };
+export type AestheticReference = { id: string; imageUrl?: string; imageDataUrl?: string | null; prompt?: string };
 
 export async function getRandomAestheticReferences(count = 2) {
   const res = await fetch(`/api/aesthetic-references/random?count=${encodeURIComponent(String(count))}`, { method: 'GET' });

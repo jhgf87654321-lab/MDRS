@@ -20,6 +20,25 @@ function toInt(value: unknown, fallback: number) {
   return fallback;
 }
 
+async function fetchImageAsDataUrl(url: string, maxBytes: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.startsWith('image/')) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.byteLength <= 0 || buf.byteLength > maxBytes) return null;
+    const base64 = buf.toString('base64');
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 type Req = {
   method?: string;
   url?: string;
@@ -57,9 +76,24 @@ export default async function handler(req: Req, res: Res) {
     try {
       const db = getAdminDb();
       const snap = await db.collection('aesthetic_references').orderBy('createdAt', 'desc').limit(10).get();
-      const refs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const refs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
       const shuffled = [...refs].sort(() => 0.5 - Math.random());
-      return res.status(200).json({ ok: true, references: shuffled.slice(0, count) });
+      const picked = shuffled.slice(0, count);
+
+      const enriched = await Promise.all(
+        picked.map(async (r) => {
+          const imageUrl = typeof (r as any).imageUrl === 'string' ? ((r as any).imageUrl as string) : '';
+          const imageDataUrl =
+            imageUrl.startsWith('http://') || imageUrl.startsWith('https://')
+              ? await fetchImageAsDataUrl(imageUrl, 1_500_000)
+              : imageUrl.startsWith('data:')
+                ? imageUrl
+                : null;
+          return { ...r, imageDataUrl };
+        }),
+      );
+
+      return res.status(200).json({ ok: true, references: enriched });
     } catch (e) {
       console.error('Fetch references failed', e);
       return res.status(200).json({ ok: true, references: [] });

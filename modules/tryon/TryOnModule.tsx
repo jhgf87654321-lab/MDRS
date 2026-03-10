@@ -29,6 +29,32 @@ function getStylePromptFromLocalStorage(): string {
   return 'high-end avant-garde fashion clothing';
 }
 
+async function compressDataUrl(dataUrl: string, maxDim: number, quality: number): Promise<string> {
+  if (!dataUrl.startsWith('data:')) return dataUrl;
+  const img = new Image();
+  img.src = dataUrl;
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Failed to load image'));
+  });
+  const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+  const w = Math.max(1, Math.round((img.width || 1) * scale));
+  const h = Math.max(1, Math.round((img.height || 1) * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return dataUrl;
+  ctx.drawImage(img, 0, 0, w, h);
+  try {
+    const webp = canvas.toDataURL('image/webp', quality);
+    if (webp) return webp;
+  } catch {
+    // ignore
+  }
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
 export default function TryOnModule() {
   const [cameraMode, setCameraMode] = useState<CameraMode>('off');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -86,14 +112,19 @@ export default function TryOnModule() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const result = event.target?.result;
       if (typeof result !== 'string') {
         console.error('Unexpected FileReader result', result);
         alert('Failed to read file.');
         return;
       }
-      setUploadedImage(result);
+      try {
+        const compressed = await compressDataUrl(result, 1280, 0.85);
+        setUploadedImage(compressed);
+      } catch {
+        setUploadedImage(result);
+      }
       setCameraMode('off');
     };
     reader.onerror = (err) => {
@@ -112,7 +143,7 @@ export default function TryOnModule() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg');
+    return canvas.toDataURL('image/jpeg', 0.9);
   };
 
   const handleApplyStyle = async () => {
@@ -136,6 +167,11 @@ export default function TryOnModule() {
 
     setIsApplying(true);
     try {
+      try {
+        baseImage = await compressDataUrl(baseImage, 1280, 0.85);
+      } catch {
+        // ignore
+      }
       const base64Data = baseImage.split(',')[1];
       const mimeType = baseImage.split(';')[0].split(':')[1];
       if (!base64Data || !mimeType) {
@@ -184,7 +220,7 @@ export default function TryOnModule() {
       </header>
 
       <div className="flex-1 relative flex items-center justify-center overflow-hidden py-10">
-        <div className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden grayscale contrast-125 border border-white/10">
+        <div className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10">
           {cameraMode !== 'off' ? (
             <video
               ref={videoRef}
