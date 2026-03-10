@@ -196,12 +196,13 @@ export default function TryOnModule() {
         `NFT REFERENCE (second image): this shows the TARGET OUTFIT ONLY. STRICT:\n` +
         `- Treat the NFT as a clothing design sheet.\n` +
         `- Transfer ALL clothing pieces from the NFT onto the real person: outerwear, inner layers, tops, bottoms, footwear, and visible accessories. Do not omit layers.\n` +
-        `- CRITICAL: The outfit must be an exact 1:1 transfer of the NFT clothing. Do NOT redesign, restyle, simplify, modernize, or reinterpret.\n` +
-        `- Keep the same silhouettes, cuts, proportions, layering order, seams, pockets, trims, patterns, prints, logos/words (if present), colors, and materials as the NFT.\n` +
-        `- You may ONLY adapt perspective, folds, and shadows so it looks naturally worn on the real person.\n` +
+        `- CRITICAL: Keep the outfit highly consistent with the NFT clothing. Do NOT redesign, restyle, simplify, modernize, or reinterpret.\n` +
+        `- Keep the same silhouettes, layering order, key materials, color blocking, patterns/prints, and visible logos/words (if present) from the NFT.\n` +
+        `- You MAY adapt garment fit to the real person's body (proportions, drape, folds, wrinkles, seams alignment) so it looks naturally worn.\n` +
         `- Do NOT copy the NFT face, body, or background.\n\n` +
         `GOAL:\n` +
-        `- Dress the real person in clothing that very closely matches the NFT outfit style and the following style description: ${stylePrompt}.\n` +
+        `- FINAL IMAGE must look like the SOURCE PHOTO. Only the clothing changes.\n` +
+        `- Dress the real person in clothing that very closely matches the NFT outfit and the following style description: ${stylePrompt}.\n` +
         `- Outfit must look naturally worn on the real person's body, with correct perspective, folds, and shadows.\n` +
         `- Keep it photorealistic, premium materials, natural lighting.\n` +
         `- Do NOT add extra text, logos, QR codes, UI overlays, watermarks, or collages. Single, unified photo only.`;
