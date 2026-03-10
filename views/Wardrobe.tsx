@@ -65,7 +65,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
     }
   ];
 
-  React.useEffect(() => {
+  const reloadLocalAssets = () => {
     try {
       const collectionStr = localStorage.getItem('myCyberCollection');
       if (collectionStr) {
@@ -76,6 +76,25 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
           return;
         }
       }
+
+      // Fallback: if collection couldn't be saved due to quota, show at least the latest NFT
+      const dataStr = localStorage.getItem('generatedNFTData');
+      if (dataStr) {
+        const parsed = JSON.parse(dataStr) as Partial<CyberCollectionItem> | null;
+        if (parsed && typeof parsed.image === 'string' && parsed.image.startsWith('data:')) {
+          const item: CyberCollectionItem = {
+            image: parsed.image,
+            serialNumber: typeof parsed.serialNumber === 'string' ? parsed.serialNumber : 'No.00000000',
+            isSpecial: typeof parsed.isSpecial === 'boolean' ? parsed.isSpecial : false,
+            theme: typeof parsed.theme === 'string' ? parsed.theme : 'Genesis Avatar',
+            prompt: typeof parsed.prompt === 'string' ? parsed.prompt : '',
+          };
+          setCollection([item]);
+          setGeneratedNFT(item.image);
+          return;
+        }
+      }
+
       const storedNFT = localStorage.getItem('generatedNFT');
       if (storedNFT) {
         setGeneratedNFT(storedNFT);
@@ -83,6 +102,21 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
     } catch (e) {
       console.error('Failed to load cyber collection', e);
     }
+  };
+
+  React.useEffect(() => {
+    reloadLocalAssets();
+
+    const onUpdated = () => reloadLocalAssets();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') reloadLocalAssets();
+    };
+    window.addEventListener('axon:collection-updated', onUpdated);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('axon:collection-updated', onUpdated);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
 
   React.useEffect(() => {

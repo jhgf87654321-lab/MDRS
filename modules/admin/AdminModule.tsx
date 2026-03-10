@@ -21,6 +21,7 @@ export default function AdminModule() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStage, setSaveStage] = useState<'idle' | 'uploading' | 'saving'>('idle');
 
   useEffect(() => {
     let mounted = true;
@@ -113,8 +114,9 @@ export default function AdminModule() {
 
     setIsSaving(true);
     try {
-      const imageUrl =
-        generatedImage.startsWith('data:') ? await uploadImageToCloudBase(generatedImage) : generatedImage;
+      setSaveStage('uploading');
+      const imageUrl = generatedImage.startsWith('data:') ? await uploadImageToCloudBase(generatedImage) : generatedImage;
+      setSaveStage('saving');
       await saveAestheticReference({ imageUrl, prompt });
       alert('Saved to Aesthetic Reference Library!');
       setGeneratedImage(null);
@@ -122,6 +124,7 @@ export default function AdminModule() {
       console.error('Error saving reference', error);
       alert('Failed to save reference.');
     } finally {
+      setSaveStage('idle');
       setIsSaving(false);
     }
   };
@@ -257,6 +260,13 @@ export default function AdminModule() {
                 </button>
               ))}
             </div>
+
+            {isSaving && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
+                <span className="material-icons-round animate-spin text-sm">sync</span>
+                {saveStage === 'uploading' ? 'Uploading to COS…' : saveStage === 'saving' ? 'Saving reference…' : 'Working…'}
+              </div>
+            )}
           </div>
         )}
       </div>

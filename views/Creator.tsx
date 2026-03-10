@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { getRandomAestheticReferences, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
@@ -22,6 +22,17 @@ type CyberCollectionItem = {
   isSpecial: boolean;
   theme: string;
   prompt: string;
+};
+
+type CreatorStateV1 = {
+  v: 1;
+  activeCategory: Category;
+  gender: Gender;
+  creatureTexture: CreatureTexture;
+  designMode: DesignMode;
+  customDesign: { top: string; bottom: string; shoes: string };
+  params: Record<string, number>;
+  selectedSkinColor: string;
 };
 
 const Creator: React.FC = () => {
@@ -85,6 +96,68 @@ const Creator: React.FC = () => {
   const toggleMode = () => {
     setAuthMode(authMode === 'signIn' ? 'signUp' : 'signIn');
   };
+
+  const defaultCreatorState = useMemo<CreatorStateV1>(
+    () => ({
+      v: 1,
+      activeCategory: 'Body',
+      gender: 'Male',
+      creatureTexture: 'Hairless',
+      designMode: 'Random',
+      customDesign: { top: 'Coat', bottom: 'Pants', shoes: 'Sneakers' },
+      params: {
+        muscularity: 82,
+        jawline: 45,
+        proportions: 64,
+        heavy: 60,
+        chromaticity: 90,
+        era: 50,
+        thickness: 50,
+      },
+      selectedSkinColor: '#E0AC69',
+    }),
+    [],
+  );
+
+  // Restore Creator controls when returning from other tabs
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('creatorState');
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<CreatorStateV1> | null;
+      if (!parsed || parsed.v !== 1) return;
+
+      if (parsed.activeCategory) setActiveCategory(parsed.activeCategory);
+      if (parsed.gender) setGender(parsed.gender);
+      if (parsed.creatureTexture) setCreatureTexture(parsed.creatureTexture);
+      if (parsed.designMode) setDesignMode(parsed.designMode);
+      if (parsed.customDesign) setCustomDesign(parsed.customDesign);
+      if (parsed.params) setParams((prev) => ({ ...prev, ...parsed.params }));
+      if (parsed.selectedSkinColor) setSelectedSkinColor(parsed.selectedSkinColor);
+    } catch (e) {
+      console.error('Failed to restore creatorState', e);
+    }
+  }, []);
+
+  // Persist Creator controls so state survives navigation
+  useEffect(() => {
+    try {
+      const payload: CreatorStateV1 = {
+        ...defaultCreatorState,
+        activeCategory,
+        gender,
+        creatureTexture,
+        designMode,
+        customDesign,
+        params,
+        selectedSkinColor,
+      };
+      localStorage.setItem('creatorState', JSON.stringify(payload));
+    } catch (e) {
+      // ignore quota errors; generation output is more important
+      console.error('Failed to persist creatorState', e);
+    }
+  }, [activeCategory, gender, creatureTexture, designMode, customDesign, params, selectedSkinColor, defaultCreatorState]);
 
   // Restore last generated NFT and metadata when returning to Creator
   useEffect(() => {
@@ -240,8 +313,15 @@ const Creator: React.FC = () => {
         const trimmed = collection.slice(0, MAX_ITEMS - 1);
         const next = [nftDataObj, ...trimmed];
         localStorage.setItem('myCyberCollection', JSON.stringify(next));
+        window.dispatchEvent(new Event('axon:collection-updated'));
       } catch (e) {
         console.error('Error saving to collection', e);
+        try {
+          // Still notify Wardrobe/TryOn to re-read generatedNFTData at least
+          window.dispatchEvent(new Event('axon:collection-updated'));
+        } catch {
+          // ignore
+        }
       }
     } catch (error) {
       console.error("Error generating NFT:", error);
