@@ -306,50 +306,24 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
       </header>
 
       <div className="px-8 pb-32">
-        {/* Leaderboard Hero Showcase */}
-        <div className="mb-8 relative">
-          <div className="flex justify_between items-end mb-4">
-            <div>
-              <h3 className="font-display text-2xl font-black italic uppercase leading-none">Leaderboard</h3>
-              <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">This Week's Hottest NFTs</p>
-            </div>
-          </div>
-          <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 group h-80">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
-            
-            {leaderboardProducts.map((product, index) => (
-              <div 
-                key={product.id}
-                className={`absolute inset-0 p-6 transition-opacity duration-1000 flex flex-col ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-              >
-                <div className="flex justify-between items-start mb-4 z-20">
-                  <div>
-                    <span className="inline-block px-3 py-1 bg-primary text-black text-[10px] font-bold uppercase rounded-full mb-2">Rank #{index + 1}</span>
-                    <h3 className="text-2xl font-future font-black">{product.name}</h3>
-                  </div>
-                  <div className="text-right flex flex-col items-end">
-                    <span className="font-display font-black text-xl flex items-center gap-1 text-primary">
-                      <span className="material-icons-round text-sm">favorite</span>
-                      {product.likes.toLocaleString()}
-                    </span>
-                    <p className="text-[8px] opacity-60 uppercase tracking-widest mt-1">{product.type}</p>
-                  </div>
-                </div>
-                <div className="flex-1 flex items-center justify-center relative z-10">
-                   <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="max-h-full object-contain filter drop-shadow-2xl group-hover:scale-110 transition-transform duration-700"
-                  />
-                </div>
-              </div>
-            ))}
-
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-              {leaderboardProducts.map((_, idx) => (
-                <div key={idx} className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-primary w-6' : 'bg-white/30'}`} />
-              ))}
-            </div>
+        {/* Share Platform Hero (from Store) */}
+        <div className="relative h-60 bg-black rounded-[2.5rem] overflow-hidden border border-white/5 mb-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20"></div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+            <span className="material-icons-round text-5xl text-primary mb-2">public</span>
+            <h2 className="font-display text-4xl font-black text-white leading-none mb-2">
+              SHARE
+              <br />
+              PLATFORM
+            </h2>
+            <p className="text-[10px] text-white/60 uppercase tracking-widest mb-4">Discover & Trade User NFTs</p>
+            <button
+              onClick={() => alert('Opening Share Platform...')}
+              className="bg-white text-black px-6 py-2 rounded-full font-bold text-xs flex items-center gap-1 active:scale-95 transition-all"
+            >
+              <span>Enter Platform</span>
+              <span className="material-icons-round text-sm">east</span>
+            </button>
           </div>
         </div>
 

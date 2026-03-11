@@ -77,20 +77,19 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         </div>
       </header>
 
-      {/* Promo Card - Share Platform */}
-      <div className="relative h-60 bg-black rounded-[2.5rem] overflow-hidden border border-white/5 mb-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20"></div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-          <span className="material-icons-round text-5xl text-primary mb-2">public</span>
-          <h2 className="font-display text-4xl font-black text-white leading-none mb-2">SHARE<br/>PLATFORM</h2>
-          <p className="text-[10px] text-white/60 uppercase tracking-widest mb-4">Discover & Trade User NFTs</p>
-          <button 
-            onClick={() => alert('Opening Share Platform...')}
-            className="bg-white text-black px-6 py-2 rounded-full font-bold text-xs flex items-center gap-1 active:scale-95 transition-all"
-          >
-            <span>Enter Platform</span>
-            <span className="material-icons-round text-sm">east</span>
-          </button>
+      {/* Promo Card - Leaderboard style from Wardrobe */}
+      <div className="mb-8 relative">
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <h3 className="font-display text-2xl font-black italic uppercase leading-none">Leaderboard</h3>
+            <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">This Week's Hottest NFTs</p>
+          </div>
+        </div>
+        <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 h-60">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
+          <div className="flex items-center justify-center h-full">
+            <span className="material-icons-round text-6xl text-primary/70">trending_up</span>
+          </div>
         </div>
       </div>
 

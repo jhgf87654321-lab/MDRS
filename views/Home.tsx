@@ -104,18 +104,16 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             }
           }}
         >
-          {/* Main Container with Dynamic Frame */}
-          <div className="absolute inset-0 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group-hover:border-primary/50 transition-colors duration-500">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10"></div>
-
-            {/* Share preview-style mosaic as background */}
-            <div className="absolute inset-x-6 bottom-8 h-40 rounded-3xl bg-black/40 border border-white/10 overflow-hidden">
-              <div className="grid grid-cols-3 gap-1.5 h-full p-1.5">
-                <div className="col-span-2 row-span-2 rounded-2xl bg-gradient-to-br from-white/40 via-white/10 to-black/60" />
-                <div className="rounded-2xl bg-gradient-to-br from-primary/60 to-primary/10" />
-                <div className="rounded-2xl bg-gradient-to-br from-accent/70 to-accent/10" />
-                <div className="rounded-2xl bg-gradient-to-br from-white/50 to-black/40" />
-              </div>
+          {/* Main Container with FUNCTION COS header background */}
+          <div className="absolute inset-0 bg-white/5 rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group-hover:border-primary/50 transition-colors duration-500">
+            <div className="absolute inset-0">
+              <img
+                src="https://lokada-1254090729.cos.ap-shanghai.myqcloud.com/FUNCTION/header.png"
+                alt="FUNCTION Header"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/10 to-black/60" />
             </div>
 
             {/* Tech Overlay Elements */}
@@ -137,21 +135,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             </div>
           </div>
 
-          {/* Central Icon */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center -translate-y-8">
-            <div className="w-40 h-40 rounded-full bg-primary/20 flex items-center justify-center backdrop-blur-md border border-primary/30 shadow-[0_0_50px_rgba(212,255,0,0.2)] group-hover:scale-110 transition-transform duration-500">
-              <span className="material-icons-round text-7xl text-primary">public</span>
-            </div>
-          </div>
-
-          {/* Floating Stats Pin */}
-          <div className="absolute right-6 top-[40%]">
-            <div className="w-20 h-20 glass rounded-full flex flex-col items-center justify-center border border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-              <span className="material-icons-round text-white/60 text-lg mb-1">trending_up</span>
-              <span className="text-2xl font-black tracking-tighter leading-none">24K</span>
-              <span className="text-[6px] font-bold opacity-40 uppercase tracking-widest mt-1">Active</span>
-            </div>
-          </div>
+          {/* Central Icon removed to let header image dominate */}
         </div>
 
         {/* Action Button */}

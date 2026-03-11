@@ -3,6 +3,7 @@ import { View } from '../../types';
 import { getCloudbaseAuth } from '../../lib/cloudbase';
 
 type Mode = 'signIn' | 'signUp';
+type Channel = 'email' | 'phone';
 
 type Props = {
   onNavigate: (view: View) => void;
@@ -15,8 +16,8 @@ function isNonEmpty(v: string) {
 export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
   const [mode, setMode] = useState<Mode>('signIn');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [channel, setChannel] = useState<Channel>('email');
+  const [identifier, setIdentifier] = useState('');
   const [code, setCode] = useState('');
   const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'submitting'>('idle');
@@ -42,14 +43,19 @@ export default function AuthModule({ onNavigate }: Props) {
 
   const sendCode = async () => {
     setError(null);
-    if (!isNonEmpty(email)) {
-      setError('请输入邮箱');
+    if (!isNonEmpty(identifier)) {
+      setError(channel === 'email' ? '请输入邮箱' : '请输入手机号');
       return;
     }
     setStatus('sending');
     try {
-      // CloudBase Auth v2 flow: get verification -> signUp
-      const res = await (auth as any).getVerification({ email: email.trim().toLowerCase() });
+      const trimmed = identifier.trim();
+      const payload =
+        channel === 'email'
+          ? { email: trimmed.toLowerCase() }
+          : { phone_number: trimmed };
+      // CloudBase Auth v2 flow: get verification -> signInWithOtp / signUp
+      const res = await (auth as any).getVerification(payload);
       const token = res?.verification_token || res?.verificationToken || res?.token;
       if (!token) throw new Error('获取验证码失败');
       setVerificationToken(String(token));
@@ -62,24 +68,36 @@ export default function AuthModule({ onNavigate }: Props) {
 
   const submit = async () => {
     setError(null);
-    const e = email.trim().toLowerCase();
-    if (!isNonEmpty(e)) return setError('请输入邮箱');
-    if (!isNonEmpty(password)) return setError('请输入密码');
+    if (!isNonEmpty(identifier)) {
+      setError(channel === 'email' ? '请输入邮箱' : '请输入手机号');
+      return;
+    }
+    if (!isNonEmpty(code)) {
+      setError('请输入验证码');
+      return;
+    }
+    if (!verificationToken) {
+      setError('请先发送验证码');
+      return;
+    }
 
     setStatus('submitting');
     try {
+      const trimmedId = identifier.trim();
+      const base =
+        channel === 'email'
+          ? { email: trimmedId.toLowerCase() }
+          : { phone_number: trimmedId };
+      const payload = {
+        ...base,
+        verification_code: code.trim(),
+        verification_token: verificationToken,
+      };
+
       if (mode === 'signIn') {
-        // Password login
-        await (auth as any).signInWithPassword({ email: e, password });
+        await (auth as any).signInWithOtp(payload);
       } else {
-        if (!verificationToken) throw new Error('请先发送验证码');
-        if (!isNonEmpty(code)) throw new Error('请输入验证码');
-        await (auth as any).signUp({
-          email: e,
-          password,
-          verification_code: code.trim(),
-          verification_token: verificationToken,
-        });
+        await (auth as any).signUp(payload);
       }
 
       const user = await auth.getCurrentUser();
@@ -116,7 +134,9 @@ export default function AuthModule({ onNavigate }: Props) {
         </button>
         <div className="text-center">
           <div className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">AUTH PROTOCOL</div>
-          <div className="text-2xl font-black tracking-tighter">{mode === 'signIn' ? 'SIGN IN' : 'SIGN UP'}</div>
+          <div className="text-2xl font-black tracking-tighter">
+            {mode === 'signIn' ? 'SIGN IN' : 'SIGN UP'} · {channel === 'email' ? 'EMAIL' : 'PHONE'}
+          </div>
         </div>
         <div className="w-10 h-10" />
       </header>
@@ -136,7 +156,7 @@ export default function AuthModule({ onNavigate }: Props) {
           </div>
         ) : null}
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4">
           <button
             onClick={() => setMode('signIn')}
             className={`flex-1 py-4 rounded-2xl border text-[11px] font-black uppercase tracking-[0.25em] transition-colors ${
@@ -155,69 +175,73 @@ export default function AuthModule({ onNavigate }: Props) {
           </button>
         </div>
 
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setChannel('email')}
+            className={`flex-1 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-[0.25em] transition-colors ${
+              channel === 'email' ? 'bg-white text-black border-white' : 'bg-white/5 text-white/60 border-white/10'
+            }`}
+          >
+            Email
+          </button>
+          <button
+            onClick={() => setChannel('phone')}
+            className={`flex-1 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-[0.25em] transition-colors ${
+              channel === 'phone' ? 'bg-white text-black border-white' : 'bg-white/5 text-white/60 border-white/10'
+            }`}
+          >
+            Phone
+          </button>
+        </div>
+
         <div className="glass rounded-[2.5rem] border border-white/10 p-8">
           <div className="space-y-5">
             <div>
               <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                Email
+                {channel === 'email' ? 'Email' : 'Phone'}
               </label>
               <input
-                value={email}
-                onChange={(ev) => setEmail(ev.target.value)}
-                type="email"
-                placeholder="user@domain.com"
+                value={identifier}
+                onChange={(ev) => setIdentifier(ev.target.value)}
+                type={channel === 'email' ? 'email' : 'tel'}
+                placeholder={channel === 'email' ? 'user@domain.com' : '+86 138 0000 0000'}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                Password
-              </label>
+              <div className="flex items-end justify-between gap-3 mb-2">
+                <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block ml-1">
+                  {channel === 'email' ? 'Email Code' : 'SMS Code'}
+                </label>
+                <button
+                  type="button"
+                  onClick={sendCode}
+                  disabled={status !== 'idle'}
+                  className="text-[10px] font-black uppercase tracking-[0.25em] text-primary hover:text-primary/80 disabled:opacity-60"
+                >
+                  {status === 'sending' ? 'Sending...' : 'Send Code'}
+                </button>
+              </div>
               <input
-                value={password}
-                onChange={(ev) => setPassword(ev.target.value)}
-                type="password"
-                placeholder="••••••••"
+                value={code}
+                onChange={(ev) => setCode(ev.target.value)}
+                inputMode="numeric"
+                placeholder="123456"
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
+              {verificationToken ? (
+                <div className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.2em]">Verification token ready</div>
+              ) : null}
             </div>
-
-            {mode === 'signUp' ? (
-              <div>
-                <div className="flex items-end justify-between gap-3 mb-2">
-                  <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block ml-1">
-                    Email Code
-                  </label>
-                  <button
-                    type="button"
-                    onClick={sendCode}
-                    disabled={status !== 'idle'}
-                    className="text-[10px] font-black uppercase tracking-[0.25em] text-primary hover:text-primary/80 disabled:opacity-60"
-                  >
-                    {status === 'sending' ? 'Sending...' : 'Send Code'}
-                  </button>
-                </div>
-                <input
-                  value={code}
-                  onChange={(ev) => setCode(ev.target.value)}
-                  inputMode="numeric"
-                  placeholder="123456"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
-                />
-                {verificationToken ? (
-                  <div className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.2em]">
-                    Verification token ready
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
 
             {error ? (
               <div className="text-sm text-red-400 font-bold break-words">{error}</div>
             ) : (
               <div className="text-sm text-white/30">
-                {mode === 'signIn' ? '使用邮箱密码登录。' : '先发送邮箱验证码，再完成注册。'}
+                {mode === 'signIn'
+                  ? `使用${channel === 'email' ? '邮箱' : '手机'}验证码登录。`
+                  : `先发送${channel === 'email' ? '邮箱' : '短信'}验证码，再完成注册。`}
               </div>
             )}
 
