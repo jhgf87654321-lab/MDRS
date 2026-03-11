@@ -83,6 +83,23 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     return () => clearInterval(interval);
   }, [leaderImages.length]);
 
+  useEffect(() => {
+    // load COS CYCLER images for Regular Recycle
+    (async () => {
+      try {
+        const res = await fetch('/api/cycler-images');
+        const data = (await res.json()) as { ok?: boolean; images?: string[] };
+        if (res.ok && data.images && data.images.length) {
+          setCyclerImages(data.images);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  const [cyclerImages, setCyclerImages] = useState<string[]>([]);
+
   const blindBoxes: Product[] = [
     { 
       id: 'Cyberpunk Series', 
@@ -101,7 +118,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
   ];
 
   const userCollections = [
-    { id: 'col1', name: 'My Cyber Collection', count: 5 },
+    { id: 'col1', name: 'Regular Recycle', count: 0 },
     { id: 'col2', name: 'Neon Dreams', count: 2 },
   ];
 
@@ -242,20 +259,40 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
       <div className="mb-6">
         <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">Categories</h3>
         <div className="flex flex-col gap-3">
-          {userCollections.map(col => (
-            <button key={col.id} className="glass p-4 rounded-[2rem] flex items-center justify-between active:scale-[0.98] transition-transform">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
-                  <span className="material-icons-round text-white/60">collections</span>
+          {userCollections.map((col, idx) => {
+            const isRegular = idx === 0;
+            return (
+              <button
+                key={col.id}
+                className="glass p-4 rounded-[2rem] flex items-center justify-between active:scale-[0.98] transition-transform"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden">
+                    {isRegular && cyclerImages.length > 0 ? (
+                      <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-0.5">
+                        {cyclerImages.slice(0, 4).map((src) => (
+                          <img
+                            key={src}
+                            src={src}
+                            alt="Regular Recycle"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="material-icons-round text-white/60">collections</span>
+                    )}
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-sm">{col.name}</h4>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest">{col.count} Items</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-sm">{col.name}</h4>
-                  <p className="text-[10px] text-white/40 uppercase tracking-widest">{col.count} Items</p>
-                </div>
-              </div>
-              <span className="material-icons-round text-white/30">chevron_right</span>
-            </button>
-          ))}
+                <span className="material-icons-round text-white/30">chevron_right</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
