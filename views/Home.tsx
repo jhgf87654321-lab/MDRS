@@ -93,26 +93,49 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         </div>
       </header>
 
-      {/* Hero Visual Section - Share Platform Entry */}
+      {/* Hero Visual Section - Entry */}
       <main className="relative z-10 flex flex-col px-8 mt-10">
-        <div className="relative w-full aspect-[4/5] mb-12 cursor-pointer group" onClick={onEnter}>
+        <div
+          className="relative w-full aspect-[4/5] mb-12 cursor-pointer group"
+          onClick={() => {
+            if (onNavigate) {
+              onNavigate(View.CREATOR);
+            } else {
+              onEnter();
+            }
+          }}
+        >
           {/* Main Container with Dynamic Frame */}
           <div className="absolute inset-0 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group-hover:border-primary/50 transition-colors duration-500">
-             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10"></div>
-             
-             {/* Tech Overlay Elements */}
-             <div className="absolute top-8 right-8 flex flex-col items-end gap-4">
-                <div className="flex gap-2">
-                   <div className="w-8 h-1.5 bg-primary/60 rounded-full shadow-[0_0_10px_#D4FF00]"></div>
-                   <div className="w-1.5 h-1.5 bg-white/10 rounded-full"></div>
-                </div>
-                <span className="text-xl font-black text-white/80 tracking-tighter uppercase">SHARE_HUB</span>
-             </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10"></div>
 
-             <div className="absolute bottom-12 left-8 flex flex-col items-start gap-2">
-                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.5em]">Global Network</span>
-                <span className="text-5xl font-display font-black text-white leading-none">DISCOVER<br/>& TRADE</span>
-             </div>
+            {/* Share preview-style mosaic as background */}
+            <div className="absolute inset-x-6 bottom-8 h-40 rounded-3xl bg-black/40 border border-white/10 overflow-hidden">
+              <div className="grid grid-cols-3 gap-1.5 h-full p-1.5">
+                <div className="col-span-2 row-span-2 rounded-2xl bg-gradient-to-br from-white/40 via-white/10 to-black/60" />
+                <div className="rounded-2xl bg-gradient-to-br from-primary/60 to-primary/10" />
+                <div className="rounded-2xl bg-gradient-to-br from-accent/70 to-accent/10" />
+                <div className="rounded-2xl bg-gradient-to-br from-white/50 to-black/40" />
+              </div>
+            </div>
+
+            {/* Tech Overlay Elements */}
+            <div className="absolute top-8 right-8 flex flex-col items-end gap-4">
+              <div className="flex gap-2">
+                <div className="w-8 h-1.5 bg-primary/60 rounded-full shadow-[0_0_10px_#D4FF00]"></div>
+                <div className="w-1.5 h-1.5 bg-white/10 rounded-full"></div>
+              </div>
+              <span className="text-xl font-black text-white/80 tracking-tighter uppercase">SHARE_HUB</span>
+            </div>
+
+            <div className="absolute bottom-12 left-8 flex flex-col items-start gap-2">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.5em]">Global Network</span>
+              <span className="text-5xl font-display font-black text-white leading-none">
+                DISCOVER
+                <br />
+                & TRADE
+              </span>
+            </div>
           </div>
 
           {/* Central Icon */}
@@ -134,12 +157,18 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
         {/* Action Button */}
         <div className="flex justify-center mb-16">
-          <button 
-            onClick={onEnter}
+          <button
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate(View.CREATOR);
+              } else {
+                onEnter();
+              }
+            }}
             className="group relative bg-white text-black px-12 py-5 rounded-full flex items-center gap-16 overflow-hidden shadow-[0_30px_60px_rgba(212,255,0,0.1)] active:scale-95 transition-all"
           >
             <div className="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">Enter Platform</span>
+            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">Start Mint</span>
             <div className="relative z-10 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:bg-black transition-colors">
               <span className="material-icons-round text-lg group-hover:translate-x-1 transition-transform">east</span>
             </div>
