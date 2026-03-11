@@ -256,7 +256,7 @@ const Creator: React.FC = () => {
 
       const prompt = `A professional ${randomStyle} for a high-end fashion NFT. 
       Theme: ${randomTheme}. 
-      STRICT FRAMING: A single, unified FULL-BODY portrait from head to toe, showing the entire character including feet and footwear in frame. Do NOT crop at the knees or ankles. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
+      STRICT FRAMING (MUST FOLLOW): A single, unified FULL-BODY / full-length portrait from head-to-toe. The entire character MUST be visible, including full legs, feet, and footwear, with comfortable margin above the head and below the feet. Do NOT crop at the head, knees, ankles, or feet. Do NOT zoom-in. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
       Background: ${backgroundInstruction}
       Graphic Elements: Overlay the image with technical UI details, fine technical text, cross-hairs, and minimalist graphic annotations. Do NOT use QR codes.
       Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).
