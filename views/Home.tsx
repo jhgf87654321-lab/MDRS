@@ -108,7 +108,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           <div className="absolute inset-0 bg-white/5 rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)] group-hover:border-primary/50 transition-colors duration-500">
             <div className="absolute inset-0">
               <img
-                src="https://lokada-1254090729.cos.ap-shanghai.myqcloud.com/FUNCTION/header.png"
+                src="https://lokada-1254090729.cos.ap-shanghai.myqcloud.com/FUNCTION/header.jpg"
                 alt="FUNCTION Header"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
