@@ -202,7 +202,8 @@ export default function TryOnModule() {
       const newImgData = await generateGeminiImage({
         prompt,
         imageUrls: [baseUrl, nftUrl],
-        model: 'gemini-3.1-flash-image',
+        // Prefer a widely-available image model; backend will fallback if unsupported.
+        model: 'gemini-3.1-flash-image-preview',
       });
       setUploadedImage(newImgData);
       localStorage.setItem('tryOnLastImage', newImgData);

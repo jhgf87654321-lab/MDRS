@@ -7,7 +7,7 @@ export const config = {
 type InlineDataPart = { inlineData: { data: string; mimeType: string } };
 type TextPart = { text: string };
 type GeminiPart = InlineDataPart | TextPart;
-type SupportedGeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image';
+type SupportedGeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -27,7 +27,7 @@ function parseParts(
   const rawModel = body.model;
 
   const model: SupportedGeminiImageModel | undefined =
-    rawModel === 'gemini-2.5-flash-image' || rawModel === 'gemini-3.1-flash-image' ? rawModel : undefined;
+    rawModel === 'gemini-2.5-flash-image' || rawModel === 'gemini-3.1-flash-image-preview' ? rawModel : undefined;
 
   if (Array.isArray(rawParts)) {
     const parts: GeminiPart[] = [];
@@ -90,6 +90,50 @@ export default async function handler(
   const body = req.body;
 
   try {
+    const ai = new GoogleGenAI({ apiKey });
+
+    const generateImageOnce = async (model: SupportedGeminiImageModel, parts: GeminiPart[]) => {
+      const response = await ai.models.generateContent({
+        model,
+        contents: {
+          parts,
+        },
+      });
+
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          const base64 = part.inlineData.data;
+          const imgData = `data:image/png;base64,${base64}`;
+          return imgData;
+        }
+      }
+
+      return null;
+    };
+
+    const generateImageWithFallback = async (model: SupportedGeminiImageModel, parts: GeminiPart[]) => {
+      try {
+        return await generateImageOnce(model, parts);
+      } catch (err) {
+        const anyErr = err as { status?: number; message?: string } | undefined;
+        const status = typeof anyErr?.status === 'number' ? anyErr.status : 500;
+        const message = err instanceof Error ? err.message : anyErr?.message || '';
+
+        // If requested model is not available/supported on this endpoint, fall back.
+        if (
+          status === 404 &&
+          model === 'gemini-3.1-flash-image-preview' &&
+          (message.includes('models/gemini-3.1-flash-image-preview') ||
+            message.includes('is not found') ||
+            message.includes('NOT_FOUND'))
+        ) {
+          return await generateImageOnce('gemini-2.5-flash-image', parts);
+        }
+
+        throw err;
+      }
+    };
+
     // Special path: imageUrls + prompt (used by TryOn with COS URLs)
     if (isRecord(body) && Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
       const urls = body.imageUrls.filter(isNonEmptyString) as string[];
@@ -97,7 +141,7 @@ export default async function handler(
 
       const rawModel = body.model;
       const model: SupportedGeminiImageModel =
-        rawModel === 'gemini-3.1-flash-image' || rawModel === 'gemini-2.5-flash-image'
+        rawModel === 'gemini-3.1-flash-image-preview' || rawModel === 'gemini-2.5-flash-image'
           ? rawModel
           : 'gemini-2.5-flash-image';
 
@@ -131,23 +175,9 @@ export default async function handler(
       const parts: GeminiPart[] = [...inlineParts];
       if (promptText) parts.push({ text: promptText });
 
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model,
-        contents: {
-          parts,
-        },
-      });
-
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          const base64 = part.inlineData.data;
-          const imgData = `data:image/png;base64,${base64}`;
-          return res.status(200).json({ image: imgData });
-        }
-      }
-
-      return res.status(500).json({ error: 'No image generated' });
+      const imgData = await generateImageWithFallback(model, parts);
+      if (!imgData) return res.status(500).json({ error: 'No image generated' });
+      return res.status(200).json({ image: imgData });
     }
 
     const parsed = parseParts(body);
@@ -155,23 +185,9 @@ export default async function handler(
       return res.status(parsed.status).json({ error: parsed.error });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: parsed.model ?? 'gemini-2.5-flash-image',
-      contents: {
-        parts: parsed.parts,
-      },
-    });
-
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        const base64 = part.inlineData.data;
-        const imgData = `data:image/png;base64,${base64}`;
-        return res.status(200).json({ image: imgData });
-      }
-    }
-
-    return res.status(500).json({ error: 'No image generated' });
+    const imgData = await generateImageWithFallback(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts);
+    if (!imgData) return res.status(500).json({ error: 'No image generated' });
+    return res.status(200).json({ image: imgData });
   } catch (err) {
     console.error('Gemini API error:', err);
     const anyErr = err as { status?: number; message?: string } | undefined;

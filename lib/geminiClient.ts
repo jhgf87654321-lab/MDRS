@@ -9,7 +9,7 @@ export type GeminiPart =
       inlineData: GeminiInlineData;
     };
 
-export type GeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image';
+export type GeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview';
 
 type PromptRequest = {
   prompt: string;
