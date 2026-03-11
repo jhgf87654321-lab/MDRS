@@ -128,51 +128,27 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         </div>
       </header>
 
-      {/* Promo Card - Leaderboard carousel */}
+      {/* Promo Card - Leaderboard carousel (image only, no text) */}
       <div className="mb-8 relative">
-        <div className="flex justify-between items-end mb-4">
-          <div>
-            <h3 className="font-display text-2xl font-black italic uppercase leading-none">Leaderboard</h3>
-            <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">This Week's Hottest NFTs</p>
-          </div>
-        </div>
-        <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 group h-60">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
-
+        <div className="bg-white/5 rounded-[2.5rem] relative overflow-hidden border border-white/10 group h-64">
           {(leaderImages.length ? leaderImages : fallbackLeaderboard.map((p) => p.image)).map((src, index) => {
             const meta = fallbackLeaderboard[index % fallbackLeaderboard.length];
             const product = meta;
             return (
-            <div
-              key={`${product.id}-${index}`}
-              className={`absolute inset-0 p-6 transition-opacity duration-1000 flex flex-col ${
-                index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-4 z-20">
-                <div>
-                  <span className="inline-block px-3 py-1 bg-primary text-black text-[10px] font-bold uppercase rounded-full mb-2">
-                    Rank #{index + 1}
-                  </span>
-                  <h3 className="text-2xl font-future font-black">{product.name}</h3>
-                </div>
-                <div className="text-right flex flex-col items-end">
-                  <span className="font-display font-black text-xl flex items-center gap-1 text-primary">
-                    <span className="material-icons-round text-sm">favorite</span>
-                    {product.likes.toLocaleString()}
-                  </span>
-                  <p className="text-[8px] opacity-60 uppercase tracking-widest mt-1">{product.type}</p>
-                </div>
-              </div>
-              <div className="flex-1 flex items-center justify-center relative z-10">
+              <div
+                key={`${product.id}-${index}`}
+                className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
+                  index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
+              >
                 <img
                   src={src}
                   alt={product.name}
-                  className="max-h-full object-contain filter drop-shadow-2xl group-hover:scale-110 transition-transform duration-700"
+                  className="w-full h-full object-cover"
                 />
               </div>
-            </div>
-          );})}
+            );
+          })}
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {(leaderImages.length ? leaderImages : fallbackLeaderboard).map((_, idx) => (
