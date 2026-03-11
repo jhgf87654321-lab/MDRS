@@ -87,12 +87,74 @@ export default async function handler(
     return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
   }
 
-  const parsed = parseParts(req.body);
-  if ('error' in parsed) {
-    return res.status(parsed.status).json({ error: parsed.error });
-  }
+  const body = req.body;
 
   try {
+    // Special path: imageUrls + prompt (used by TryOn with COS URLs)
+    if (isRecord(body) && Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
+      const urls = body.imageUrls.filter(isNonEmptyString) as string[];
+      if (urls.length === 0) return res.status(400).json({ error: 'imageUrls must contain non-empty strings' });
+
+      const rawModel = body.model;
+      const model: SupportedGeminiImageModel =
+        rawModel === 'gemini-3.1-flash-image' || rawModel === 'gemini-2.5-flash-image'
+          ? rawModel
+          : 'gemini-2.5-flash-image';
+
+      const promptText = isNonEmptyString(body.prompt) ? body.prompt : '';
+
+      const fetchImageAsInline = async (url: string): Promise<InlineDataPart | null> => {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          const resp = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) return null;
+          const mime = resp.headers.get('content-type') || 'image/jpeg';
+          const buf = Buffer.from(await resp.arrayBuffer());
+          if (!buf.byteLength) return null;
+          return { inlineData: { data: buf.toString('base64'), mimeType: mime } };
+        } catch {
+          return null;
+        }
+      };
+
+      const inlineParts: GeminiPart[] = [];
+      for (const url of urls) {
+        const p = await fetchImageAsInline(url);
+        if (p) inlineParts.push(p);
+      }
+      if (inlineParts.length === 0) {
+        return res.status(400).json({ error: 'Failed to load any imageUrls' });
+      }
+
+      const parts: GeminiPart[] = [...inlineParts];
+      if (promptText) parts.push({ text: promptText });
+
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model,
+        contents: {
+          parts,
+        },
+      });
+
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          const base64 = part.inlineData.data;
+          const imgData = `data:image/png;base64,${base64}`;
+          return res.status(200).json({ image: imgData });
+        }
+      }
+
+      return res.status(500).json({ error: 'No image generated' });
+    }
+
+    const parsed = parseParts(body);
+    if ('error' in parsed) {
+      return res.status(parsed.status).json({ error: parsed.error });
+    }
+
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: parsed.model ?? 'gemini-2.5-flash-image',

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { generateGeminiImage, type GeminiPart } from '../../lib/geminiClient';
+import { generateGeminiImage } from '../../lib/geminiClient';
+import { uploadImageToCloudBase } from '../../lib/apiClient';
 
 type CameraMode = 'front' | 'rear' | 'off';
 
@@ -180,45 +181,29 @@ export default function TryOnModule() {
       } catch {
         // ignore
       }
-      const base64Data = baseImage.split(',')[1];
-      const mimeType = baseImage.split(';')[0].split(':')[1];
-      if (!base64Data || !mimeType) {
-        throw new Error('Invalid base image format');
-      }
 
+      const stylePrompt = getStylePromptFromLocalStorage();
       const prompt =
-        `Image edit / virtual try-on.\n` +
-        `IMAGE A (first image) = ORIGINAL. This is the person and background we must KEEP.\n` +
-        `STRICT:\n` +
-        `- Keep the ORIGINAL person's face identity, hair, skin tone, body shape, pose, hands, and background exactly the same.\n` +
-        `- Keep camera angle, framing, and scene unchanged.\n` +
-        `- Do NOT turn the ORIGINAL into the reference person.\n\n` +
-        `IMAGE B (second image) = REFERENCE OUTFIT. We want to take ONLY the clothing from this image.\n` +
-        `STRICT CLOTHING TRANSFER:\n` +
-        `- Put the REFERENCE OUTFIT clothing onto the ORIGINAL person.\n` +
-        `- Transfer ALL visible clothing pieces from IMAGE B: top/outerwear, inner layers, bottoms, footwear, and visible accessories.\n` +
-        `- Do NOT change design, materials, colors, patterns/prints, logos/words. No redesign or reinterpretation.\n` +
-        `- Allowed changes ONLY: perspective and folds/wrinkles to match the ORIGINAL pose/body.\n\n` +
-        `OUTPUT:\n` +
-        `- The final image must look like IMAGE A with clothing swapped from IMAGE B.\n` +
-        `- Photorealistic, natural lighting. No extra text, UI, watermarks, QR codes. Single, unified photo.`;
+        `把图2人物的衣服穿在图1人物身上，\n` +
+        `要求：\n` +
+        `1）图1中的人物身份、五官、发型、肤色、身材比例、肢体姿势以及背景环境都必须保持不变，不要把图1人物变成图2人物。\n` +
+        `2）只替换服装：从图2中提取所有可见衣服，包括外套、内搭、下装、靴子以及明显的配饰，把这套衣服自然地穿在图1人物身上。\n` +
+        `3）服装的设计、版型、结构线、材质、颜色、图案和 Logo 不能改变，只允许为了适配图1人物的身体和姿势而改变透视和褶皱（比如拉伸、弯曲、产生新的阴影和皱褶）。\n` +
+        `4）画面风格保持为高质量写实照片，光影自然，不能添加多余的文字、水印、UI 元素或边框，只输出一张完整的单张照片。\n` +
+        `5）整体效果要看起来就像图1原始照片中，这个人真实穿上了图2这套衣服。\n` +
+        (stylePrompt ? `6）服装细节和整体气质尽量贴合以下风格描述：${stylePrompt}。\n` : '');
 
-      const parts: GeminiPart[] = [{ inlineData: { data: base64Data, mimeType } }];
+      // Upload both images to COS and send URLs to backend
+      const [baseUrl, nftUrl] = await Promise.all([
+        uploadImageToCloudBase(baseImage),
+        uploadImageToCloudBase(generatedNFT),
+      ]);
 
-      // Add NFT reference image (helps reduce style drift)
-      if (generatedNFT?.startsWith('data:')) {
-        const nftBase64 = generatedNFT.split(',')[1];
-        const nftMime = generatedNFT.split(';')[0].split(':')[1];
-        if (nftBase64 && nftMime) {
-          parts.push({
-            text: 'NFT style reference image (use as clothing style inspiration only; do not change the person/background):',
-          });
-          parts.push({ inlineData: { data: nftBase64, mimeType: nftMime } });
-        }
-      }
-      parts.push({ text: prompt });
-
-      const newImgData = await generateGeminiImage({ parts, model: 'gemini-3.1-flash-image' });
+      const newImgData = await generateGeminiImage({
+        prompt,
+        imageUrls: [baseUrl, nftUrl],
+        model: 'gemini-3.1-flash-image',
+      });
       setUploadedImage(newImgData);
       localStorage.setItem('tryOnLastImage', newImgData);
       setViewMode('tryon');
