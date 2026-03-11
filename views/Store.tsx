@@ -32,7 +32,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
   const format = (n: number) => n.toString().padStart(2, '0');
 
-  const leaderboardProducts = [
+  const fallbackLeaderboard = [
     { 
       id: 'Cyber Nomad #01', 
       name: 'Cyber Nomad #01',
@@ -56,14 +56,32 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     }
   ];
 
+  const [leaderImages, setLeaderImages] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
+    // load COS leader images
+    (async () => {
+      try {
+        const res = await fetch('/api/leader-images');
+        const data = (await res.json()) as { ok?: boolean; images?: string[] };
+        if (res.ok && data.images && data.images.length) {
+          setLeaderImages(data.images);
+        }
+      } catch {
+        // ignore, will use fallback
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const sourceLength = leaderImages.length || fallbackLeaderboard.length;
+    if (!sourceLength) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % leaderboardProducts.length);
+      setCurrentSlide((prev) => (prev + 1) % sourceLength);
     }, 3000);
     return () => clearInterval(interval);
-  }, [leaderboardProducts.length]);
+  }, [leaderImages.length]);
 
   const blindBoxes: Product[] = [
     { 
@@ -121,9 +139,12 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 group h-60">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
 
-          {leaderboardProducts.map((product, index) => (
+          {(leaderImages.length ? leaderImages : fallbackLeaderboard.map((p) => p.image)).map((src, index) => {
+            const meta = fallbackLeaderboard[index % fallbackLeaderboard.length];
+            const product = meta;
+            return (
             <div
-              key={product.id}
+              key={`${product.id}-${index}`}
               className={`absolute inset-0 p-6 transition-opacity duration-1000 flex flex-col ${
                 index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
               }`}
@@ -145,16 +166,16 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
               </div>
               <div className="flex-1 flex items-center justify-center relative z-10">
                 <img
-                  src={product.image}
+                  src={src}
                   alt={product.name}
                   className="max-h-full object-contain filter drop-shadow-2xl group-hover:scale-110 transition-transform duration-700"
                 />
               </div>
             </div>
-          ))}
+          );})}
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-            {leaderboardProducts.map((_, idx) => (
+            {(leaderImages.length ? leaderImages : fallbackLeaderboard).map((_, idx) => (
               <div
                 key={idx}
                 className={`w-2 h-2 rounded-full transition-all ${
