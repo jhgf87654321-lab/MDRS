@@ -1,4 +1,6 @@
-import COS from 'cos-nodejs-sdk-v5';
+// Suppress Node.js deprecation warnings originating from legacy deps (e.g. url.parse()).
+// This must run before the SDK is loaded, so we use a dynamic import.
+process.noDeprecation = true;
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -19,10 +21,12 @@ function getExtension(mimeType: string) {
   return 'bin';
 }
 
-function getCosClient() {
+async function getCosClient() {
   const SecretId = process.env.COS_SECRET_ID;
   const SecretKey = process.env.COS_SECRET_KEY;
   if (!SecretId || !SecretKey) throw new Error('COS_SECRET_ID or COS_SECRET_KEY is not configured');
+  const mod = await import('cos-nodejs-sdk-v5');
+  const COS = (mod as unknown as { default: new (opts: { SecretId: string; SecretKey: string }) => any }).default;
   return new COS({ SecretId, SecretKey });
 }
 
@@ -60,7 +64,7 @@ export default async function handler(
     const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`;
     const Key = `${prefix}${fileName}`;
 
-    const cos = getCosClient();
+    const cos = await getCosClient();
     await new Promise<void>((resolve, reject) => {
       cos.putObject(
         {
