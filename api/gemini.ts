@@ -111,29 +111,6 @@ export default async function handler(
       return null;
     };
 
-    const generateImageWithFallback = async (model: SupportedGeminiImageModel, parts: GeminiPart[]) => {
-      try {
-        return await generateImageOnce(model, parts);
-      } catch (err) {
-        const anyErr = err as { status?: number; message?: string } | undefined;
-        const status = typeof anyErr?.status === 'number' ? anyErr.status : 500;
-        const message = err instanceof Error ? err.message : anyErr?.message || '';
-
-        // If requested model is not available/supported on this endpoint, fall back.
-        if (
-          status === 404 &&
-          model === 'gemini-3.1-flash-image-preview' &&
-          (message.includes('models/gemini-3.1-flash-image-preview') ||
-            message.includes('is not found') ||
-            message.includes('NOT_FOUND'))
-        ) {
-          return await generateImageOnce('gemini-2.5-flash-image', parts);
-        }
-
-        throw err;
-      }
-    };
-
     // Special path: imageUrls + prompt (used by TryOn with COS URLs)
     if (isRecord(body) && Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
       const urls = body.imageUrls.filter(isNonEmptyString) as string[];
@@ -175,7 +152,7 @@ export default async function handler(
       const parts: GeminiPart[] = [...inlineParts];
       if (promptText) parts.push({ text: promptText });
 
-      const imgData = await generateImageWithFallback(model, parts);
+      const imgData = await generateImageOnce(model, parts);
       if (!imgData) return res.status(500).json({ error: 'No image generated' });
       return res.status(200).json({ image: imgData });
     }
@@ -185,7 +162,7 @@ export default async function handler(
       return res.status(parsed.status).json({ error: parsed.error });
     }
 
-    const imgData = await generateImageWithFallback(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts);
+    const imgData = await generateImageOnce(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts);
     if (!imgData) return res.status(500).json({ error: 'No image generated' });
     return res.status(200).json({ image: imgData });
   } catch (err) {
