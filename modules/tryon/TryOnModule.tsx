@@ -186,12 +186,13 @@ export default function TryOnModule() {
       const prompt =
         `把图2人物的衣服穿在图1人物身上，\n` +
         `要求：\n` +
-        `1）图1中的人物身份、五官、发型、肤色、身材比例、肢体姿势以及背景环境都必须保持不变，不要把图1人物变成图2人物。\n` +
-        `2）只替换服装：从图2中提取所有可见衣服，包括外套、内搭、下装、靴子以及明显的配饰，把这套衣服自然地穿在图1人物身上。\n` +
-        `3）服装的设计、版型、结构线、材质、颜色、图案和 Logo 不能改变，只允许为了适配图1人物的身体和姿势而改变透视和褶皱（比如拉伸、弯曲、产生新的阴影和皱褶）。\n` +
-        `4）画面风格保持为高质量写实照片，光影自然，不能添加多余的文字、水印、UI 元素或边框，只输出一张完整的单张照片。\n` +
-        `5）整体效果要看起来就像图1原始照片中，这个人真实穿上了图2这套衣服。\n` +
-        (stylePrompt ? `6）服装细节和整体气质尽量贴合以下风格描述：${stylePrompt}。\n` : '');
+        `1）图1中的人物身份、五官、发型、肤色、身材比例、肢体姿势必须保持不变；图1的背景环境/镜头角度/构图/景深/光线方向也必须保持不变。\n` +
+        `2）只替换服装：从图2中提取所有可见衣服（外套、内搭、下装、靴子、明显配饰），把这套衣服自然地穿在图1人物身上。\n` +
+        `3）服装的设计、版型、结构线、材质、颜色、图案、Logo/文字（如果这些属于“衣服本身”的印花或标识）都不能改变；只允许为了适配图1人物的身体和姿势而改变透视和褶皱（例如拉伸、弯曲、产生新的阴影和皱褶）。\n` +
+        `4）严禁把图2的背景元素带入结果：不要保留图2里的背景、标语、海报、字母、图形或任何非服装元素。尤其不要让图2背景中的“FUTURE MODE”等文字出现在结果里。\n` +
+        `5）结果必须是一张完整单图、高质量写实照片，光影自然；不能添加水印、UI、边框、海报文字、额外标识。若输出中出现任何不属于衣服本身的文字，请去除。\n` +
+        `6）整体效果要看起来就像图1原始照片中，这个人真实穿上了图2这套衣服，人物姿势与背景完全不变。\n` +
+        (stylePrompt ? `7）服装细节和整体气质尽量贴合以下风格描述（仅作为风格倾向，不得改变服装设计本体）：${stylePrompt}。\n` : '');
 
       // Upload both images to COS and send URLs to backend
       const [baseUrl, nftUrl] = await Promise.all([
@@ -249,23 +250,27 @@ export default function TryOnModule() {
           className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10 text-left"
         >
           {cameraMode !== 'off' ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className={`w-full h-full object-cover ${cameraMode === 'front' ? 'scale-x-[-1]' : ''}`}
-            />
+            <div className="w-full h-full p-4 flex items-center justify-center bg-black/10">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`max-w-full max-h-full object-contain ${cameraMode === 'front' ? 'scale-x-[-1]' : ''}`}
+              />
+            </div>
           ) : (
-            <img
-              src={
-                (viewMode === 'nft' ? generatedNFT : uploadedImage) ||
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45'
-              }
-              alt="Portrait"
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
+            <div className="w-full h-full p-4 flex items-center justify-center bg-black/10">
+              <img
+                src={
+                  (viewMode === 'nft' ? generatedNFT : uploadedImage) ||
+                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45'
+                }
+                alt="Portrait"
+                className="max-w-full max-h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
           <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#D4FF00] animate-scan z-20"></div>
