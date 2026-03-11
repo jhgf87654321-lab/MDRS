@@ -13,6 +13,7 @@ import Collection from './views/Collection';
 import Admin from './views/Admin';
 import ShareHub from './views/ShareHub';
 import CreatePost from './views/CreatePost';
+import Auth from './views/Auth';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.HOME);
@@ -63,7 +64,8 @@ const App: React.FC = () => {
           />
         );
       case View.TRY_ON: return <TryOn />;
-      case View.CREATOR: return <Creator />;
+      case View.CREATOR: return <Creator onNavigate={setCurrentView} />;
+      case View.AUTH: return <Auth onNavigate={setCurrentView} />;
       case View.STORE: return (
         <Store 
           onOpenDrop={() => setCurrentView(View.NEW_RELEASES)} 

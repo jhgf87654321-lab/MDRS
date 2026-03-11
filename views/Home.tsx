@@ -83,8 +83,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         <div className="flex items-center">
           <button 
             onClick={() => {
-              setAuthMode('signIn');
-              setIsAuthOpen(true);
+              onNavigate?.(View.AUTH);
             }}
             className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
           >

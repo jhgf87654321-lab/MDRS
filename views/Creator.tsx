@@ -1,6 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 
@@ -36,7 +37,11 @@ type CreatorStateV1 = {
   selectedSkinColor: string;
 };
 
-const Creator: React.FC = () => {
+type CreatorProps = {
+  onNavigate?: (view: View) => void;
+};
+
+const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState<Category>('Body');
   const [gender, setGender] = useState<Gender>('Male');
   const [creatureTexture, setCreatureTexture] = useState<CreatureTexture>('Hairless');
@@ -392,8 +397,7 @@ const Creator: React.FC = () => {
         
         <button 
           onClick={() => {
-            setAuthMode('signIn');
-            setIsAuthOpen(true);
+            onNavigate?.(View.AUTH);
           }}
           className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
         >

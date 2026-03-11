@@ -4,6 +4,7 @@ export enum View {
   WARDROBE = 'wardrobe',
   TRY_ON = 'try_on',
   CREATOR = 'creator',
+  AUTH = 'auth',
   STORE = 'store',
   NEW_RELEASES = 'new_releases',
   CART = 'cart',
