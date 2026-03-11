@@ -28,9 +28,10 @@ type CyberCollectionItem = {
 
 interface WardrobeProps {
   onShare?: (mediaUrl: string) => void;
+  onOpenShareHub?: () => void;
 }
 
-const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
+const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub }) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signIn');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -318,7 +319,13 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare }) => {
             </h2>
             <p className="text-[10px] text-white/60 uppercase tracking-widest mb-4">Discover & Trade User NFTs</p>
             <button
-              onClick={() => alert('Opening Share Platform...')}
+              onClick={() => {
+                if (onOpenShareHub) {
+                  onOpenShareHub();
+                } else {
+                  alert('Opening Share Platform...');
+                }
+              }}
               className="bg-white text-black px-6 py-2 rounded-full font-bold text-xs flex items-center gap-1 active:scale-95 transition-all"
             >
               <span>Enter Platform</span>

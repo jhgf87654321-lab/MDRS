@@ -61,6 +61,7 @@ const App: React.FC = () => {
               setShareMedia([media]);
               setCurrentView(View.CREATE_POST);
             }}
+            onOpenShareHub={() => setCurrentView(View.SHARE_HUB)}
           />
         );
       case View.TRY_ON: return <TryOn />;

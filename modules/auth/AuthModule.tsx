@@ -18,6 +18,7 @@ export default function AuthModule({ onNavigate }: Props) {
   const [mode, setMode] = useState<Mode>('signIn');
   const [channel, setChannel] = useState<Channel>('email');
   const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'submitting'>('idle');
@@ -43,6 +44,10 @@ export default function AuthModule({ onNavigate }: Props) {
 
   const sendCode = async () => {
     setError(null);
+    if (mode !== 'signUp') {
+      setError('当前为登录模式，请切换到注册再获取验证码');
+      return;
+    }
     if (!isNonEmpty(identifier)) {
       setError(channel === 'email' ? '请输入邮箱' : '请输入手机号');
       return;
@@ -72,32 +77,41 @@ export default function AuthModule({ onNavigate }: Props) {
       setError(channel === 'email' ? '请输入邮箱' : '请输入手机号');
       return;
     }
-    if (!isNonEmpty(code)) {
-      setError('请输入验证码');
-      return;
-    }
-    if (!verificationToken) {
-      setError('请先发送验证码');
+    if (!isNonEmpty(password)) {
+      setError('请输入密码');
       return;
     }
 
     setStatus('submitting');
     try {
-      const trimmedId = identifier.trim();
-      const base =
-        channel === 'email'
-          ? { email: trimmedId.toLowerCase() }
-          : { phone_number: trimmedId };
-      const payload = {
-        ...base,
-        verification_code: code.trim(),
-        verification_token: verificationToken,
-      };
-
       if (mode === 'signIn') {
-        await (auth as any).signInWithOtp(payload);
+        const trimmedId = identifier.trim();
+        const base =
+          channel === 'email'
+            ? { email: trimmedId.toLowerCase() }
+            : { phone_number: trimmedId };
+        await (auth as any).signInWithPassword({
+          ...base,
+          password,
+        });
       } else {
-        await (auth as any).signUp(payload);
+        if (!isNonEmpty(code)) {
+          throw new Error('请输入验证码');
+        }
+        if (!verificationToken) {
+          throw new Error('请先发送验证码');
+        }
+        const trimmedId = identifier.trim();
+        const base =
+          channel === 'email'
+            ? { email: trimmedId.toLowerCase() }
+            : { phone_number: trimmedId };
+        await (auth as any).signUp({
+          ...base,
+          password,
+          verification_code: code.trim(),
+          verification_token: verificationToken,
+        });
       }
 
       const user = await auth.getCurrentUser();
@@ -210,6 +224,20 @@ export default function AuthModule({ onNavigate }: Props) {
             </div>
 
             <div>
+              <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
+                Password
+              </label>
+              <input
+                value={password}
+                onChange={(ev) => setPassword(ev.target.value)}
+                type="password"
+                placeholder="••••••••"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+              />
+            </div>
+
+            {mode === 'signUp' && (
+              <div>
               <div className="flex items-end justify-between gap-3 mb-2">
                 <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block ml-1">
                   {channel === 'email' ? 'Email Code' : 'SMS Code'}
@@ -233,15 +261,16 @@ export default function AuthModule({ onNavigate }: Props) {
               {verificationToken ? (
                 <div className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.2em]">Verification token ready</div>
               ) : null}
-            </div>
+              </div>
+            )}
 
             {error ? (
               <div className="text-sm text-red-400 font-bold break-words">{error}</div>
             ) : (
               <div className="text-sm text-white/30">
                 {mode === 'signIn'
-                  ? `使用${channel === 'email' ? '邮箱' : '手机'}验证码登录。`
-                  : `先发送${channel === 'email' ? '邮箱' : '短信'}验证码，再完成注册。`}
+                  ? `使用${channel === 'email' ? '邮箱' : '手机'} + 密码登录。`
+                  : `先发送${channel === 'email' ? '邮箱' : '短信'}验证码，再使用密码完成注册。`}
               </div>
             )}
 

@@ -32,6 +32,39 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
   const format = (n: number) => n.toString().padStart(2, '0');
 
+  const leaderboardProducts = [
+    { 
+      id: 'Cyber Nomad #01', 
+      name: 'Cyber Nomad #01',
+      likes: 12450, 
+      type: 'User NFT',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBaOKSjB2d9dKh6KOhkyXPq088wpSrv9uRrrQqJgnsAPSrk1GuXd6kPz1Vvk_-ziM5HXxbuSUtZPySyztFo6OBXQt_YvWZKvU8jLlEJDBgqhwYj8ZvdQ2eQuItMuahDt-BtBOHVb7Y-cUPgkfG_rxcs-Ma2d46RdD2nfXqV311B-QwJBA89uc8hauO03Bs8gmg6nyaOEGvHKz7isEhAFOCdbPBUMgNAbZ6yckmJ9zBMpQ9UO7G7kn5Wu1sRmuIsh4cgQTAYZzRF-2ZH' 
+    },
+    { 
+      id: 'Neon Beast #42', 
+      name: 'Neon Beast #42',
+      likes: 9820, 
+      type: 'User NFT',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAoATIVSbrj9vO-WA5HbmZE18PtqpvOej5R9OwCauCnD-sEkqdhez4ikIfLujc0cYKoXsvnlFGp3YyAV-3gwWOVvGje_a6XL4e6XFQe76QLTsekVJFS0aRkEJCGONhnaA08hhyNrk0qw5B7zo6koIDb_RTE_11ewuIih8km6wNmjDAxrnCI9F7Oon8tZP1QhK7kA-d8sl1wlT2gNxKFvu9fW2TXZ9yIXpUEIIGmdBx7KtpKot0p6Yl2kF0vkSkyNoKF-e7_SK0CnrTT' 
+    },
+    {
+      id: 'Chrome Angel #07',
+      name: 'Chrome Angel #07',
+      likes: 8500,
+      type: 'User NFT',
+      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7EiJ_hhLJf-3T-E0UgXeAz6trCapwiGJ84ObO6-z-gvVifDsOqxOaTck0RXXTU9Yke84Te_E52cOrV4thgrqhLjS9gjzgJ-nnvkndpvptlJO42_dBEs8BQP7cs32gAhPu2mMQCi2j2huJF4FrH37r5SEC4NY2D-ldbp4Nutcw_ustrhw6104cNAB89YE0uHB2CRWaqPzeN8-G3-1sjECcFEmKQbfw1wjOweqocYpon-mT3R-28Bhic_G__hKzOG8SMf66nuzpNwF6'
+    }
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % leaderboardProducts.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [leaderboardProducts.length]);
+
   const blindBoxes: Product[] = [
     { 
       id: 'Cyberpunk Series', 
@@ -77,7 +110,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         </div>
       </header>
 
-      {/* Promo Card - Leaderboard style from Wardrobe */}
+      {/* Promo Card - Leaderboard carousel */}
       <div className="mb-8 relative">
         <div className="flex justify-between items-end mb-4">
           <div>
@@ -85,10 +118,50 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
             <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">This Week's Hottest NFTs</p>
           </div>
         </div>
-        <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 h-60">
+        <div className="bg-white/5 rounded-[2.5rem] p-6 relative overflow-hidden border border-white/10 group h-60">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rotate-45 translate-x-12 -translate-y-12"></div>
-          <div className="flex items-center justify-center h-full">
-            <span className="material-icons-round text-6xl text-primary/70">trending_up</span>
+
+          {leaderboardProducts.map((product, index) => (
+            <div
+              key={product.id}
+              className={`absolute inset-0 p-6 transition-opacity duration-1000 flex flex-col ${
+                index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-4 z-20">
+                <div>
+                  <span className="inline-block px-3 py-1 bg-primary text-black text-[10px] font-bold uppercase rounded-full mb-2">
+                    Rank #{index + 1}
+                  </span>
+                  <h3 className="text-2xl font-future font-black">{product.name}</h3>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <span className="font-display font-black text-xl flex items-center gap-1 text-primary">
+                    <span className="material-icons-round text-sm">favorite</span>
+                    {product.likes.toLocaleString()}
+                  </span>
+                  <p className="text-[8px] opacity-60 uppercase tracking-widest mt-1">{product.type}</p>
+                </div>
+              </div>
+              <div className="flex-1 flex items-center justify-center relative z-10">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="max-h-full object-contain filter drop-shadow-2xl group-hover:scale-110 transition-transform duration-700"
+                />
+              </div>
+            </div>
+          ))}
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            {leaderboardProducts.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  idx === currentSlide ? 'bg-primary w-6' : 'bg-white/30'
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -168,9 +241,9 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         ))}
       </div>
 
-      {/* User Collections Navigation */}
+      {/* Categories Navigation */}
       <div className="mb-6">
-        <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">My Collections</h3>
+        <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">Categories</h3>
         <div className="flex flex-col gap-3">
           {userCollections.map(col => (
             <button key={col.id} className="glass p-4 rounded-[2rem] flex items-center justify-between active:scale-[0.98] transition-transform">
