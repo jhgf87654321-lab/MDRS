@@ -1,7 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { getRandomAestheticReferences, type AestheticReference } from '../lib/apiClient';
+import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 
 type AuthMode = 'signIn' | 'signUp';
@@ -22,6 +22,7 @@ type CyberCollectionItem = {
   isSpecial: boolean;
   theme: string;
   prompt: string;
+  cosUrl?: string;
 };
 
 type CreatorStateV1 = {
@@ -329,12 +330,23 @@ const Creator: React.FC = () => {
       setGeneratedNFT(storedImg);
       localStorage.setItem('generatedNFT', storedImg);
 
+      // Upload minted image to COS using serialNumber as filename
+      let cosUrl: string | undefined;
+      try {
+        const folder = isSpecial ? 'SP/' : 'MINT/';
+        const fileName = serialNumber.replace(/\./g, '_');
+        cosUrl = await uploadImageToCloudBase(storedImg, { prefix: folder, fileName });
+      } catch (e) {
+        console.error('Mint upload to COS failed', e);
+      }
+
       const nftDataObj: CyberCollectionItem = {
         image: storedImg,
         serialNumber,
         isSpecial,
         theme: randomTheme,
         prompt,
+        ...(cosUrl ? { cosUrl } : {}),
       };
       setNftData(nftDataObj);
       localStorage.setItem('generatedNFTData', JSON.stringify(nftDataObj));

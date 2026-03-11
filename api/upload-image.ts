@@ -6,6 +6,10 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 function parseDataUrl(dataUrl: string) {
   const match = /^data:(.+);base64,(.+)$/.exec(dataUrl);
   if (!match) return null;
@@ -19,6 +23,27 @@ function getExtension(mimeType: string) {
   if (mimeType === 'image/png') return 'png';
   if (mimeType === 'image/webp') return 'webp';
   return 'bin';
+}
+
+function sanitizeFileName(name: string) {
+  const trimmed = name.trim().slice(0, 120);
+  // Keep alphanum, dot, dash, underscore; replace others to underscore.
+  const safe = trimmed.replace(/[^a-zA-Z0-9._-]+/g, '_');
+  // Avoid hidden files or empty names
+  return safe.replace(/^_+/, '').replace(/^\.*/, '').slice(0, 120) || 'file';
+}
+
+function normalizePrefix(prefix: string) {
+  let p = prefix.trim();
+  if (!p) return '';
+  p = p.replace(/^\/+/, '').replace(/\\/g, '/');
+  if (!p.endsWith('/')) p += '/';
+  return p;
+}
+
+function isAllowedPrefix(prefix: string) {
+  const allowed = new Set(['share-posts/', 'aesthetic-references/', 'MINT/', 'SP/']);
+  return allowed.has(prefix);
 }
 
 async function getCosClient() {
@@ -44,8 +69,9 @@ export default async function handler(
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const body = req.body as { dataUrl?: unknown } | undefined;
-  const dataUrlRaw = body?.dataUrl;
+  const body = req.body;
+  if (!isRecord(body)) return res.status(400).json({ error: 'Invalid JSON body' });
+  const dataUrlRaw = body.dataUrl;
   if (!isNonEmptyString(dataUrlRaw)) {
     return res.status(400).json({ error: 'Missing or invalid dataUrl' });
   }
@@ -60,8 +86,13 @@ export default async function handler(
 
     const buffer = Buffer.from(parsed.base64, 'base64');
     const ext = getExtension(parsed.mimeType);
-    const prefix = process.env.COS_UPLOAD_PREFIX || 'share-posts/';
-    const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`;
+    const requestedPrefix = isNonEmptyString(body.prefix) ? normalizePrefix(body.prefix) : '';
+    const prefix = requestedPrefix || process.env.COS_UPLOAD_PREFIX || 'share-posts/';
+    if (!isAllowedPrefix(prefix)) return res.status(400).json({ error: 'Invalid prefix' });
+
+    const requestedName = isNonEmptyString(body.fileName) ? sanitizeFileName(body.fileName) : '';
+    const baseName = requestedName || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const fileName = baseName.toLowerCase().endsWith(`.${ext}`) ? baseName : `${baseName}.${ext}`;
     const Key = `${prefix}${fileName}`;
 
     const cos = await getCosClient();
