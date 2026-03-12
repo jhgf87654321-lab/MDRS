@@ -69,57 +69,26 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub }) => {
 
   const reloadLocalAssets = async () => {
     try {
-      // Prefer CloudBase profile owned NFTs (COS urls)
+      // Only use CloudBase profile owned NFTs (COS urls). Do not fall back to browser cache.
       try {
         const owned = await listMyOwnedNfts();
-        if (Array.isArray(owned) && owned.length > 0) {
-          const next: CyberCollectionItem[] = owned.map((x) => ({
-            image: x.cosUrl,
-            cosUrl: x.cosUrl,
-            serialNumber: x.serialNumber || 'No.00000000',
-            isSpecial: (x.serialNumber || '').startsWith('Sp.'),
-            theme: 'Owned',
-            prompt: '',
-          }));
-          setCollection(next);
-          setGeneratedNFT(next[0]!.image);
-          return;
-        }
+        const next: CyberCollectionItem[] = Array.isArray(owned)
+          ? owned.map((x) => ({
+              image: x.cosUrl,
+              cosUrl: x.cosUrl,
+              serialNumber: x.serialNumber || 'No.00000000',
+              isSpecial: (x.serialNumber || '').startsWith('Sp.'),
+              theme: 'Owned',
+              prompt: '',
+            }))
+          : [];
+        setCollection(next);
+        setGeneratedNFT(next[0]?.image ?? null);
+        return;
       } catch {
-        // ignore; fallback to local assets
-      }
-
-      const collectionStr = localStorage.getItem('myCyberCollection');
-      if (collectionStr) {
-        const parsed = JSON.parse(collectionStr) as CyberCollectionItem[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setCollection(parsed);
-          setGeneratedNFT(parsed[0]!.image);
-          return;
-        }
-      }
-
-      // Fallback: if collection couldn't be saved due to quota, show at least the latest NFT
-      const dataStr = localStorage.getItem('generatedNFTData');
-      if (dataStr) {
-        const parsed = JSON.parse(dataStr) as Partial<CyberCollectionItem> | null;
-        if (parsed && typeof parsed.image === 'string' && parsed.image.startsWith('data:')) {
-          const item: CyberCollectionItem = {
-            image: parsed.image,
-            serialNumber: typeof parsed.serialNumber === 'string' ? parsed.serialNumber : 'No.00000000',
-            isSpecial: typeof parsed.isSpecial === 'boolean' ? parsed.isSpecial : false,
-            theme: typeof parsed.theme === 'string' ? parsed.theme : 'Genesis Avatar',
-            prompt: typeof parsed.prompt === 'string' ? parsed.prompt : '',
-          };
-          setCollection([item]);
-          setGeneratedNFT(item.image);
-          return;
-        }
-      }
-
-      const storedNFT = localStorage.getItem('generatedNFT');
-      if (storedNFT) {
-        setGeneratedNFT(storedNFT);
+        setCollection([]);
+        setGeneratedNFT(null);
+        return;
       }
     } catch (e) {
       console.error('Failed to load cyber collection', e);
