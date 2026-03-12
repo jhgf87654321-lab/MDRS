@@ -317,12 +317,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       ${outfitDesc}
       Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.
       Skin tone: ${selectedSkinColor}. 
-      Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture. 
+      Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, around 1024px on the long edge, sharp focus, realistic skin texture. 
       The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean and modern.`;
 
       let references: AestheticReference[] = [];
       try {
-        references = await getRandomAestheticReferences(2);
+        references = await getRandomAestheticReferences(1);
       } catch (e) {
         console.error('Failed to fetch aesthetic references', e);
         references = [];
