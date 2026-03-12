@@ -149,7 +149,7 @@ export default function AuthModule({ onNavigate }: Props) {
         <div className="text-center">
           <div className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">AUTH PROTOCOL</div>
           <div className="text-2xl font-black tracking-tighter">
-            {mode === 'signIn' ? 'SIGN IN' : 'SIGN UP'} · {channel === 'email' ? 'EMAIL' : 'PHONE'}
+            {mode === 'signIn' ? 'SIGN IN' : 'SIGN UP'}
           </div>
         </div>
         <div className="w-10 h-10" />
@@ -169,25 +169,6 @@ export default function AuthModule({ onNavigate }: Props) {
             </button>
           </div>
         ) : null}
-
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setMode('signIn')}
-            className={`flex-1 py-4 rounded-2xl border text-[11px] font-black uppercase tracking-[0.25em] transition-colors ${
-              mode === 'signIn' ? 'bg-primary text-black border-primary' : 'bg-white/5 text-white/60 border-white/10'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => setMode('signUp')}
-            className={`flex-1 py-4 rounded-2xl border text-[11px] font-black uppercase tracking-[0.25em] transition-colors ${
-              mode === 'signUp' ? 'bg-primary text-black border-primary' : 'bg-white/5 text-white/60 border-white/10'
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
 
         <div className="flex gap-2 mb-6">
           <button
@@ -281,6 +262,16 @@ export default function AuthModule({ onNavigate }: Props) {
             >
               {status === 'submitting' ? 'Working...' : mode === 'signIn' ? 'Start Session' : 'Create Account'}
             </button>
+
+            <div className="mt-8 text-center">
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'signIn' ? 'signUp' : 'signIn')}
+                className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/90 hover:text-primary transition-colors underline underline-offset-4"
+              >
+                {mode === 'signIn' ? 'SIGN UP HERE' : 'SIGN IN HERE'}
+              </button>
+            </div>
           </div>
         </div>
       </main>
