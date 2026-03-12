@@ -273,6 +273,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       const colorStyle = params.chromaticity > 70 ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.` : params.chromaticity < 30 ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.' : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
+      let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, daring silhouette, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
       const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
@@ -304,14 +305,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
         : `Clean, minimalist studio setting (white, light grey, or soft neutral tones) with large, bold, artistic typography. The typography words and font style perfectly match the character's outfit vibe and the ${randomTheme} theme.`;
 
-      const prompt = `A professional ${randomStyle} for a high-end fashion NFT.
+      const prompt = `A professional ${randomStyle} for a high-end fashion NFT. 
       Theme: ${randomTheme}. 
-      STRICT FRAMING (MUST FOLLOW): A single, unified FULL-BODY / full-length portrait from head-to-toe. The entire character MUST be visible, including full legs, feet, and footwear, with comfortable margin above the head and below the feet. Do NOT crop at the head, knees, ankles, or feet. Do NOT zoom-in. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
+      The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
       Background: ${backgroundInstruction}
       Graphic Elements: Overlay the image with technical UI details, fine technical text, cross-hairs, and minimalist graphic annotations. Do NOT use QR codes.
       Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).
       ${outfitDesc}
-      Colors & Textures: ${colorStyle}. The aesthetic era is ${eraStyle}. The clothing layering and amount is ${thicknessStyle}.
+      Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.
       Skin tone: ${selectedSkinColor}. 
       Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture. 
       The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean and modern.`;

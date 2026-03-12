@@ -156,7 +156,9 @@ export default function AdminModule() {
     try {
       setSaveStage('uploading');
       const prepared = await compressDataUrlIfNeeded(generatedImage);
-      const imageUrl = prepared.startsWith('data:') ? await uploadImageToCloudBase(prepared) : prepared;
+      const imageUrl = prepared.startsWith('data:')
+        ? await uploadImageToCloudBase(prepared, { prefix: 'REF/' })
+        : prepared;
       setSaveStage('saving');
       await saveAestheticReference({ imageUrl, prompt });
       alert('Saved to Aesthetic Reference Library!');
