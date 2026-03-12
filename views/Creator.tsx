@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
+import { addNftToMyProfile } from '../lib/userProfile';
 
 type AuthMode = 'signIn' | 'signUp';
 type Category = 'Body' | 'Skin' | 'Style' | 'Design';
@@ -343,6 +344,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         cosUrl = await uploadImageToCloudBase(storedImg, { prefix: folder, fileName });
       } catch (e) {
         console.error('Mint upload to COS failed', e);
+      }
+
+      if (cosUrl) {
+        try {
+          await addNftToMyProfile({ cosUrl, serialNumber, source: 'mint' });
+        } catch (e) {
+          console.error('Failed to record minted NFT in profile', e);
+        }
       }
 
       const nftDataObj: CyberCollectionItem = {

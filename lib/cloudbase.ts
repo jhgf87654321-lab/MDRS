@@ -16,3 +16,8 @@ export function getCloudbaseAuth() {
   return app.auth({ persistence: 'local' as any });
 }
 
+export function getCloudbaseDb() {
+  const app = getCloudbaseApp();
+  return (app as any).database();
+}
+

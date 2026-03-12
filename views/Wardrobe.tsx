@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { listMyOwnedNfts } from '../lib/userProfile';
 
 type AuthMode = 'signIn' | 'signUp';
 
@@ -66,8 +67,28 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub }) => {
     }
   ];
 
-  const reloadLocalAssets = () => {
+  const reloadLocalAssets = async () => {
     try {
+      // Prefer CloudBase profile owned NFTs (COS urls)
+      try {
+        const owned = await listMyOwnedNfts();
+        if (Array.isArray(owned) && owned.length > 0) {
+          const next: CyberCollectionItem[] = owned.map((x) => ({
+            image: x.cosUrl,
+            cosUrl: x.cosUrl,
+            serialNumber: x.serialNumber || 'No.00000000',
+            isSpecial: (x.serialNumber || '').startsWith('Sp.'),
+            theme: 'Owned',
+            prompt: '',
+          }));
+          setCollection(next);
+          setGeneratedNFT(next[0]!.image);
+          return;
+        }
+      } catch {
+        // ignore; fallback to local assets
+      }
+
       const collectionStr = localStorage.getItem('myCyberCollection');
       if (collectionStr) {
         const parsed = JSON.parse(collectionStr) as CyberCollectionItem[];
@@ -106,11 +127,11 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub }) => {
   };
 
   React.useEffect(() => {
-    reloadLocalAssets();
+    void reloadLocalAssets();
 
-    const onUpdated = () => reloadLocalAssets();
+    const onUpdated = () => void reloadLocalAssets();
     const onVis = () => {
-      if (document.visibilityState === 'visible') reloadLocalAssets();
+      if (document.visibilityState === 'visible') void reloadLocalAssets();
     };
     window.addEventListener('axon:collection-updated', onUpdated);
     document.addEventListener('visibilitychange', onVis);

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View } from '../../types';
 import { getCloudbaseAuth } from '../../lib/cloudbase';
+import { ensureUserProfile } from '../../lib/userProfile';
 
 type Mode = 'signIn' | 'signUp';
 type Channel = 'email' | 'phone';
@@ -181,6 +182,11 @@ export default function AuthModule({ onNavigate }: Props) {
 
       const user = await auth.getCurrentUser();
       setMe(user ? { uid: (user as any).uid, email: (user as any).email } : null);
+      try {
+        await ensureUserProfile();
+      } catch {
+        // ignore profile init failures; auth success is higher priority
+      }
       onNavigate(View.CREATOR);
     } catch (err) {
       if (mode === 'signIn') {
