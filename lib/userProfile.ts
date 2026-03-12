@@ -79,8 +79,8 @@ async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
   return doc;
 }
 
-export async function ensureUserProfile() {
-  const uid = await getUid();
+export async function ensureUserProfile(uidHint?: string) {
+  const uid = uidHint && uidHint.trim() ? uidHint.trim() : await getUid();
   const existing = await getProfileDoc(uid);
   if (existing) return existing;
   const now = Date.now();

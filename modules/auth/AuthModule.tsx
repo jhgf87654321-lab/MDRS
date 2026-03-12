@@ -180,10 +180,11 @@ export default function AuthModule({ onNavigate }: Props) {
       }
 
       const user = await auth.getCurrentUser();
-      setMe(user ? { uid: (user as any).uid, email: (user as any).email } : null);
+      const uid = (user as any)?.uid as string | undefined;
+      setMe(user ? { uid, email: (user as any).email } : null);
       try {
-        // 创建 / 确保用户档案存在
-        const profile = await ensureUserProfile();
+        // 创建 / 确保用户档案存在；直接传入 uid 避免 getCurrentUser 会话未落地时 NOT_SIGNED_IN
+        await ensureUserProfile(uid);
         // 注册时，把用户填写的昵称写入档案，仅影响 displayName，不参与登录
         if (mode === 'signUp' && isNonEmpty(displayName)) {
           await setMyDisplayName(displayName.trim());
