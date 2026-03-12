@@ -111,6 +111,11 @@ export async function uploadImageToCloudBase(
     fileName?: string;
   },
 ) {
+  // If it's already a remote URL (e.g. COS URL), skip re-upload and return as-is.
+  if (typeof dataUrl === 'string' && /^https?:\/\//i.test(dataUrl)) {
+    return dataUrl;
+  }
+
   const res = await fetch('/api/upload-image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -136,7 +136,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
               placeholder="Add a catchy title..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-transparent text-xl font-bold placeholder:text-white/20 focus:outline-none"
+              className="w-full bg-transparent text-xl font-bold placeholder:text-white/20 focus:outline-none normal-case"
               maxLength={100}
             />
           </div>
@@ -147,7 +147,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
               placeholder="Share your thoughts, outfit details, or inspiration..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full h-40 bg-transparent text-sm text-white/80 placeholder:text-white/20 focus:outline-none resize-none"
+              className="w-full h-40 bg-transparent text-sm text-white/80 placeholder:text-white/20 focus:outline-none resize-none normal-case"
               maxLength={5000}
             />
           </div>

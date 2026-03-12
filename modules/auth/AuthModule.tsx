@@ -67,6 +67,7 @@ export default function AuthModule({ onNavigate }: Props) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'submitting'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<{ uid?: string; email?: string } | null>(null);
+  const [signedInDisplayName, setSignedInDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -84,6 +85,24 @@ export default function AuthModule({ onNavigate }: Props) {
       mounted = false;
     };
   }, [auth]);
+
+  useEffect(() => {
+    if (!me?.uid) {
+      setSignedInDisplayName(null);
+      return;
+    }
+    let mounted = true;
+    ensureUserProfile(me.uid)
+      .then((doc) => {
+        if (mounted && doc?.displayName) setSignedInDisplayName(doc.displayName);
+      })
+      .catch(() => {
+        if (mounted) setSignedInDisplayName(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [me?.uid]);
 
   const sendCode = async () => {
     setError(null);
@@ -241,7 +260,7 @@ export default function AuthModule({ onNavigate }: Props) {
         {me?.uid ? (
           <div className="glass rounded-[2.5rem] border border-white/10 p-8">
             <div className="text-[10px] uppercase tracking-[0.35em] text-white/40 font-bold mb-2">SIGNED IN</div>
-            <div className="text-sm font-bold break-all">{me.email || me.uid}</div>
+            <div className="text-sm font-bold break-all">{signedInDisplayName || me.email || me.uid}</div>
 
             <div className="mt-6 space-y-3">
               <button
