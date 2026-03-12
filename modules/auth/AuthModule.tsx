@@ -25,6 +25,34 @@ function normalizePhone(input: string) {
   return trimmed;
 }
 
+function getErrorDescription(err: unknown) {
+  const anyErr = err as any;
+  return (
+    anyErr?.error_description ??
+    anyErr?.errorDescription ??
+    anyErr?.message ??
+    anyErr?.error?.message ??
+    ''
+  );
+}
+
+function formatSignInError(err: unknown) {
+  const desc = String(getErrorDescription(err) || '');
+  const normalized = desc.toLowerCase();
+  if (
+    normalized.includes('invalid login') ||
+    normalized.includes('invalid credentials') ||
+    normalized.includes('wrong password') ||
+    normalized.includes('password') ||
+    normalized.includes('not found') ||
+    normalized.includes('does not exist') ||
+    normalized.includes('user not found')
+  ) {
+    return '账号不存在或密码错误';
+  }
+  return desc ? `登录失败：${desc}` : '登录失败，请检查账号和密码';
+}
+
 export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
   const [mode, setMode] = useState<Mode>('signIn');
@@ -155,7 +183,12 @@ export default function AuthModule({ onNavigate }: Props) {
       setMe(user ? { uid: (user as any).uid, email: (user as any).email } : null);
       onNavigate(View.CREATOR);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '认证失败');
+      if (mode === 'signIn') {
+        setError(formatSignInError(err));
+      } else {
+        const desc = getErrorDescription(err);
+        setError(desc ? String(desc) : '认证失败');
+      }
     } finally {
       setStatus('idle');
     }
@@ -194,18 +227,27 @@ export default function AuthModule({ onNavigate }: Props) {
 
       <main className="flex-1 px-6 pb-28">
         {me?.uid ? (
-          <div className="glass rounded-[2.5rem] border border-white/10 p-8 mb-6">
+          <div className="glass rounded-[2.5rem] border border-white/10 p-8">
             <div className="text-[10px] uppercase tracking-[0.35em] text-white/40 font-bold mb-2">SIGNED IN</div>
             <div className="text-sm font-bold break-all">{me.email || me.uid}</div>
-            <button
-              onClick={signOut}
-              disabled={status !== 'idle'}
-              className="mt-6 w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] active:scale-95 transition-all disabled:opacity-60"
-            >
-              {status === 'submitting' ? 'Signing out...' : 'Sign Out'}
-            </button>
+
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={() => onNavigate(View.CREATOR)}
+                className="w-full bg-white text-black py-5 rounded-[2rem] font-black uppercase tracking-[0.25em] text-[12px] shadow-2xl active:scale-95 transition-all"
+              >
+                Continue
+              </button>
+              <button
+                onClick={signOut}
+                disabled={status !== 'idle'}
+                className="w-full bg-white/5 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] border border-white/10 active:scale-95 transition-all disabled:opacity-60"
+              >
+                {status === 'submitting' ? 'Signing out...' : 'Sign Out'}
+              </button>
+            </div>
           </div>
-        ) : null}
+        ) : (
 
         <div className="flex gap-2 mb-6">
           <button
@@ -349,6 +391,7 @@ export default function AuthModule({ onNavigate }: Props) {
             </div>
           </div>
         </div>
+        )}
       </main>
     </div>
   );
