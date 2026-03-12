@@ -20,7 +20,7 @@ export default function AuthModule({ onNavigate }: Props) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
-  const [verificationToken, setVerificationToken] = useState<string | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'submitting'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<{ uid?: string; email?: string } | null>(null);
@@ -59,11 +59,11 @@ export default function AuthModule({ onNavigate }: Props) {
         channel === 'email'
           ? { email: trimmed.toLowerCase() }
           : { phone_number: trimmed };
-      // CloudBase Auth v2 flow: get verification -> signInWithOtp / signUp
+      // CloudBase getVerification 发送验证码，返回 verification_id（非 verification_token）
       const res = await (auth as any).getVerification(payload);
-      const token = res?.verification_token || res?.verificationToken || res?.token;
-      if (!token) throw new Error('获取验证码失败');
-      setVerificationToken(String(token));
+      const id = res?.verification_id ?? res?.verificationId;
+      if (!id) throw new Error('获取验证码失败');
+      setVerificationId(String(id));
     } catch (e) {
       setError(e instanceof Error ? e.message : '发送失败');
     } finally {
@@ -98,7 +98,7 @@ export default function AuthModule({ onNavigate }: Props) {
         if (!isNonEmpty(code)) {
           throw new Error('请输入验证码');
         }
-        if (!verificationToken) {
+        if (!verificationId) {
           throw new Error('请先发送验证码');
         }
         const trimmedId = identifier.trim();
@@ -106,6 +106,14 @@ export default function AuthModule({ onNavigate }: Props) {
           channel === 'email'
             ? { email: trimmedId.toLowerCase() }
             : { phone_number: trimmedId };
+        // 先用 verify 将 verification_id + code 换取 verification_token
+        const verifyRes = await (auth as any).verify({
+          verification_id: verificationId,
+          verification_code: code.trim(),
+        });
+        const verificationToken =
+          verifyRes?.verification_token ?? verifyRes?.verificationToken;
+        if (!verificationToken) throw new Error('验证码校验失败');
         await (auth as any).signUp({
           ...base,
           password,
@@ -239,8 +247,8 @@ export default function AuthModule({ onNavigate }: Props) {
                 placeholder="123456"
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
-              {verificationToken ? (
-                <div className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.2em]">Verification token ready</div>
+              {verificationId ? (
+                <div className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.2em]">验证码已发送</div>
               ) : null}
               </div>
             )}
@@ -266,7 +274,13 @@ export default function AuthModule({ onNavigate }: Props) {
             <div className="mt-8 text-center">
               <button
                 type="button"
-                onClick={() => setMode(mode === 'signIn' ? 'signUp' : 'signIn')}
+                onClick={() => {
+                  setMode(mode === 'signIn' ? 'signUp' : 'signIn');
+                  if (mode === 'signUp') {
+                    setVerificationId(null);
+                    setCode('');
+                  }
+                }}
                 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/90 hover:text-primary transition-colors underline underline-offset-4"
               >
                 {mode === 'signIn' ? 'SIGN UP HERE' : 'SIGN IN HERE'}
