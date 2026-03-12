@@ -6,7 +6,10 @@ let cachedApp: ReturnType<typeof cloudbase.init> | null = null;
 
 export function getCloudbaseApp() {
   if (cachedApp) return cachedApp;
-  cachedApp = cloudbase.init({ env: CLOUDBASE_ENV_ID });
+  cachedApp = cloudbase.init({
+    env: CLOUDBASE_ENV_ID,
+    region: 'ap-shanghai',
+  });
   return cachedApp;
 }
 
