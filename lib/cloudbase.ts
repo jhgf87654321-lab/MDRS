@@ -1,9 +1,12 @@
 import cloudbase from '@cloudbase/js-sdk';
 
-export const CLOUDBASE_ENV_ID = 'denglu-8gher1d52a21e6fe';
+// 优先从环境变量读取 EnvId & Publishable Key，未配置时回退到本地默认值（便于开发）
+// 本地开发：在 .env.local 中配置
+//  VITE_CLOUDBASE_ENV_ID=denglu-8gher1d52a21e6fe
+//  VITE_CLOUDBASE_ACCESS_KEY=你的PublishableKey
+export const CLOUDBASE_ENV_ID =
+  (import.meta.env.VITE_CLOUDBASE_ENV_ID as string | undefined) || 'denglu-8gher1d52a21e6fe';
 
-// 从环境变量中读取 Publishable Key（开发和线上统一方式）
-// 本地开发请在 .env.local 中配置：VITE_CLOUDBASE_ACCESS_KEY=你的PublishableKey
 const ACCESS_KEY = import.meta.env.VITE_CLOUDBASE_ACCESS_KEY as string | undefined;
 
 let cachedApp: ReturnType<typeof cloudbase.init> | null = null;
