@@ -24,10 +24,17 @@ function normalizeUrl(url: string | undefined | null) {
 
 async function getUid() {
   const auth = getCloudbaseAuth();
-  const user = await auth.getCurrentUser();
-  const uid = (user as any)?.uid as string | undefined;
-  if (!uid) throw new Error('NOT_SIGNED_IN');
-  return uid;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // 登录/注册刚完成时，CloudBase 的会话可能需要短暂时间落地，
+  // 这里做小次数重试，避免瞬时 getCurrentUser() 为空导致 NOT_SIGNED_IN。
+  for (let i = 0; i < 6; i += 1) {
+    const user = await auth.getCurrentUser();
+    const uid = (user as any)?.uid as string | undefined;
+    if (uid) return uid;
+    // 0, 80, 160, 240... 逐步等待
+    await sleep(i === 0 ? 0 : 80 * i);
+  }
+  throw new Error('NOT_SIGNED_IN');
 }
 
 async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
