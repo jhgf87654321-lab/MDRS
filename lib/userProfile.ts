@@ -43,18 +43,14 @@ async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
 
 async function setProfileDoc(uid: string, doc: UserProfileDoc) {
   const db = getCloudbaseDb();
-  // 使用 set 可能在某些情况下被平台完全忽略（例如与默认字段冲突），
-  // 这里统一改为 update + upsert 语义，显式写入 ownedNfts / 时间戳。
-  await db
-    .collection(COLLECTION)
-    .doc(uid)
-    .update({
-      uid: doc.uid,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      ...(doc.displayName ? { displayName: doc.displayName } : {}),
-      ownedNfts: doc.ownedNfts,
-    });
+  // 使用 set 以确保在文档不存在时可以直接创建（upsert 语义）
+  await db.collection(COLLECTION).doc(uid).set({
+    uid: doc.uid,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    ...(doc.displayName ? { displayName: doc.displayName } : {}),
+    ownedNfts: doc.ownedNfts,
+  });
 }
 
 async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
@@ -72,20 +68,7 @@ async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
     ownedNfts: next,
     updatedAt: now,
   };
-
-  const db = getCloudbaseDb();
-  const res = await db
-    .collection(COLLECTION)
-    .doc(uid)
-    .update({
-      uid: doc.uid,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      ...(doc.displayName ? { displayName: doc.displayName } : {}),
-      ownedNfts: doc.ownedNfts,
-    });
-
-  console.log('[userProfile] updateOwnedNfts result', res);
+  await setProfileDoc(uid, doc);
   return doc;
 }
 
