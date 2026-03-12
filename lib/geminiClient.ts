@@ -38,6 +38,12 @@ export async function generateGeminiImage(input: PromptRequest | PartsRequest) {
     throw new Error(res.ok ? 'Generation failed: invalid response' : `Generation failed: ${text.slice(0, 120)}`);
   }
 
+  if (data.error) {
+    const e = new Error(data.error);
+    (e as any).status = res.status;
+    throw e;
+  }
+
   if (!res.ok) {
     const msg = data.error || 'Generation failed';
     const e = new Error(msg);
@@ -45,7 +51,7 @@ export async function generateGeminiImage(input: PromptRequest | PartsRequest) {
     throw e;
   }
 
-  if (!data.image) throw new Error('No image generated');
+  if (!data.image) throw new Error(`No image generated (status ${res.status}): ${text.slice(0, 200)}`);
   return data.image;
 }
 

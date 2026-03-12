@@ -5,6 +5,7 @@ import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 import { addNftToMyProfile } from '../lib/userProfile';
+import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
 
 type AuthMode = 'signIn' | 'signUp';
 type Category = 'Body' | 'Skin' | 'Style' | 'Design';
@@ -169,6 +170,22 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   // Restore last generated NFT and metadata when returning to Creator
   useEffect(() => {
     try {
+      const snap = getMintJobSnapshot();
+      if (snap.status === 'running') setIsGenerating(true);
+      if (snap.status === 'done' && snap.result?.imageDataUrl) {
+        setIsGenerating(false);
+        setGeneratedNFT(snap.result.imageDataUrl);
+        setNftMetadata({ theme: snap.result.theme, rarity: snap.result.rarity });
+        setNftData({
+          image: snap.result.imageDataUrl,
+          serialNumber: snap.result.serialNumber,
+          isSpecial: snap.result.isSpecial,
+          theme: snap.result.theme,
+          prompt: snap.result.prompt,
+          ...(snap.result.cosUrl ? { cosUrl: snap.result.cosUrl } : {}),
+        });
+      }
+
       const storedImg = localStorage.getItem('generatedNFT');
       if (storedImg) {
         setGeneratedNFT(storedImg);
@@ -186,6 +203,33 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     } catch (e) {
       console.error('Failed to restore Creator state', e);
     }
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeMintJob((snap) => {
+      if (snap.status === 'running') {
+        setIsGenerating(true);
+        return;
+      }
+      if (snap.status === 'done' && snap.result) {
+        setIsGenerating(false);
+        setGeneratedNFT(snap.result.imageDataUrl);
+        setNftMetadata({ theme: snap.result.theme, rarity: snap.result.rarity });
+        setNftData({
+          image: snap.result.imageDataUrl,
+          serialNumber: snap.result.serialNumber,
+          isSpecial: snap.result.isSpecial,
+          theme: snap.result.theme,
+          prompt: snap.result.prompt,
+          ...(snap.result.cosUrl ? { cosUrl: snap.result.cosUrl } : {}),
+        });
+        return;
+      }
+      if (snap.status === 'error') {
+        setIsGenerating(false);
+      }
+    });
+    return () => unsub();
   }, []);
 
   // Define parameters based on active category
@@ -214,8 +258,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   };
 
   const generateNFT = async () => {
-    setIsGenerating(true);
-    try {
+    const run = async (): Promise<MintJobResult> => {
       // Randomize traits for high variety
       const randomTheme = themes[Math.floor(Math.random() * themes.length)];
       const randomMaterial = materials[Math.floor(Math.random() * materials.length)];
@@ -382,9 +425,22 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           // ignore
         }
       }
+      return {
+        imageDataUrl: storedImg,
+        serialNumber,
+        isSpecial,
+        theme: randomTheme,
+        rarity: randomRarity,
+        prompt,
+        cosUrl,
+      };
+    };
+
+    setIsGenerating(true);
+    try {
+      await startMintJob(run);
     } catch (error) {
-      console.error("Error generating NFT:", error);
-    } finally {
+      console.error('Error generating NFT:', error);
       setIsGenerating(false);
     }
   };

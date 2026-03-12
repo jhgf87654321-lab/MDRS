@@ -101,10 +101,11 @@ export default async function handler(
       });
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          const base64 = part.inlineData.data;
-          const imgData = `data:image/png;base64,${base64}`;
-          return imgData;
+        const inline = (part as any).inlineData ?? (part as any).inline_data;
+        const base64 = inline?.data;
+        const mimeType = inline?.mimeType || inline?.mime_type || 'image/png';
+        if (typeof base64 === 'string' && base64.length > 0) {
+          return `data:${mimeType};base64,${base64}`;
         }
       }
 
