@@ -320,31 +320,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, around 1024px on the long edge, sharp focus, realistic skin texture. 
       The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean and modern.`;
 
-      let references: AestheticReference[] = [];
-      try {
-        references = await getRandomAestheticReferences(1);
-      } catch (e) {
-        console.error('Failed to fetch aesthetic references', e);
-        references = [];
-      }
-
       const parts: GeminiPart[] = [{ text: prompt }];
-      if (references.length > 0) {
-        parts.push({
-          text: 'Please use the following images as strong aesthetic and stylistic references for the lighting, composition, and overall vibe:',
-        });
-        for (const ref of references) {
-          const imgUrl = (ref.imageDataUrl && typeof ref.imageDataUrl === 'string' ? ref.imageDataUrl : ref.imageUrl) || '';
-          if (!imgUrl || !imgUrl.startsWith('data:')) continue;
-          const base64Data = imgUrl.split(',')[1];
-          const mimeType = imgUrl.split(';')[0].split(':')[1];
-          if (!base64Data || !mimeType) {
-            console.error('Invalid reference imageUrl format', { id: ref.id });
-            continue;
-          }
-          parts.push({ inlineData: { data: base64Data, mimeType } });
-        }
-      }
+      // NOTE: reference-image prompt logic temporarily disabled.
+      // The block that fetches aesthetic references and pushes inlineData parts
+      // has been kept for future use, but is not executed for now to simplify generation.
 
       const imgData = await generateGeminiImage({ parts, model: 'gemini-2.5-flash-image' });
 
