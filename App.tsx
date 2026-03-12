@@ -62,6 +62,7 @@ const App: React.FC = () => {
               setCurrentView(View.CREATE_POST);
             }}
             onOpenShareHub={() => setCurrentView(View.SHARE_HUB)}
+            onOpenAuth={() => setCurrentView(View.AUTH)}
           />
         );
       case View.TRY_ON: return <TryOn />;

@@ -346,7 +346,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         }
       }
 
-      const imgData = await generateGeminiImage({ parts, model: 'gemini-3.1-flash-image-preview' });
+      const imgData = await generateGeminiImage({ parts, model: 'gemini-2.5-flash-image' });
 
       const compressForStorage = async (dataUrl: string) => {
         try {
