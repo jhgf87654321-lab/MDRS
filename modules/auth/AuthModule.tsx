@@ -13,6 +13,18 @@ function isNonEmpty(v: string) {
   return v.trim().length > 0;
 }
 
+// CloudBase 要求手机号形如 "+86 13800000000"
+function normalizePhone(input: string) {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.startsWith('+')) return trimmed;
+  const digits = trimmed.replace(/\D/g, '');
+  if (/^1\d{10}$/.test(digits)) {
+    return `+86 ${digits}`;
+  }
+  return trimmed;
+}
+
 export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
   const [mode, setMode] = useState<Mode>('signIn');
@@ -58,7 +70,7 @@ export default function AuthModule({ onNavigate }: Props) {
       const payload =
         channel === 'email'
           ? { email: trimmed.toLowerCase() }
-          : { phone_number: trimmed };
+          : { phone_number: normalizePhone(trimmed) };
       // CloudBase getVerification 发送验证码，返回 verification_id（非 verification_token）
       const res = await (auth as any).getVerification(payload);
       const id = res?.verification_id ?? res?.verificationId;
@@ -89,7 +101,7 @@ export default function AuthModule({ onNavigate }: Props) {
         const base =
           channel === 'email'
             ? { email: trimmedId.toLowerCase() }
-            : { phone_number: trimmedId };
+            : { phone_number: normalizePhone(trimmedId) };
         await (auth as any).signInWithPassword({
           ...base,
           password,
@@ -105,7 +117,7 @@ export default function AuthModule({ onNavigate }: Props) {
         const base =
           channel === 'email'
             ? { email: trimmedId.toLowerCase() }
-            : { phone_number: trimmedId };
+            : { phone_number: normalizePhone(trimmedId) };
         // 先用 verify 将 verification_id + code 换取 verification_token
         const verifyRes = await (auth as any).verify({
           verification_id: verificationId,
