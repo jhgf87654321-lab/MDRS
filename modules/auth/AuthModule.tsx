@@ -29,8 +29,10 @@ export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
   const [mode, setMode] = useState<Mode>('signIn');
   const [channel, setChannel] = useState<Channel>('email');
+  const [username, setUsername] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [code, setCode] = useState('');
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'submitting'>('idle');
@@ -93,6 +95,20 @@ export default function AuthModule({ onNavigate }: Props) {
       setError('请输入密码');
       return;
     }
+    if (mode === 'signUp') {
+      if (!isNonEmpty(username)) {
+        setError('请输入用户名');
+        return;
+      }
+      if (!isNonEmpty(confirmPassword)) {
+        setError('请确认密码');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('两次输入的密码不一致');
+        return;
+      }
+    }
 
     setStatus('submitting');
     try {
@@ -128,6 +144,7 @@ export default function AuthModule({ onNavigate }: Props) {
         if (!verificationToken) throw new Error('验证码校验失败');
         await (auth as any).signUp({
           ...base,
+          username: username.trim(),
           password,
           verification_code: code.trim(),
           verification_token: verificationToken,
@@ -211,6 +228,21 @@ export default function AuthModule({ onNavigate }: Props) {
 
         <div className="glass rounded-[2.5rem] border border-white/10 p-8">
           <div className="space-y-5">
+            {mode === 'signUp' && (
+              <div>
+                <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
+                  Username
+                </label>
+                <input
+                  value={username}
+                  onChange={(ev) => setUsername(ev.target.value)}
+                  type="text"
+                  placeholder="AXON_USER"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                />
+              </div>
+            )}
+
             <div>
               <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
                 {channel === 'email' ? 'Email' : 'Phone'}
@@ -236,6 +268,21 @@ export default function AuthModule({ onNavigate }: Props) {
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
             </div>
+
+            {mode === 'signUp' && (
+              <div>
+                <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
+                  Confirm Password
+                </label>
+                <input
+                  value={confirmPassword}
+                  onChange={(ev) => setConfirmPassword(ev.target.value)}
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                />
+              </div>
+            )}
 
             {mode === 'signUp' && (
               <div>
@@ -291,6 +338,8 @@ export default function AuthModule({ onNavigate }: Props) {
                   if (mode === 'signUp') {
                     setVerificationId(null);
                     setCode('');
+                    setUsername('');
+                    setConfirmPassword('');
                   }
                 }}
                 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/90 hover:text-primary transition-colors underline underline-offset-4"
