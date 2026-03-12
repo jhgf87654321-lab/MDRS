@@ -92,7 +92,10 @@ export default async function handler(
   try {
     const ai = new GoogleGenAI({ apiKey });
 
-    const generateImageOnce = async (model: SupportedGeminiImageModel, parts: GeminiPart[]) => {
+    const generateImageOnce = async (
+      model: SupportedGeminiImageModel,
+      parts: GeminiPart[],
+    ): Promise<{ imgData: string | null; debug: { finishReason?: string; textParts?: string } }> => {
       const response = await ai.models.generateContent({
         model,
         contents: {
@@ -105,11 +108,18 @@ export default async function handler(
         const base64 = inline?.data;
         const mimeType = inline?.mimeType || inline?.mime_type || 'image/png';
         if (typeof base64 === 'string' && base64.length > 0) {
-          return `data:${mimeType};base64,${base64}`;
+          return { imgData: `data:${mimeType};base64,${base64}`, debug: {} };
         }
       }
 
-      return null;
+      const finishReason = (response as any)?.candidates?.[0]?.finishReason;
+      const textParts = ((response as any)?.candidates?.[0]?.content?.parts || [])
+        .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(' | ')
+        .slice(0, 240);
+      return { imgData: null, debug: { finishReason, textParts } };
     };
 
     // Special path: imageUrls + prompt (used by TryOn with COS URLs)
@@ -153,8 +163,13 @@ export default async function handler(
       const parts: GeminiPart[] = [...inlineParts];
       if (promptText) parts.push({ text: promptText });
 
-      const imgData = await generateImageOnce(model, parts);
-      if (!imgData) return res.status(500).json({ error: 'No image generated' });
+      const out = await generateImageOnce(model, parts);
+      const imgData = out.imgData;
+      if (!imgData) {
+        return res.status(500).json({
+          error: `No image generated (finishReason=${out.debug.finishReason || 'unknown'}; text=${out.debug.textParts || ''})`,
+        });
+      }
       return res.status(200).json({ image: imgData });
     }
 
@@ -163,8 +178,13 @@ export default async function handler(
       return res.status(parsed.status).json({ error: parsed.error });
     }
 
-    const imgData = await generateImageOnce(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts);
-    if (!imgData) return res.status(500).json({ error: 'No image generated' });
+    const out = await generateImageOnce(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts);
+    const imgData = out.imgData;
+    if (!imgData) {
+      return res.status(500).json({
+        error: `No image generated (finishReason=${out.debug.finishReason || 'unknown'}; text=${out.debug.textParts || ''})`,
+      });
+    }
     return res.status(200).json({ image: imgData });
   } catch (err) {
     console.error('Gemini API error:', err);
