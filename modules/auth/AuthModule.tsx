@@ -184,8 +184,9 @@ export default function AuthModule({ onNavigate }: Props) {
       setMe(user ? { uid: (user as any).uid, email: (user as any).email } : null);
       try {
         await ensureUserProfile();
-      } catch {
-        // ignore profile init failures; auth success is higher priority
+      } catch (e) {
+        // Surface profile init issues to browser console for debugging
+        console.error('ensureUserProfile error', e);
       }
       onNavigate(View.CREATOR);
     } catch (err) {
