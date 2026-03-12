@@ -16,8 +16,8 @@ export type UserProfileDoc = {
 
 const COLLECTION = 'user_profiles';
 
-function normalizeUrl(url: string) {
-  return url.trim();
+function normalizeUrl(url: string | undefined | null) {
+  return (url || '').trim();
 }
 
 async function getUid() {
