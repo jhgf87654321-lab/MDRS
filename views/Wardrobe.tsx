@@ -68,16 +68,17 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
       // Only use CloudBase profile owned NFTs (COS urls). Do not fall back to browser cache.
       try {
         const owned = await listMyOwnedNfts();
-        const next: CyberCollectionItem[] = Array.isArray(owned)
-          ? owned.map((x) => ({
-              image: x.cosUrl,
-              cosUrl: x.cosUrl,
-              serialNumber: x.serialNumber || 'No.00000000',
-              isSpecial: (x.serialNumber || '').startsWith('Sp.'),
-              theme: 'Owned',
-              prompt: '',
-            }))
+        const validOwned = Array.isArray(owned)
+          ? owned.filter((x) => typeof x.cosUrl === 'string' && x.cosUrl.trim().length > 0)
           : [];
+        const next: CyberCollectionItem[] = validOwned.map((x) => ({
+          image: x.cosUrl,
+          cosUrl: x.cosUrl,
+          serialNumber: x.serialNumber || 'No.00000000',
+          isSpecial: (x.serialNumber || '').startsWith('Sp.'),
+          theme: 'Owned',
+          prompt: '',
+        }));
         setCollection(next);
         setGeneratedNFT(next[0]?.image ?? null);
         return;
@@ -263,12 +264,19 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
 
   return (
     <div className="min-h-full flex flex-col">
-      <header className="relative z-50 px-8 pt-12 flex justify_between items-center mb-10">
+      {/* Header aligned with Home / Creator avatar placement */}
+      <header className="relative z-50 px-8 pt-12 flex justify-between items-center mb-10">
         <div>
-          <p className="text-[10px] uppercase tracking_[0.3em] font-space text_white/50 leading-none mb-2">Virtual Vault</p>
-          <h2 className="text-3xl font-future font-black tracking-tighter leading-none">WARD<br/>ROBE</h2>
+          <p className="text-[10px] uppercase tracking-[0.3em] font-space text-white/50 leading-none mb-2">
+            Virtual Vault
+          </p>
+          <h2 className="text-3xl font-future font-black tracking-tighter leading-none">
+            WARD
+            <br />
+            ROBE
+          </h2>
         </div>
-        <button 
+        <button
           onClick={() => {
             if (onOpenAuth) {
               onOpenAuth();
@@ -276,7 +284,11 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
           }}
           className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
         >
-          <img src="https://picsum.photos/100/100?seed=axon_prime" alt="Avatar" className="w-14 h-14 rounded-full object-cover" />
+          <img
+            src="https://picsum.photos/100/100?seed=axon_prime"
+            alt="Avatar"
+            className="w-14 h-14 rounded-full object-cover"
+          />
         </button>
       </header>
 

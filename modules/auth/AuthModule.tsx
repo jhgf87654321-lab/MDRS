@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View } from '../../types';
 import { getCloudbaseAuth } from '../../lib/cloudbase';
-import { ensureUserProfile } from '../../lib/userProfile';
+import { ensureUserProfile, setMyDisplayName } from '../../lib/userProfile';
 
 type Mode = 'signIn' | 'signUp';
 type Channel = 'email' | 'phone';
@@ -58,8 +58,8 @@ export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
   const [mode, setMode] = useState<Mode>('signIn');
   const [channel, setChannel] = useState<Channel>('email');
-  const [username, setUsername] = useState('');
   const [identifier, setIdentifier] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [code, setCode] = useState('');
@@ -125,8 +125,8 @@ export default function AuthModule({ onNavigate }: Props) {
       return;
     }
     if (mode === 'signUp') {
-      if (!isNonEmpty(username)) {
-        setError('请输入用户名');
+      if (!isNonEmpty(displayName)) {
+        setError('请输入用户名 / 昵称');
         return;
       }
       if (!isNonEmpty(confirmPassword)) {
@@ -173,7 +173,6 @@ export default function AuthModule({ onNavigate }: Props) {
         if (!verificationToken) throw new Error('验证码校验失败');
         await (auth as any).signUp({
           ...base,
-          username: username.trim(),
           password,
           verification_code: code.trim(),
           verification_token: verificationToken,
@@ -183,7 +182,12 @@ export default function AuthModule({ onNavigate }: Props) {
       const user = await auth.getCurrentUser();
       setMe(user ? { uid: (user as any).uid, email: (user as any).email } : null);
       try {
-        await ensureUserProfile();
+        // 创建 / 确保用户档案存在
+        const profile = await ensureUserProfile();
+        // 注册时，把用户填写的昵称写入档案，仅影响 displayName，不参与登录
+        if (mode === 'signUp' && isNonEmpty(displayName)) {
+          await setMyDisplayName(displayName.trim());
+        }
       } catch (e) {
         // Surface profile init issues to browser console for debugging
         console.error('ensureUserProfile error', e);
@@ -280,18 +284,17 @@ export default function AuthModule({ onNavigate }: Props) {
             {mode === 'signUp' && (
               <div>
                 <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                  Username
+                  Username / Nickname
                 </label>
                 <input
-                  value={username}
-                  onChange={(ev) => setUsername(ev.target.value)}
+                  value={displayName}
+                  onChange={(ev) => setDisplayName(ev.target.value)}
                   type="text"
-                  placeholder="AXON_USER"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                  placeholder="Your name or handle"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white normal-case focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
                 />
               </div>
             )}
-
             <div>
               <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
                 {channel === 'email' ? 'Email' : 'Phone'}
@@ -301,7 +304,7 @@ export default function AuthModule({ onNavigate }: Props) {
                 onChange={(ev) => setIdentifier(ev.target.value)}
                 type={channel === 'email' ? 'email' : 'tel'}
                 placeholder={channel === 'email' ? 'user@domain.com' : '+86 138 0000 0000'}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white normal-case focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
             </div>
 
@@ -314,7 +317,7 @@ export default function AuthModule({ onNavigate }: Props) {
                 onChange={(ev) => setPassword(ev.target.value)}
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white normal-case focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
             </div>
 
@@ -328,7 +331,7 @@ export default function AuthModule({ onNavigate }: Props) {
                   onChange={(ev) => setConfirmPassword(ev.target.value)}
                   type="password"
                   placeholder="••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white normal-case focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
                 />
               </div>
             )}
@@ -353,7 +356,7 @@ export default function AuthModule({ onNavigate }: Props) {
                 onChange={(ev) => setCode(ev.target.value)}
                 inputMode="numeric"
                 placeholder="123456"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white normal-case focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
               />
               {verificationId ? (
                 <div className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.2em]">验证码已发送</div>
@@ -387,7 +390,6 @@ export default function AuthModule({ onNavigate }: Props) {
                   if (mode === 'signUp') {
                     setVerificationId(null);
                     setCode('');
-                    setUsername('');
                     setConfirmPassword('');
                   }
                 }}

@@ -11,6 +11,8 @@ export type UserProfileDoc = {
   uid: string;
   createdAt: number;
   updatedAt: number;
+  // 用户自定义显示名，仅用于前端展示，不参与登录
+  displayName?: string;
   ownedNfts: OwnedNftRef[];
 };
 
@@ -50,6 +52,7 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
       uid: doc.uid,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+      ...(doc.displayName ? { displayName: doc.displayName } : {}),
       ownedNfts: doc.ownedNfts,
     });
 }
@@ -78,6 +81,7 @@ async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
       uid: doc.uid,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+      ...(doc.displayName ? { displayName: doc.displayName } : {}),
       ownedNfts: doc.ownedNfts,
     });
 
@@ -106,6 +110,38 @@ export async function listMyOwnedNfts(): Promise<OwnedNftRef[]> {
   // keep in sync with server doc if it already exists
   if (doc.uid !== uid) return [];
   return Array.isArray(doc.ownedNfts) ? doc.ownedNfts : [];
+}
+
+export async function setMyDisplayName(displayName: string) {
+  const uid = await getUid();
+  const now = Date.now();
+  const existing = await getProfileDoc(uid);
+  const base: UserProfileDoc =
+    existing ?? {
+      uid,
+      createdAt: now,
+      updatedAt: now,
+      ownedNfts: [],
+    };
+  const doc: UserProfileDoc = {
+    ...base,
+    displayName,
+    updatedAt: now,
+  };
+
+  const db = getCloudbaseDb();
+  const res = await db
+    .collection(COLLECTION)
+    .doc(uid)
+    .update({
+      uid: doc.uid,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      displayName: doc.displayName,
+      ownedNfts: doc.ownedNfts,
+    });
+  console.log('[userProfile] setMyDisplayName result', res);
+  return doc;
 }
 
 export async function addNftToMyProfile(input: { cosUrl: string; serialNumber?: string; source?: 'mint' | 'trade' }) {
@@ -163,12 +199,14 @@ export async function transferNftBetweenUsers(params: { fromUid: string; toUid: 
     uid: fromUid,
     createdAt: Date.now(),
     updatedAt: Date.now(),
+    displayName: undefined,
     ownedNfts: [],
   };
   const toDoc = (await getProfileDoc(toUid)) ?? {
     uid: toUid,
     createdAt: Date.now(),
     updatedAt: Date.now(),
+    displayName: undefined,
     ownedNfts: [],
   };
 
