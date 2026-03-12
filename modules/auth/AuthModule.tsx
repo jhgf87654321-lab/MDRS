@@ -248,8 +248,8 @@ export default function AuthModule({ onNavigate }: Props) {
             </div>
           </div>
         ) : (
-
-        <div className="flex gap-2 mb-6">
+          <>
+            <div className="flex gap-2 mb-6">
           <button
             onClick={() => setChannel('email')}
             className={`flex-1 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-[0.25em] transition-colors ${
@@ -266,9 +266,9 @@ export default function AuthModule({ onNavigate }: Props) {
           >
             Phone
           </button>
-        </div>
+            </div>
 
-        <div className="glass rounded-[2.5rem] border border-white/10 p-8">
+            <div className="glass rounded-[2.5rem] border border-white/10 p-8">
           <div className="space-y-5">
             {mode === 'signUp' && (
               <div>
@@ -390,7 +390,8 @@ export default function AuthModule({ onNavigate }: Props) {
               </button>
             </div>
           </div>
-        </div>
+            </div>
+          </>
         )}
       </main>
     </div>
