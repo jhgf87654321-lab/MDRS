@@ -146,7 +146,7 @@ export default function AuthModule({ onNavigate }: Props) {
         const base =
           channel === 'email'
             ? { email: trimmedId.toLowerCase() }
-            : { phone_number: normalizePhone(trimmedId) };
+            : { phone: normalizePhone(trimmedId) };
         await (auth as any).signInWithPassword({
           ...base,
           password,
