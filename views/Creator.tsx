@@ -277,19 +277,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
       const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
-      const bodyTypeDesc =
-        params.muscularity > 70
-          ? 'muscular'
-          : params.muscularity >= 20 && params.muscularity <= 40
-            ? 'athletic'
-            : 'lean';
-      if (params.muscularity >= 20 && params.muscularity <= 40 && params.thickness < 30) {
-        finalStyleInstruction += ' Keep it editorial fashion and non-explicit.';
-      }
       
       const characterDesc = gender === 'Creature' 
         ? `A unique, otherworldly creature (alien, mutant, or bio-engineered beast). Texture: ${creatureTexture}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}.`
-        : `A stylish ${gender.toLowerCase()} fashion model. Body type: ${bodyTypeDesc} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
+        : `A stylish ${gender.toLowerCase()} fashion model. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
 
       const outfitDesc = designMode === 'Custom'
         ? `Outfit consists of: Top - ${customDesign.top}, Bottom - ${customDesign.bottom}, Footwear - ${customDesign.shoes}.`
@@ -318,6 +309,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       Theme: ${randomTheme}. 
       The composition is a single, unified full-frame image featuring exactly ONE character.
       FRAMING (MUST FOLLOW): FULL-BODY / full-length portrait from head-to-toe. The entire character MUST be visible, including full legs, feet, and footwear, with comfortable margin above the head and below the feet. Do NOT crop at the head, knees, ankles, or feet. Do NOT zoom-in tight on just the face or torso.
+      SAFETY: Absolutely no visible nipples, areola, or genitals. No explicit sex acts or pornographic content.
       Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
       Background: ${backgroundInstruction}
       Graphic Elements: Overlay the image with technical UI details, fine technical text, cross-hairs, and minimalist graphic annotations. Do NOT use QR codes.

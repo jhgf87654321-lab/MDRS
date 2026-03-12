@@ -8,7 +8,6 @@ export type OwnedNftRef = {
 };
 
 export type UserProfileDoc = {
-  _id: string; // uid
   uid: string;
   createdAt: number;
   updatedAt: number;
@@ -49,7 +48,6 @@ async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
   const existing = await getProfileDoc(uid);
   const now = Date.now();
   const doc: UserProfileDoc = existing ?? {
-    _id: uid,
     uid,
     createdAt: now,
     updatedAt: now,
@@ -67,7 +65,6 @@ export async function ensureUserProfile() {
   if (existing) return existing;
   const now = Date.now();
   const doc: UserProfileDoc = {
-    _id: uid,
     uid,
     createdAt: now,
     updatedAt: now,
@@ -117,14 +114,12 @@ export async function transferNftBetweenUsers(params: { fromUid: string; toUid: 
   if (!fromUid || !toUid || !cosUrl) throw new Error('INVALID_TRANSFER');
 
   const fromDoc = (await getProfileDoc(fromUid)) ?? {
-    _id: fromUid,
     uid: fromUid,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     ownedNfts: [],
   };
   const toDoc = (await getProfileDoc(toUid)) ?? {
-    _id: toUid,
     uid: toUid,
     createdAt: Date.now(),
     updatedAt: Date.now(),
