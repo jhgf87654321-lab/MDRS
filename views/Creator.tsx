@@ -46,7 +46,7 @@ type CreatorProps = {
 const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState<Category>('Body');
   const [gender, setGender] = useState<Gender>('Male');
-  const [creatureTexture, setCreatureTexture] = useState<CreatureTexture>('Hairless');
+  const [creatureTexture, setCreatureTexture] = useState<CreatureTexture>('Hairy');
   const [designMode, setDesignMode] = useState<DesignMode>('Random');
   const [customDesign, setCustomDesign] = useState({
     top: 'Coat',
@@ -110,7 +110,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       v: 1,
       activeCategory: 'Body',
       gender: 'Male',
-      creatureTexture: 'Hairless',
+      creatureTexture: 'Hairy',
       designMode: 'Random',
       customDesign: { top: 'Coat', bottom: 'Pants', shoes: 'Sneakers' },
       params: {
