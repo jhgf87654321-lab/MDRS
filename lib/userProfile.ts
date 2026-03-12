@@ -83,19 +83,39 @@ export async function listMyOwnedNfts(): Promise<OwnedNftRef[]> {
 }
 
 export async function addNftToMyProfile(input: { cosUrl: string; serialNumber?: string; source?: 'mint' | 'trade' }) {
-  const uid = await getUid();
-  const cosUrl = normalizeUrl(input.cosUrl);
-  if (!cosUrl) throw new Error('EMPTY_URL');
+  try {
+    const uid = await getUid();
+    const cosUrl = normalizeUrl(input.cosUrl);
+    if (!cosUrl) throw new Error('EMPTY_URL');
 
-  const doc = await ensureUserProfile();
-  const owned = Array.isArray(doc.ownedNfts) ? doc.ownedNfts : [];
-  if (owned.some((x) => normalizeUrl(x.cosUrl) === cosUrl)) return doc;
+    console.log('[userProfile] addNftToMyProfile start', { uid, cosUrl, serialNumber: input.serialNumber, source: input.source });
 
-  const next: OwnedNftRef[] = [
-    { cosUrl, serialNumber: input.serialNumber, source: input.source, createdAt: Date.now() },
-    ...owned,
-  ];
-  return await updateOwnedNfts(uid, next);
+    const doc = await ensureUserProfile();
+    console.log('[userProfile] ensureUserProfile ok for uid', doc.uid);
+
+    const owned = Array.isArray(doc.ownedNfts) ? doc.ownedNfts : [];
+    if (owned.some((x) => normalizeUrl(x.cosUrl) === cosUrl)) {
+      console.log('[userProfile] NFT already recorded for uid, skip', { uid, cosUrl });
+      return doc;
+    }
+
+    const next: OwnedNftRef[] = [
+      { cosUrl, serialNumber: input.serialNumber, source: input.source, createdAt: Date.now() },
+      ...owned,
+    ];
+    console.log('[userProfile] updating ownedNfts count', { uid, count: next.length });
+    const result = await updateOwnedNfts(uid, next);
+    console.log('[userProfile] addNftToMyProfile success', { uid });
+    return result;
+  } catch (err: any) {
+    console.error('[userProfile] addNftToMyProfile error', {
+      code: err?.code,
+      message: err?.message,
+      requestId: err?.requestId,
+      raw: err,
+    });
+    throw err;
+  }
 }
 
 export async function removeNftFromMyProfile(cosUrlRaw: string) {
