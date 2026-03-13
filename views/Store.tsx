@@ -32,31 +32,45 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
   const format = (n: number) => n.toString().padStart(2, '0');
 
+  // Use COS "current" artwork as initial images to avoid showing old placeholders during async load.
+  // (leaderImages is fetched async; these act as the initial render)
+  const COS_FALLBACK = 'https://lokada-1254090729.cos.ap-shanghai.myqcloud.com/FUNCTION/header.jpg';
   const fallbackLeaderboard = [
     { 
       id: 'Cyber Nomad #01', 
       name: 'Cyber Nomad #01',
       likes: 12450, 
       type: 'User NFT',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBaOKSjB2d9dKh6KOhkyXPq088wpSrv9uRrrQqJgnsAPSrk1GuXd6kPz1Vvk_-ziM5HXxbuSUtZPySyztFo6OBXQt_YvWZKvU8jLlEJDBgqhwYj8ZvdQ2eQuItMuahDt-BtBOHVb7Y-cUPgkfG_rxcs-Ma2d46RdD2nfXqV311B-QwJBA89uc8hauO03Bs8gmg6nyaOEGvHKz7isEhAFOCdbPBUMgNAbZ6yckmJ9zBMpQ9UO7G7kn5Wu1sRmuIsh4cgQTAYZzRF-2ZH' 
+      image: COS_FALLBACK,
     },
     { 
       id: 'Neon Beast #42', 
       name: 'Neon Beast #42',
       likes: 9820, 
       type: 'User NFT',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAoATIVSbrj9vO-WA5HbmZE18PtqpvOej5R9OwCauCnD-sEkqdhez4ikIfLujc0cYKoXsvnlFGp3YyAV-3gwWOVvGje_a6XL4e6XFQe76QLTsekVJFS0aRkEJCGONhnaA08hhyNrk0qw5B7zo6koIDb_RTE_11ewuIih8km6wNmjDAxrnCI9F7Oon8tZP1QhK7kA-d8sl1wlT2gNxKFvu9fW2TXZ9yIXpUEIIGmdBx7KtpKot0p6Yl2kF0vkSkyNoKF-e7_SK0CnrTT' 
+      image: COS_FALLBACK,
     },
     {
       id: 'Chrome Angel #07',
       name: 'Chrome Angel #07',
       likes: 8500,
       type: 'User NFT',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7EiJ_hhLJf-3T-E0UgXeAz6trCapwiGJ84ObO6-z-gvVifDsOqxOaTck0RXXTU9Yke84Te_E52cOrV4thgrqhLjS9gjzgJ-nnvkndpvptlJO42_dBEs8BQP7cs32gAhPu2mMQCi2j2huJF4FrH37r5SEC4NY2D-ldbp4Nutcw_ustrhw6104cNAB89YE0uHB2CRWaqPzeN8-G3-1sjECcFEmKQbfw1wjOweqocYpon-mT3R-28Bhic_G__hKzOG8SMf66nuzpNwF6'
+      image: COS_FALLBACK,
     }
   ];
 
-  const [leaderImages, setLeaderImages] = useState<string[]>([]);
+  const [leaderImages, setLeaderImages] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('leaderImagesCache');
+      const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+      if (Array.isArray(parsed) && parsed.every((x) => typeof x === 'string' && x.startsWith('http'))) {
+        return parsed.slice(0, 20);
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -67,6 +81,11 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         const data = (await res.json()) as { ok?: boolean; images?: string[] };
         if (res.ok && data.images && data.images.length) {
           setLeaderImages(data.images);
+          try {
+            localStorage.setItem('leaderImagesCache', JSON.stringify(data.images.slice(0, 20)));
+          } catch {
+            // ignore
+          }
         }
       } catch {
         // ignore, will use fallback

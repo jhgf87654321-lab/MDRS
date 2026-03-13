@@ -11,6 +11,8 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
   const [mediaUrls, setMediaUrls] = useState<string[]>(initialMedia);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const HASHTAGS = ['#CyberFashion', '#OOTD', '#NFT'] as const;
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +57,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
     setIsSubmitting(true);
     try {
       const urls = await Promise.all(mediaUrls.map((m) => uploadImageToCloudBase(m)));
-      await createPost({ mediaUrls: urls, title: title.trim(), content: content.trim() });
+      await createPost({ mediaUrls: urls, title: title.trim(), content: content.trim(), hashtags: selectedTags });
       onSuccess();
     } catch (error) {
       console.error('Error creating post', error);
@@ -153,15 +155,25 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
           </div>
 
           <div className="flex gap-2 flex-wrap pt-4 border-t border-white/10">
-            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">
-              #CyberFashion
-            </span>
-            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/60">
-              #OOTD
-            </span>
-            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/60">
-              #NFT
-            </span>
+            {HASHTAGS.map((tag) => {
+              const active = selectedTags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+                  }}
+                  className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest border transition-colors ${
+                    active
+                      ? 'bg-primary/20 text-primary border-primary/40'
+                      : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30 hover:text-white/80'
+                  } normal-case`}
+                >
+                  {tag}
+                </button>
+              );
+            })}
           </div>
         </form>
       </main>

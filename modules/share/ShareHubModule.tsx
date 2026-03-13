@@ -108,6 +108,18 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
 
                 <div className="px-1">
                   <h3 className="text-sm font-bold line-clamp-2 leading-tight mb-2">{post.title}</h3>
+                  {Array.isArray((post as any).hashtags) && (post as any).hashtags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {((post as any).hashtags as string[]).slice(0, 10).map((t) => (
+                        <span
+                          key={t}
+                          className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold tracking-wider text-primary/90 normal-case"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <img

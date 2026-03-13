@@ -11,6 +11,14 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function isHashtag(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const s = value.trim();
+  if (!s.startsWith('#')) return false;
+  if (s.length < 2 || s.length > 40) return false;
+  return true;
+}
+
 type Req = {
   method?: string;
   url?: string;
@@ -82,17 +90,24 @@ export default async function handler(req: Req, res: Res) {
       const mediaUrls = req.body.mediaUrls;
       const title = req.body.title;
       const content = req.body.content;
+      const hashtagsRaw = (req.body as any).hashtags;
       if (!Array.isArray(mediaUrls) || mediaUrls.length === 0 || mediaUrls.length > 10) return res.status(400).json({ error: 'mediaUrls must be 1-10 items' });
       if (!mediaUrls.every((u) => typeof u === 'string' && u.length > 0 && u.length < 5_000_000)) return res.status(400).json({ error: 'Invalid mediaUrls' });
       if (!isNonEmptyString(title) || title.length > 100) return res.status(400).json({ error: 'Invalid title' });
       if (!isNonEmptyString(content) || content.length > 5000) return res.status(400).json({ error: 'Invalid content' });
+      const hashtags = Array.isArray(hashtagsRaw)
+        ? hashtagsRaw
+            .filter(isHashtag)
+            .map((s: string) => s.trim())
+            .slice(0, 10)
+        : [];
       try {
         const authorName = session.email.split('@')[0] || 'Anonymous';
         const authorAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.uid}`;
         const postId = crypto.randomUUID();
         await db.collection('posts').doc(postId).set({
           id: postId, authorUid: session.uid, authorName, authorAvatar,
-          mediaUrls, title: title.trim(), content: content.trim(), likesCount: 0, createdAt: new Date(),
+          mediaUrls, title: title.trim(), content: content.trim(), hashtags, likesCount: 0, createdAt: new Date(),
         });
         return res.status(200).json({ ok: true, id: postId });
       } catch (e) {
