@@ -75,7 +75,13 @@ export async function likePost(postId: string) {
   if (!res.ok) throw new Error(data.error || 'Failed to like');
 }
 
-export async function createPost(input: { mediaUrls: string[]; title: string; content: string; hashtags?: string[] }) {
+export async function createPost(input: {
+  mediaUrls: string[];
+  title: string;
+  content: string;
+  hashtags?: string[];
+  authorName?: string;
+}) {
   const res = await fetch('/api/posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

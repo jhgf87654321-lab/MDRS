@@ -19,6 +19,15 @@ function isHashtag(value: unknown): value is string {
   return true;
 }
 
+function sanitizeAuthorName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const s = value.trim();
+  if (!s) return null;
+  // Allow Chinese/emoji/etc, just cap length to keep UI stable.
+  if (s.length > 32) return s.slice(0, 32);
+  return s;
+}
+
 type Req = {
   method?: string;
   url?: string;
@@ -91,6 +100,7 @@ export default async function handler(req: Req, res: Res) {
       const title = req.body.title;
       const content = req.body.content;
       const hashtagsRaw = (req.body as any).hashtags;
+      const authorNameRaw = (req.body as any).authorName;
       if (!Array.isArray(mediaUrls) || mediaUrls.length === 0 || mediaUrls.length > 10) return res.status(400).json({ error: 'mediaUrls must be 1-10 items' });
       if (!mediaUrls.every((u) => typeof u === 'string' && u.length > 0 && u.length < 5_000_000)) return res.status(400).json({ error: 'Invalid mediaUrls' });
       if (!isNonEmptyString(title) || title.length > 100) return res.status(400).json({ error: 'Invalid title' });
@@ -102,7 +112,7 @@ export default async function handler(req: Req, res: Res) {
             .slice(0, 10)
         : [];
       try {
-        const authorName = session.email.split('@')[0] || 'Anonymous';
+        const authorName = sanitizeAuthorName(authorNameRaw) || session.email.split('@')[0] || 'Anonymous';
         const authorAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.uid}`;
         const postId = crypto.randomUUID();
         await db.collection('posts').doc(postId).set({
