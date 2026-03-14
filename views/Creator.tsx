@@ -337,7 +337,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             img.onload = () => resolve();
             img.onerror = () => reject(new Error('load failed'));
           });
-          const maxDim = 768;
+          // Keep 1K preview (do not downscale to 768) so upscaler gets better input.
+          const maxDim = 1024;
           const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
           const w = Math.max(1, Math.round((img.width || 1) * scale));
           const h = Math.max(1, Math.round((img.height || 1) * scale));
@@ -363,14 +364,23 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       setGeneratedNFT(storedImg);
       localStorage.setItem('generatedNFT', storedImg);
 
-      // Upload minted image to COS using serialNumber as filename
+      // Upscale 1K -> 2K via Upscayl, then upload to COS 2KUSERS/ with same name.
       let cosUrl: string | undefined;
       try {
-        const folder = isSpecial ? 'SP/' : 'MINT/';
-        const fileName = serialNumber.replace(/\./g, '_');
-        cosUrl = await uploadImageToCloudBase(storedImg, { prefix: folder, fileName });
+        const fileName = `${serialNumber.replace(/\./g, '_')}.webp`;
+        const resp = await fetch('/api/upscale-2k', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl: storedImg, fileName }),
+        });
+        const text = await resp.text();
+        const data = text ? (JSON.parse(text) as any) : {};
+        if (!resp.ok || !data?.url) {
+          throw new Error(typeof data?.error === 'string' ? data.error : 'Upscale failed');
+        }
+        cosUrl = String(data.url);
       } catch (e) {
-        console.error('Mint upload to COS failed', e);
+        console.error('Upscale+upload to COS failed', e);
       }
 
       if (cosUrl) {
