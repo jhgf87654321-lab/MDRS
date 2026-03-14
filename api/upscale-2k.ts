@@ -1,5 +1,3 @@
-import crypto from 'node:crypto';
-
 export const config = {
   maxDuration: 120,
 };
@@ -39,30 +37,7 @@ async function getCosClient() {
   return new COS({ SecretId, SecretKey });
 }
 
-const UPSCAYL_BASE = 'https://api.upscayl.org';
-
-async function upscaylJson(path: string, apiKey: string, body: unknown) {
-  const res = await fetch(`${UPSCAYL_BASE}${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': apiKey,
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  let data: any;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    throw new Error(`Upscayl ${path} invalid response: ${text.slice(0, 160)}`);
-  }
-  if (!res.ok) {
-    const msg = typeof data?.error === 'string' ? data.error : text.slice(0, 200);
-    throw new Error(`Upscayl ${path} failed (${res.status}): ${msg}`);
-  }
-  return data;
-}
+import { runUpscayl2K } from '../lib/upscayl';
 
 export default async function handler(req: Req, res: Res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -91,112 +66,11 @@ export default async function handler(req: Req, res: Res) {
 
   const originalFileName = sanitizeFileName(String(fileNameRaw));
   const fileType = parsed.mimeType;
-  const fileSize = inputBuf.byteLength;
 
   try {
-    // 1) Get multipart upload URLs
-    const uploadInfo = await upscaylJson('/get-upload-url', apiKey, {
-      data: { fileSize, fileType, originalFileName },
-    });
-    const uploadData = uploadInfo?.data;
-    const uploadId = uploadData?.uploadId as string | undefined;
-    const partUrls = uploadData?.partUrls as Array<{ partNumber: number; signedUrl: string }> | undefined;
-    const partSize = uploadData?.partSize as number | undefined;
-    const path = uploadData?.path as string | undefined;
-    const generatedFileName = uploadData?.fileName as string | undefined;
-    if (!uploadId || !Array.isArray(partUrls) || !partUrls.length || !partSize || !path) {
-      throw new Error('Upscayl get-upload-url missing fields');
-    }
+    const { downloadUrl, taskId } = await runUpscayl2K(inputBuf, fileType, originalFileName, apiKey);
 
-    // 2) Upload parts
-    const parts: Array<{ PartNumber: number; ETag: string }> = [];
-    for (const p of partUrls) {
-      const start = (p.partNumber - 1) * partSize;
-      const end = Math.min(start + partSize, inputBuf.length);
-      const chunk = inputBuf.subarray(start, end);
-      const putRes = await fetch(p.signedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': fileType },
-        body: chunk,
-      });
-      if (!putRes.ok) {
-        const t = await putRes.text();
-        throw new Error(`Upscayl upload part ${p.partNumber} failed: ${t.slice(0, 160)}`);
-      }
-      const etag = putRes.headers.get('etag') || putRes.headers.get('ETag');
-      if (!etag) throw new Error(`Upscayl upload part ${p.partNumber} missing ETag`);
-      parts.push({ PartNumber: p.partNumber, ETag: etag });
-    }
-
-    // 3) Complete multipart upload
-    await upscaylJson('/complete-multipart-upload', apiKey, {
-      data: {
-        uploadId,
-        key: path,
-        parts,
-      },
-    });
-
-    // 4) Start task using uploaded file reference
-    const files = [
-      {
-        fileName: generatedFileName || crypto.randomUUID(),
-        fileType,
-        fileSize,
-        originalFileName,
-        path,
-      },
-    ];
-
-    const form = new FormData();
-    form.set('enhanceFace', 'false');
-    form.set('model', 'upscayl-lite-4x');
-    form.set('scale', '2');
-    form.set('saveImageAs', 'jpg');
-    form.set('files', JSON.stringify(files));
-
-    const startRes = await fetch(`${UPSCAYL_BASE}/start-task`, {
-      method: 'POST',
-      headers: { 'X-API-Key': apiKey },
-      body: form as any,
-    });
-    const startText = await startRes.text();
-    let startJson: any = {};
-    try {
-      startJson = startText ? JSON.parse(startText) : {};
-    } catch {
-      throw new Error(`Upscayl start-task invalid response: ${startText.slice(0, 160)}`);
-    }
-    if (!startRes.ok) {
-      throw new Error(`Upscayl start-task failed (${startRes.status}): ${startText.slice(0, 200)}`);
-    }
-    const taskId = startJson?.data?.taskId as string | undefined;
-    if (!taskId) throw new Error('Upscayl start-task missing taskId');
-
-    // 5) Poll task status
-    const deadline = Date.now() + 110_000;
-    let downloadUrl: string | null = null;
-    while (Date.now() < deadline) {
-      const st = await upscaylJson('/get-task-status', apiKey, { data: { taskId } });
-      const s = st?.data?.status as string | undefined;
-      if (s === 'PROCESSED') {
-        const filesOut = st?.data?.files;
-        const first = Array.isArray(filesOut) ? filesOut[0] : null;
-        const url = first?.downloadUrl;
-        if (typeof url === 'string' && url.startsWith('http')) {
-          downloadUrl = url;
-          break;
-        }
-      }
-      if (s === 'PROCESSING_FAILED') {
-        throw new Error('Upscayl processing failed');
-      }
-      // small backoff
-      await new Promise((r) => setTimeout(r, 1200));
-    }
-    if (!downloadUrl) throw new Error('Upscayl timeout waiting for 2K result');
-
-    // 6) Download result and upload to COS under 2KUSERS/ with same base name
+    // Download result and upload to COS under 2KUSERS/ with same base name
     const outResp = await fetch(downloadUrl);
     if (!outResp.ok) throw new Error('Failed to download upscaled image');
     const outMime = outResp.headers.get('content-type') || 'image/jpeg';
