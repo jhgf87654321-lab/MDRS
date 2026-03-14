@@ -28,3 +28,4 @@ export function getAdminDb() {
   const databaseId = process.env.FIRESTORE_DATABASE_ID;
   return databaseId ? getFirestore(app, databaseId) : getFirestore(app);
 }
+

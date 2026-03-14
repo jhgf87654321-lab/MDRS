@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getCookieValue } from './cookies.js';
+import { getCookieValue } from './api-cookies.js';
 
 type SessionPayload = {
   uid: string;
@@ -65,3 +65,4 @@ export function getSessionFromRequest(req: { headers?: Record<string, string | s
   if (!token) return null;
   return verifySessionToken(token);
 }
+

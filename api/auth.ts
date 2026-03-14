@@ -1,9 +1,9 @@
 import crypto from 'node:crypto';
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { buildSetCookie } from './lib/cookies.js';
-import { getAdminDb } from './lib/firebaseAdmin.js';
-import { createSessionToken, getSessionFromRequest } from './lib/session.js';
+import { buildSetCookie } from '../lib/api-cookies.js';
+import { getAdminDb } from '../lib/firebaseAdmin.js';
+import { createSessionToken, getSessionFromRequest } from '../lib/api-session.js';
 
 type UserRole = 'user' | 'admin';
 
