@@ -37,8 +37,6 @@ async function getCosClient() {
   return new COS({ SecretId, SecretKey });
 }
 
-import { runUpscayl2K } from '../lib/upscayl.js';
-
 export default async function handler(req: Req, res: Res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -49,8 +47,9 @@ export default async function handler(req: Req, res: Res) {
 
   if (!isRecord(req.body)) return res.status(400).json({ error: 'Invalid JSON body' });
 
-  const apiKey = process.env.UPSCAYL_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'UPSCAYL_API_KEY is not configured' });
+  const cloudUrlRaw = process.env.CLOUD_UPSCALE_URL;
+  if (!cloudUrlRaw) return res.status(500).json({ error: 'CLOUD_UPSCALE_URL is not configured' });
+  const cloudUrl = cloudUrlRaw.replace(/\/+$/, '');
 
   const dataUrlRaw = (req.body as any).dataUrl;
   const fileNameRaw = (req.body as any).fileName;
@@ -61,21 +60,39 @@ export default async function handler(req: Req, res: Res) {
   const parsed = parseDataUrl(dataUrlRaw);
   if (!parsed) return res.status(400).json({ error: 'Invalid data URL format' });
 
-  const inputBuf = Buffer.from(parsed.base64, 'base64');
-  if (!inputBuf.byteLength) return res.status(400).json({ error: 'Empty image' });
+  if (!parsed.base64 || !parsed.base64.length) return res.status(400).json({ error: 'Empty image' });
 
   const originalFileName = sanitizeFileName(String(fileNameRaw));
-  const fileType = parsed.mimeType;
 
   try {
-    const { downloadUrl, taskId } = await runUpscayl2K(inputBuf, fileType, originalFileName, apiKey);
+    // 1) 调用 CloudBase 云托管的 Real-ESRGAN 服务做无水印超分
+    const upscaleResp = await fetch(`${cloudUrl}/upscale`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: parsed.base64,
+        scale: 2,
+      }),
+    });
+    const upscaleText = await upscaleResp.text();
+    let upscaleJson: any = {};
+    try {
+      upscaleJson = upscaleText ? JSON.parse(upscaleText) : {};
+    } catch {
+      throw new Error(`Cloud upscale invalid response: ${upscaleText.slice(0, 200)}`);
+    }
+    if (!upscaleResp.ok) {
+      throw new Error(`Cloud upscale failed (${upscaleResp.status}): ${upscaleText.slice(0, 200)}`);
+    }
+    const imageBase64 = upscaleJson?.imageBase64 as string | undefined;
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      throw new Error('Cloud upscale missing imageBase64');
+    }
 
-    // Download result and upload to COS under 2KUSERS/ with same base name
-    const outResp = await fetch(downloadUrl);
-    if (!outResp.ok) throw new Error('Failed to download upscaled image');
-    const outMime = outResp.headers.get('content-type') || 'image/jpeg';
-    const outBuf = Buffer.from(await outResp.arrayBuffer());
+    // 2) 将返回的 2K base64 上传到 COS：2KUSERS/ 同名 jpg
+    const outBuf = Buffer.from(imageBase64, 'base64');
     if (!outBuf.byteLength) throw new Error('Empty upscaled image');
+    const outMime = 'image/jpeg';
 
     const Bucket = process.env.COS_BUCKET;
     const Region = process.env.COS_REGION;
@@ -103,7 +120,7 @@ export default async function handler(req: Req, res: Res) {
     });
 
     const url = `https://${Bucket}.cos.${Region}.myqcloud.com/${Key}`;
-    return res.status(200).json({ ok: true, url, taskId });
+    return res.status(200).json({ ok: true, url });
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error';
     return res.status(500).json({ error: `Upscale failed: ${message}` });
