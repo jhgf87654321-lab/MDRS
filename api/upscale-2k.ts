@@ -47,10 +47,6 @@ export default async function handler(req: Req, res: Res) {
 
   if (!isRecord(req.body)) return res.status(400).json({ error: 'Invalid JSON body' });
 
-  const cloudUrlRaw = process.env.CLOUD_UPSCALE_URL;
-  if (!cloudUrlRaw) return res.status(500).json({ error: 'CLOUD_UPSCALE_URL is not configured' });
-  const cloudUrl = cloudUrlRaw.replace(/\/+$/, '');
-
   const dataUrlRaw = (req.body as any).dataUrl;
   const fileNameRaw = (req.body as any).fileName;
 
@@ -63,34 +59,62 @@ export default async function handler(req: Req, res: Res) {
   if (!parsed.base64 || !parsed.base64.length) return res.status(400).json({ error: 'Empty image' });
 
   const originalFileName = sanitizeFileName(String(fileNameRaw));
+  const inputBuf = Buffer.from(parsed.base64, 'base64');
+  const fileType = parsed.mimeType;
+
+  // 与本地同一流程：先选放大方式，再得到 2K Buffer，最后统一上传 COS → 返回 url
+  const opencvBase =
+    (process.env.LOCAL_UPS_ENDPOINT || process.env.CLOUD_UPSCALE_URL || '').replace(/\/+$/, '');
 
   try {
-    // 1) 调用 CloudBase 云托管的 Real-ESRGAN 服务做无水印超分
-    const upscaleResp = await fetch(`${cloudUrl}/upscale`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64: parsed.base64,
-        scale: 2,
-      }),
-    });
-    const upscaleText = await upscaleResp.text();
-    let upscaleJson: any = {};
-    try {
-      upscaleJson = upscaleText ? JSON.parse(upscaleText) : {};
-    } catch {
-      throw new Error(`Cloud upscale invalid response: ${upscaleText.slice(0, 200)}`);
-    }
-    if (!upscaleResp.ok) {
-      throw new Error(`Cloud upscale failed (${upscaleResp.status}): ${upscaleText.slice(0, 200)}`);
-    }
-    const imageBase64 = upscaleJson?.imageBase64 as string | undefined;
-    if (!imageBase64 || typeof imageBase64 !== 'string') {
-      throw new Error('Cloud upscale missing imageBase64');
+    let outBuf: Buffer;
+
+    if (opencvBase) {
+      // 本地或线上：OpenCV 放大器（ups /api/enhance），无水印
+      const enhanceResp = await fetch(`${opencvBase}/api/enhance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: dataUrlRaw,
+          scale: 2,
+          denoise: 50,
+        }),
+      });
+      const enhanceText = await enhanceResp.text();
+      let enhanceJson: any = {};
+      try {
+        enhanceJson = enhanceText ? JSON.parse(enhanceText) : {};
+      } catch {
+        throw new Error(`OpenCV enhance invalid response: ${enhanceText.slice(0, 200)}`);
+      }
+      if (!enhanceResp.ok || !enhanceJson?.success) {
+        throw new Error(
+          `OpenCV enhance failed (${enhanceResp.status}): ${enhanceJson?.message ?? enhanceText.slice(0, 200)}`,
+        );
+      }
+      const enhancedDataUrl = enhanceJson?.enhanced_image as string | undefined;
+      if (!enhancedDataUrl || typeof enhancedDataUrl !== 'string') {
+        throw new Error('OpenCV enhance missing enhanced_image');
+      }
+      const outBase64 = enhancedDataUrl.includes(',') ? enhancedDataUrl.split(',')[1]! : enhancedDataUrl;
+      outBuf = Buffer.from(outBase64, 'base64');
+    } else {
+      // 未配置 OpenCV 时回退 Upscayl（线上可用，带水印）
+      const apiKey = process.env.UPSCAYL_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({
+          error:
+            'Configure LOCAL_UPS_ENDPOINT or CLOUD_UPSCALE_URL for OpenCV, or UPSCAYL_API_KEY for fallback',
+        });
+      }
+      const { runUpscayl2K } = await import('../lib/upscayl.js');
+      const { downloadUrl } = await runUpscayl2K(inputBuf, fileType, originalFileName, apiKey);
+      const outResp = await fetch(downloadUrl);
+      if (!outResp.ok) throw new Error('Failed to download upscaled image');
+      outBuf = Buffer.from(await outResp.arrayBuffer());
     }
 
-    // 2) 将返回的 2K base64 上传到 COS：2KUSERS/ 同名 jpg
-    const outBuf = Buffer.from(imageBase64, 'base64');
+    // 统一：2K 图上传 COS 2KUSERS/，返回 url（与本地同一流程）
     if (!outBuf.byteLength) throw new Error('Empty upscaled image');
     const outMime = 'image/jpeg';
 

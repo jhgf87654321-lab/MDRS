@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI图像超分辨率工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #4f46e5;
+            background-color: #f8fafc;
+        }
+        .image-preview {
+            max-height: 400px;
+            object-fit: contain;
+        }
+        .processing-overlay {
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-camera-retro text-indigo-600 text-2xl"></i>
+            <h1 class="text-xl font-bold text-gray-800">AI图像增强工具</h1>
+        </div>
+        <div class="flex space-x-4">
+            <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主体容器 -->
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 左侧上传区 -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-lg font-semibold mb-4 text-gray-800">原始图像</h2>
+                
+                <!-- 文件上传区域 -->
+                <div id="dropZone" class="upload-area rounded-xl p-8 text-center cursor-pointer mb-6">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-600 mb-2">拖放图片到这里 或</p>
+                    <button id="selectFileBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                        选择图片文件
+                    </button>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    <p class="text-sm text-gray-500 mt-2">支持 JPG、PNG、WEBP 格式</p>
+                </div>
+
+                <!-- 预览区域 -->
+                <div id="originalPreviewContainer" class="hidden">
+                    <img id="originalImage" src="" alt="原始图像预览" class="w-full image-preview rounded-lg shadow">
+                    <div class="mt-4 flex justify-between items-center">
+                        <span id="originalInfo" class="text-sm text-gray-600"></span>
+                        <button id="resetBtn" class="text-red-600 hover:text-red-800 text-sm">
+                            <i class="fas fa-trash mr-1"></i>清除
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 控制面板 -->
+                <div id="controlPanel" class="hidden mt-6">
+                    <h3 class="font-medium text-gray-800 mb-3">增强参数</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">放大倍数</label>
+                            <select id="scaleSelect" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-300">
+                                <option value="2">2x (1K → 2K)</option>
+                                <option value="3">3x</option>
+                                <option value="4">4x</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">降噪强度</label>
+                            <input type="range" id="denoiseSlider" min="0" max="100" value="50" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>轻度</span>
+                                <span id="denoiseValue">50%</span>
+                                <span>强烈</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="processBtn" class="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition">
+                        开始增强处理
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧结果区 -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-lg font-semibold mb-4 text-gray-800">增强结果</h2>
+                
+                <!-- 结果展示区 -->
+                <div id="resultPlaceholder" class="border-2 border-dashed border-gray-300 rounded-xl h-96 flex items-center justify-center">
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-image text-4xl mb-3"></i>
+                        <p>处理后的高清图像将在此显示</p>
+                    </div>
+                </div>
+                
+                <div id="resultContainer" class="hidden">
+                    <img id="resultImage" src="" alt="增强后图像" class="w-full image-preview rounded-lg shadow">
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-600">新尺寸</p>
+                            <p id="newSize" class="font-semibold text-green-700">-</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-600">提升比例</p>
+                            <p id="enhancementRatio" class="font-semibold text-blue-700">-</p>
+                        </div>
+                    </div>
+                    <button id="downloadBtn" class="w-full mt-4 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition">
+                        <i class="fas fa-download mr-2">下载高清图像
+                    </button>
+                </div>
+                
+                <!-- 进度指示器 -->
+                <div id="progressOverlay" class="hidden processing-overlay absolute inset-0 bg-black bg-opacity-30 rounded-2xl flex items-center justify-center">
+                    <div class="bg-white p-6 rounded-xl text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                        <p class="text-gray-700">正在智能增强图像...</p>
+                        <p class="text-sm text-gray-500 mt-1">预计耗时约15秒</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能说明区 -->
+        <div class="mt-12 bg-white rounded-2xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">为什么选择我们的AI增强技术?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="border-l-4 border-indigo-500 pl-4 py-1">
+                    <h3 class="font-semibold text-gray-800">深度学习模型</h3>
+                    <p class="text-gray-600 text-sm mt-1">基于ESRGAN训练的先进神经网络，自动识别纹理细节</p>
+                </div>
+                <div class="border-l-4 border-green-500 pl-4 py-1">
+                    <h3 class="font-semibold text-gray-800">边缘保持算法</h3>
+                    <p class="text-gray-600 text-sm mt-1">独特插值方法保留锐利轮廓，防止模糊失真</p>
+                </div>
+                <div class="border-l-4 border-purple-500 pl-4 py-1">
+                    <h3 class="font-semibold text-gray-800">完全免费使用</h3>
+                    <p class="text-gray-600 text-sm mt-1">浏览器端运算无需上传，保护您的隐私安全</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let originalImageData = null;
+        let processedImageData = null;
+
+        // DOM元素引用
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const originalPreviewContainer = document.getElementById('originalPreviewContainer');
+        const originalImage = document.getElementById('originalImage');
+        const originalInfo = document.getElementById('originalInfo');
+        const resetBtn = document.getElementById('resetBtn');
+        const controlPanel = document.getElementById('controlPanel');
+        const scaleSelect = document.getElementById('scaleSelect');
+        const denoiseSlider = document.getElementById('denoiseSlider');
+        const denoiseValue = document.getElementById('denoiseValue');
+        const processBtn = document.getElementById('processBtn');
+        const resultPlaceholder = document.getElementById('resultPlaceholder');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultImage = document.getElementById('resultImage');
+        const newSize = document.getElementById('newSize');
+        const enhancementRatio = document.getElementById('enhancementRatio');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progressOverlay = document.getElementById('progressOverlay');
+
+        // 事件监听器初始化
+        function initEventListeners() {
+            // 文件选择按钮点击事件
+            selectFileBtn.addEventListener('click', () => fileInput.click());
+            
+            // 文件输入变化事件
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // 拖拽上传事件
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            // 清除按钮事件
+            resetBtn.addEventListener('click', resetAll);
+            
+            // 参数调整事件
+            denoiseSlider.addEventListener('input', updateDenoiseValue);
+            
+            // 处理按钮事件
+            processBtn.addEventListener('click', processImage);
+            
+            // 下载按钮事件
+            downloadBtn.addEventListener('click', downloadResult);
+        }
+
+        // 阻止默认行为
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // 高亮拖拽区域
+        function highlight() {
+            dropZone.classList.add('dragover');
+        }
+
+        // 取消高亮
+        function unhighlight() {
+            dropZone.classList.remove('dragover');
+        }
+
+        // 处理文件拖放
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        // 处理文件
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files;
+            if (!file.type.match('image.*')) {
+                alert('请选择有效的图像文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImageData = e.target.result;
+                displayOriginalImage();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 显示原始图像
+        function displayOriginalImage() {
+            originalImage.src = originalImageData;
+            originalImage.onload = function() {
+                // 显示预览和信息
+                originalPreviewContainer.classList.remove('hidden');
+                originalInfo.textContent = `${this.naturalWidth}×${this.naturalHeight}px | ${(originalImageData.length / 1024).toFixed(1)}KB`;
+                
+                // 显示控制面板
+                controlPanel.classList.remove('hidden');
+                
+                // 隐藏结果区域
+                resultContainer.classList.add('hidden');
+                resultPlaceholder.classList.remove('hidden');
+            };
+        }
+
+        // 更新降噪值显示
+        function updateDenoiseValue() {
+            denoiseValue.textContent = `${denoiseSlider.value}%`;
+        }
+
+        // 重置所有内容
+        function resetAll() {
+            originalImageData = null;
+            processedImageData = null;
+            fileInput.value = '';
+            originalPreviewContainer.classList.add('hidden');
+            controlPanel.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            resultPlaceholder.classList.remove('hidden');
+        }
+
+        // 图像处理过程
+        async function processImage() {
+            if (!originalImageData) return;
+            
+            // 显示进度条
+            progressOverlay.classList.remove('hidden');
+            
+            try {
+                // 准备发送到后端的数据
+                const imageData = originalImageData.split(','); // 移除base64前缀
+                const requestData = {
+                    image: imageData,
+                    scale: parseInt(scaleSelect.value),
+                    denoise: parseInt(denoiseSlider.value)
+                };
+                
+               
