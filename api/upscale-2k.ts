@@ -63,8 +63,11 @@ export default async function handler(req: Req, res: Res) {
   const fileType = parsed.mimeType;
 
   // 与本地同一流程：先选放大方式，再得到 2K Buffer，最后统一上传 COS → 返回 url
-  const opencvBase =
-    (process.env.LOCAL_UPS_ENDPOINT || process.env.CLOUD_UPSCALE_URL || '').replace(/\/+$/, '');
+  let opencvBase =
+    (process.env.LOCAL_UPS_ENDPOINT || process.env.CLOUD_UPSCALE_URL || '').trim().replace(/\/+$/, '');
+  if (opencvBase && !/^https?:\/\//i.test(opencvBase)) {
+    opencvBase = `https://${opencvBase}`;
+  }
 
   try {
     let outBuf: Buffer;
