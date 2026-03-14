@@ -37,7 +37,7 @@ async function getCosClient() {
   return new COS({ SecretId, SecretKey });
 }
 
-import { runUpscayl2K } from './upscayl';
+import { runUpscayl2K } from '../lib/upscayl.js';
 
 export default async function handler(req: Req, res: Res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
