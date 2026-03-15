@@ -1,5 +1,5 @@
 // Purchase a mystery NFT by randomly selecting an image from COS CYCLER/
-// and copying it into MINT/ (normal) or SP/ (special).
+// and copying it back to MINT/ or SP/ according to the original serial.
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -18,9 +18,18 @@ function pickOne<T>(arr: T[]) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function makeSerial(isSpecial: boolean) {
-  const tail = (Date.now().toString().slice(-8) + Math.random().toString(16).slice(2, 6)).slice(0, 8);
-  return isSpecial ? `Sp.${tail.slice(-5)}` : `No.${tail}`;
+function parseSerialFromKey(key: string): { serialNumber: string; isSpecial: boolean } {
+  const base = key.split('/').pop() || '';
+  const m = /(Sp\.\d+|No\.\d+)/i.exec(base);
+  if (m?.[1]) {
+    const raw = m[1];
+    const normalized = raw.startsWith('sp.') ? `Sp.${raw.slice(3)}` : raw.startsWith('no.') ? `No.${raw.slice(3)}` : raw;
+    const isSpecial = normalized.startsWith('Sp.');
+    return { serialNumber: normalized, isSpecial };
+  }
+  // Fallback：没有命名信息时当作普通 No.
+  const tail = Date.now().toString().slice(-8);
+  return { serialNumber: `No.${tail}`, isSpecial: false };
 }
 
 export default async function handler(
@@ -40,10 +49,6 @@ export default async function handler(
   const Bucket = process.env.COS_BUCKET;
   const Region = process.env.COS_REGION;
   if (!Bucket || !Region) return res.status(500).json({ error: 'COS_BUCKET or COS_REGION is not configured' });
-
-  const isSpecial = Math.random() < 0.1;
-  const serialNumber = makeSerial(isSpecial);
-  const targetPrefix = isSpecial ? 'SP/' : 'MINT/';
 
   try {
     const cos = await getCosClient();
@@ -72,6 +77,8 @@ export default async function handler(
 
     if (keys.length === 0) return res.status(404).json({ error: 'No cycler images found' });
     const srcKey = pickOne(keys);
+    const { serialNumber, isSpecial } = parseSerialFromKey(srcKey);
+    const targetPrefix = isSpecial ? 'SP/' : 'MINT/';
     const ext = (/\.(png|jpe?g|webp)$/i.exec(srcKey)?.[1] || 'webp').toLowerCase();
     const fileName = `${serialNumber.replace(/\./g, '_')}.${ext === 'jpeg' ? 'jpg' : ext}`;
     const dstKey = `${targetPrefix}${fileName}`;
