@@ -546,7 +546,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
              {/* Focus Overlay */}
              <div className="absolute inset-0 flex items-center justify-center">
-                {isGenerating ? (
+               {isGenerating && !generatedNFT ? (
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                     <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] animate-pulse">Minting NFT...</span>
