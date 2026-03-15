@@ -73,26 +73,42 @@ export default async function handler(req: Req, res: Res) {
     let outBuf: Buffer;
 
     if (opencvBase) {
-      // 本地或线上：OpenCV 放大器（ups /api/enhance），无水印
-      const enhanceResp = await fetch(`${opencvBase}/api/enhance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image: dataUrlRaw,
-          scale: 2,
-          denoise: 50,
-        }),
+      // 本地或线上：OpenCV 放大器（ups /api/enhance），无水印。503/502 时重试（冷启动）
+      const enhancePayload = JSON.stringify({
+        image: dataUrlRaw,
+        scale: 2,
+        denoise: 50,
       });
-      const enhanceText = await enhanceResp.text();
+      const maxRetries = 3;
+      let enhanceResp: Response | null = null;
+      let enhanceText = '';
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        enhanceResp = await fetch(`${opencvBase}/api/enhance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: enhancePayload,
+        });
+        enhanceText = await enhanceResp.text();
+        if (enhanceResp.status === 503 || enhanceResp.status === 502 || enhanceResp.status === 504) {
+          if (attempt < maxRetries - 1) {
+            await new Promise((r) => setTimeout(r, 3000));
+            continue;
+          }
+          throw new Error(
+            'OpenCV 服务暂时不可用（可能正在启动），请稍后重试。如持续出现，请在 CloudBase 将云托管最小实例数设为 1。',
+          );
+        }
+        break;
+      }
       let enhanceJson: any = {};
       try {
         enhanceJson = enhanceText ? JSON.parse(enhanceText) : {};
       } catch {
         throw new Error(`OpenCV enhance invalid response: ${enhanceText.slice(0, 200)}`);
       }
-      if (!enhanceResp.ok || !enhanceJson?.success) {
+      if (!enhanceResp!.ok || !enhanceJson?.success) {
         throw new Error(
-          `OpenCV enhance failed (${enhanceResp.status}): ${enhanceJson?.message ?? enhanceText.slice(0, 200)}`,
+          `OpenCV enhance failed (${enhanceResp!.status}): ${enhanceJson?.message ?? enhanceText.slice(0, 200)}`,
         );
       }
       const enhancedDataUrl = enhanceJson?.enhanced_image as string | undefined;
