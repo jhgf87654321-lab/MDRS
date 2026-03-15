@@ -9,7 +9,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-6 pb-8 pt-4 z-[100]">
+    <nav 
+      className="fixed left-0 right-0 bottom-0 max-w-[430px] mx-auto px-6 pt-4 z-[100]"
+      style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="bg-black/80 backdrop-blur-2xl rounded-full h-18 flex items-center justify-around px-2 py-2 shadow-2xl border border-white/10">
         <button 
           onClick={() => onViewChange(View.STORE)}

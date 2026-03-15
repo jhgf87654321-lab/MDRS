@@ -119,8 +119,8 @@ const App: React.FC = () => {
         {/* Background Grids */}
         <div className="fixed inset-0 grid-bg pointer-events-none opacity-10"></div>
         
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto no-scrollbar relative z-10">
+        {/* Main Content Area — pb for fixed bottom nav */}
+        <div className="flex-1 overflow-y-auto no-scrollbar relative z-10 pb-28">
           {renderView()}
         </div>
 
