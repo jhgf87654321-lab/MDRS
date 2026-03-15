@@ -51,13 +51,27 @@ async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
 async function setProfileDoc(uid: string, doc: UserProfileDoc) {
   const db = getCloudbaseDb();
   // 使用 set 以确保在文档不存在时可以直接创建（upsert 语义）
-  await db.collection(COLLECTION).doc(uid).set({
-    uid: doc.uid,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-    ...(doc.displayName ? { displayName: doc.displayName } : {}),
-    ownedNfts: doc.ownedNfts,
-  });
+  // 但在极端并发（多个标签页同时首次写入）时，CloudBase 可能返回 DuplicateWrite。
+  // 这种情况下忽略错误并回读最新文档即可。
+  try {
+    await db.collection(COLLECTION).doc(uid).set({
+      uid: doc.uid,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      ...(doc.displayName ? { displayName: doc.displayName } : {}),
+      ownedNfts: doc.ownedNfts,
+    });
+  } catch (err: any) {
+    const msg: string = err?.message || '';
+    if (msg.includes('DuplicateWrite') || msg.includes('duplicate key error') || err?.code === 'DATABASE_REQUEST_FAILED') {
+      // 可能是多个并发写导致的重复写入错误，回退为读取已有文档。
+      const existing = await getProfileDoc(uid);
+      if (existing) {
+        return existing;
+      }
+    }
+    throw err;
+  }
 }
 
 async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
