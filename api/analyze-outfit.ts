@@ -102,10 +102,12 @@ export default async function handler(
     'Rules: colors should be simple color words; if unknown, use empty string for style/material and [] for colors. Do not include any extra keys.';
 
   const ai = new GoogleGenAI({ apiKey });
+  // Use vision-capable models available in current API; avoid deprecated "gemini-1.5-flash" (404 in v1beta).
   const models = [
     (process.env.OUTFIT_MODEL || '').trim(),
     'gemini-2.0-flash',
-    'gemini-1.5-flash',
+    'gemini-2.5-flash',
+    'gemini-1.5-flash-latest',
   ].filter(Boolean);
 
   let lastText = '';
