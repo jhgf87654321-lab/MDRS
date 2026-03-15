@@ -15,6 +15,10 @@ export type ImageInfoDoc = {
   top: OutfitPieceInfo;
   bottom: OutfitPieceInfo;
   shoes: OutfitPieceInfo;
+  /** 外搭，如外套、大衣 */
+  outer?: OutfitPieceInfo;
+  /** 内搭，如外套内的衬衫、T恤 */
+  inner?: OutfitPieceInfo;
   notes?: string;
 };
 
@@ -39,15 +43,20 @@ export async function upsertImageInfo(params: {
   if (!/^https?:\/\//i.test(imageUrl)) throw new Error('INVALID_IMAGE_URL');
 
   const now = Date.now();
+  const top = asPiece(params.info?.top);
+  const bottom = asPiece(params.info?.bottom);
+  const shoes = asPiece(params.info?.shoes);
   const doc: ImageInfoDoc = {
     serialNumber,
     imageUrl,
     source: params.source,
     createdAt: now,
     updatedAt: now,
-    top: asPiece(params.info?.top),
-    bottom: asPiece(params.info?.bottom),
-    shoes: asPiece(params.info?.shoes),
+    top,
+    bottom,
+    shoes,
+    ...(params.info?.outer && (params.info.outer.colors?.length || params.info.outer.style || params.info.outer.material) ? { outer: asPiece(params.info.outer) } : {}),
+    ...(params.info?.inner && (params.info.inner.colors?.length || params.info.inner.style || params.info.inner.material) ? { inner: asPiece(params.info.inner) } : {}),
     ...(typeof params.info?.notes === 'string' && params.info.notes.trim() ? { notes: params.info.notes.trim().slice(0, 400) } : {}),
   };
 

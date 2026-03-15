@@ -91,15 +91,19 @@ export default async function handler(
   if (!inline) return res.status(400).json({ error: 'Missing or invalid imageUrl/imageDataUrl' });
 
   const prompt =
-    'You are a fashion analyst. Extract the outfit attributes from the image.\n' +
-    'Return ONLY valid JSON matching this schema:\n' +
+    'You are a fashion analyst. Extract ALL visible outfit pieces from the image.\n\n' +
+    'You MUST always return these three: top (上装), bottom (下装), shoes (鞋履). Shoes have no outer/inner—only one "shoes" object.\n' +
+    'For the upper body only: if there is an outer layer (外搭, e.g. coat, jacket, blazer) and/or inner layer (内搭, e.g. shirt, tee under the jacket), add "outer" and/or "inner" with the same { colors, style, material } shape. Do not add outer/inner for bottom or shoes.\n\n' +
+    'Return ONLY valid JSON with this structure (no extra keys):\n' +
     '{\n' +
-    '  "top": { "colors": string[], "style": string, "material": string },\n' +
-    '  "bottom": { "colors": string[], "style": string, "material": string },\n' +
-    '  "shoes": { "colors": string[], "style": string, "material": string },\n' +
-    '  "notes": string\n' +
+    '  "top": { "colors": ["color1"], "style": "e.g. T-shirt", "material": "e.g. cotton" },\n' +
+    '  "bottom": { "colors": ["color1"], "style": "e.g. pants", "material": "e.g. denim" },\n' +
+    '  "shoes": { "colors": ["color1"], "style": "e.g. sneakers", "material": "e.g. leather" },\n' +
+    '  "outer": { "colors", "style", "material" } or omit if no outer layer,\n' +
+    '  "inner": { "colors", "style", "material" } or omit if no inner layer,\n' +
+    '  "notes": ""\n' +
     '}\n' +
-    'Rules: colors should be simple color words; if unknown, use empty string for style/material and [] for colors. Do not include any extra keys.';
+    'Rules: top/bottom/shoes always present. outer/inner only for upper body, optional. Use simple color words; "" and [] when unknown.';
 
   const ai = new GoogleGenAI({ apiKey });
   // Use vision-capable models available in current API; avoid deprecated "gemini-1.5-flash" (404 in v1beta).
@@ -131,7 +135,12 @@ export default async function handler(
       lastText = text;
       const json = extractJsonObject(text);
       if (json && typeof json === 'object') {
-        return res.status(200).json({ ok: true, info: json });
+        const hasTop = json.top && typeof json.top === 'object';
+        const hasBottom = json.bottom && typeof json.bottom === 'object';
+        const hasShoes = json.shoes && typeof json.shoes === 'object';
+        if (hasTop && hasBottom && hasShoes) {
+          return res.status(200).json({ ok: true, info: json });
+        }
       }
     } catch (e) {
       lastErr = e;
