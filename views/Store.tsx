@@ -136,6 +136,14 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     }
   ];
 
+  const regularRecycleMystery: Product = {
+    id: 'Regular Recycle Mystery',
+    name: 'Mystery Recycle NFT',
+    price: 60,
+    type: 'Regular Recycle',
+    image: 'https://lokada-1254090729.cos.ap-shanghai.myqcloud.com/FUNCTION/header.jpg',
+  };
+
   const userCollections = [
     { id: 'col1', name: 'Regular Recycle', count: 0 },
     { id: 'col2', name: 'Neon Dreams', count: 2 },
@@ -281,12 +289,9 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
           {userCollections.map((col, idx) => {
             const isRegular = idx === 0;
             return (
-              <button
-                key={col.id}
-                className="glass p-4 rounded-[2rem] flex items-center justify-between active:scale-[0.98] transition-transform"
-              >
+              <div key={col.id} className="glass p-4 rounded-[2rem] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden">
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden relative">
                     {isRegular && cyclerImages.length > 0 ? (
                       <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-0.5">
                         {cyclerImages.slice(0, 4).map((src) => (
@@ -308,8 +313,26 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
                     <p className="text-[10px] text-white/40 uppercase tracking-widest">{col.count} Items</p>
                   </div>
                 </div>
-                <span className="material-icons-round text-white/30">chevron_right</span>
-              </button>
+
+                {isRegular ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAddToCart?.({
+                        ...regularRecycleMystery,
+                        image: cyclerImages[0] || regularRecycleMystery.image,
+                      });
+                      onOpenCart?.();
+                    }}
+                    className="relative w-12 h-12 rounded-2xl bg-primary text-black shadow-[0_0_20px_rgba(212,255,0,0.35)] active:scale-90 transition-transform flex items-center justify-center overflow-hidden"
+                    title="Buy mystery recycle NFT"
+                  >
+                    <span className="material-icons-round text-lg">help</span>
+                  </button>
+                ) : (
+                  <span className="material-icons-round text-white/30">chevron_right</span>
+                )}
+              </div>
             );
           })}
         </div>

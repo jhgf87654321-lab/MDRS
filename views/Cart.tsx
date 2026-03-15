@@ -7,12 +7,14 @@ interface CartProps {
   onBack: () => void;
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  onDeploy?: () => Promise<void> | void;
 }
 
-const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove }) => {
+const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDeploy }) => {
   const subtotal = items.reduce((acc, item) => acc + (item.price * item.qty), 0);
   const processingFee = items.length > 0 ? 12.50 : 0;
   const total = subtotal + processingFee;
+  const [deploying, setDeploying] = React.useState(false);
 
   return (
     <div className="relative min-h-screen flex flex-col bg-black p-6">
@@ -98,14 +100,23 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove }) => 
 
         <button 
           disabled={items.length === 0}
+          onClick={async () => {
+            if (!onDeploy || deploying || items.length === 0) return;
+            setDeploying(true);
+            try {
+              await onDeploy();
+            } finally {
+              setDeploying(false);
+            }
+          }}
           className={`w-full py-6 rounded-[2rem] flex items-center justify-between px-10 group active:scale-95 transition-all shadow-2xl relative overflow-hidden ${items.length === 0 ? 'bg-white/10 text-white/20 cursor-not-allowed' : 'bg-white text-black'}`}
         >
           {items.length > 0 && (
             <div className="absolute inset-0 bg-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
           )}
-          <span className="relative z-10 text-lg font-black uppercase tracking-widest">Deploy Loadout</span>
+          <span className="relative z-10 text-lg font-black uppercase tracking-widest">{deploying ? 'Deploying…' : 'Deploy Loadout'}</span>
           <div className={`relative z-10 p-2 rounded-xl flex items-center justify-center ${items.length === 0 ? 'bg-white/5 text-white/10' : 'bg-primary text-black'}`}>
-            <span className="material-icons-round">near_me</span>
+            <span className="material-icons-round">{deploying ? 'hourglass_top' : 'near_me'}</span>
           </div>
         </button>
       </div>

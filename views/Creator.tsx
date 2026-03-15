@@ -6,6 +6,7 @@ import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticRef
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 import { addNftToMyProfile } from '../lib/userProfile';
 import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
+import { upsertImageInfo } from '../lib/imageInfo';
 
 type AuthMode = 'signIn' | 'signUp';
 type Category = 'Body' | 'Skin' | 'Style' | 'Design';
@@ -388,6 +389,22 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           await addNftToMyProfile({ cosUrl, serialNumber, source: 'mint' });
         } catch (e) {
           console.error('Failed to record minted NFT in profile', e);
+        }
+        try {
+          const r = await fetch('/api/analyze-outfit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: cosUrl }),
+          });
+          const t = await r.text();
+          const data = t ? (JSON.parse(t) as any) : {};
+          if (r.ok && data?.info) {
+            await upsertImageInfo({ serialNumber, imageUrl: cosUrl, source: 'mint', info: data.info });
+          } else {
+            console.warn('Outfit analysis skipped', { status: r.status, error: data?.error });
+          }
+        } catch (e) {
+          console.warn('Outfit analysis failed (non-blocking)', e);
         }
       }
 

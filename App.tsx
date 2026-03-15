@@ -14,6 +14,8 @@ import Admin from './views/Admin';
 import ShareHub from './views/ShareHub';
 import CreatePost from './views/CreatePost';
 import Auth from './views/Auth';
+import { addNftToMyProfile } from './lib/userProfile';
+import { upsertImageInfo } from './lib/imageInfo';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.HOME);
@@ -48,6 +50,55 @@ const App: React.FC = () => {
 
   const handleRemoveItem = (id: string) => {
     setCartItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleDeploy = async () => {
+    const items = cartItems.slice();
+    if (items.length === 0) return;
+
+    // Only the mystery recycle item has a real fulfillment flow right now.
+    const mystery = items.find((x) => x.id === 'Regular Recycle Mystery');
+    if (!mystery) {
+      alert('Checkout is not connected for these items yet.');
+      return;
+    }
+
+    const qty = Math.max(1, mystery.qty || 1);
+    for (let i = 0; i < qty; i += 1) {
+      const r = await fetch('/api/recycle-mystery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const t = await r.text();
+      const data = t ? (JSON.parse(t) as any) : {};
+      if (!r.ok || !data?.url || !data?.serialNumber) {
+        throw new Error(typeof data?.error === 'string' ? data.error : 'Recycle purchase failed');
+      }
+      const cosUrl = String(data.url);
+      const serialNumber = String(data.serialNumber);
+
+      try {
+        await addNftToMyProfile({ cosUrl, serialNumber, source: 'trade' });
+      } catch {
+        // ignore
+      }
+
+      try {
+        const ar = await fetch('/api/analyze-outfit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: cosUrl }),
+        });
+        const at = await ar.text();
+        const ad = at ? (JSON.parse(at) as any) : {};
+        if (ar.ok && ad?.info) {
+          await upsertImageInfo({ serialNumber, imageUrl: cosUrl, source: 'trade', info: ad.info });
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    setCartItems([]);
+    window.dispatchEvent(new Event('axon:collection-updated'));
+    setCurrentView(View.WARDROBE);
   };
 
   const renderView = () => {
@@ -94,6 +145,7 @@ const App: React.FC = () => {
           onBack={() => setCurrentView(View.STORE)} 
           onUpdateQty={handleUpdateQty}
           onRemove={handleRemoveItem}
+          onDeploy={handleDeploy}
         />
       );
       case View.ADMIN:

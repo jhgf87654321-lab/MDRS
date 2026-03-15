@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { generateGeminiImage } from '../../lib/geminiClient';
 import { uploadImageToCloudBase } from '../../lib/apiClient';
+import { addNftToMyProfile } from '../../lib/userProfile';
+import { upsertImageInfo } from '../../lib/imageInfo';
 
 type CameraMode = 'front' | 'rear' | 'off';
 
@@ -212,6 +214,31 @@ export default function TryOnModule() {
       localStorage.setItem('tryOnLastImage', newImgData);
       setViewMode('tryon');
       setCameraMode('off');
+
+      // Record SP output as an owned NFT + imageinf archive (non-blocking)
+      try {
+        const serialNumber = `Sp.${Date.now().toString().slice(-5).padStart(5, '0')}`;
+        const fileName = `${serialNumber.replace(/\./g, '_')}.webp`;
+        const cosUrl = await uploadImageToCloudBase(newImgData, { prefix: 'SP/', fileName });
+        await addNftToMyProfile({ cosUrl, serialNumber, source: 'mint' });
+        try {
+          const r = await fetch('/api/analyze-outfit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: cosUrl }),
+          });
+          const t = await r.text();
+          const data = t ? (JSON.parse(t) as any) : {};
+          if (r.ok && data?.info) {
+            await upsertImageInfo({ serialNumber, imageUrl: cosUrl, source: 'sp', info: data.info });
+          }
+        } catch {
+          // ignore
+        }
+        window.dispatchEvent(new Event('axon:collection-updated'));
+      } catch {
+        // ignore
+      }
     } catch (error) {
       console.error('Error applying style', error);
       const msg = error instanceof Error ? error.message : String(error);
