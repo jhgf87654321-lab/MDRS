@@ -417,33 +417,66 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
             <div className="rounded-3xl overflow-hidden border border-white/10 mb-4">
               <img src={selectedNft.image} alt={selectedNft.theme} className="w-full h-full object-cover" />
             </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (onShare) {
-                    onShare(selectedNft.image);
-                    return;
-                  }
-                  alert('Uploaded to Share Platform successfully!');
-                }}
-                className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1"
-              >
-                <span className="material-icons-round text-sm">public</span>
-                Share
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = collection.filter((c) => c.serialNumber !== selectedNft.serialNumber);
-                  setCollection(next);
-                  localStorage.setItem('myCyberCollection', JSON.stringify(next));
-                  setSelectedNft(null);
-                }}
-                className="w-28 py-3 rounded-2xl bg-red-500/10 border border-red-500/40 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/30"
-              >
-                Recycle
-              </button>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const url = selectedNft.image;
+                    const name = (selectedNft.serialNumber || 'nft').replace(/\s/g, '_') + '.jpg';
+                    try {
+                      if (url.startsWith('data:')) {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = name;
+                        a.click();
+                        return;
+                      }
+                      const res = await fetch(url, { mode: 'cors' });
+                      const blob = await res.blob();
+                      const obj = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = obj;
+                      a.download = name;
+                      a.click();
+                      URL.revokeObjectURL(obj);
+                    } catch (e) {
+                      console.error(e);
+                      window.open(url, '_blank');
+                    }
+                  }}
+                  className="flex-1 py-3 rounded-2xl bg-primary/20 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-primary/40"
+                >
+                  <span className="material-icons-round text-sm">download</span>
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onShare) {
+                      onShare(selectedNft.image);
+                      return;
+                    }
+                    alert('Uploaded to Share Platform successfully!');
+                  }}
+                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1"
+                >
+                  <span className="material-icons-round text-sm">public</span>
+                  Share
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = collection.filter((c) => c.serialNumber !== selectedNft.serialNumber);
+                    setCollection(next);
+                    localStorage.setItem('myCyberCollection', JSON.stringify(next));
+                    setSelectedNft(null);
+                  }}
+                  className="w-28 py-3 rounded-2xl bg-red-500/10 border border-red-500/40 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/30"
+                >
+                  Recycle
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -698,6 +698,39 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
               <span>{isGenerating ? 'Minting...' : 'Generate Unique NFT'}</span>
               <span className="material-icons-round text-sm">{isGenerating ? 'hourglass_top' : 'token'}</span>
             </button>
+            {generatedNFT && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const url = nftData?.cosUrl || generatedNFT;
+                  const name = (nftData?.serialNumber || 'avatar').replace(/\s/g, '_').replace(/\./g, '_') + '.jpg';
+                  try {
+                    if (url.startsWith('data:')) {
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = name;
+                      a.click();
+                      return;
+                    }
+                    const res = await fetch(url, { mode: 'cors' });
+                    const blob = await res.blob();
+                    const obj = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = obj;
+                    a.download = name;
+                    a.click();
+                    URL.revokeObjectURL(obj);
+                  } catch (e) {
+                    console.error(e);
+                    if (url && !url.startsWith('data:')) window.open(url, '_blank');
+                  }
+                }}
+                className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 hover:bg-primary hover:text-black transition-colors"
+                title="Save 2K image"
+              >
+                <span className="material-icons-round">download</span>
+              </button>
+            )}
             <button 
               onClick={() => {
                 setParams({
@@ -709,6 +742,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                 setDesignMode('Random');
                 setGeneratedNFT(null);
                 setNftMetadata(null);
+                setNftData(null);
               }}
               className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center glass hover:bg-white/10 transition-colors border border-white/10"
             >
