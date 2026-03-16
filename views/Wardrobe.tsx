@@ -452,6 +452,56 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                 </button>
                 <button
                   type="button"
+                  onClick={async () => {
+                    try {
+                      const name =
+                        (selectedNft.serialNumber || 'nft')
+                          .replace(/\s/g, '_')
+                          .replace(/\./g, '_') + '_2k.webp';
+                      let dataUrl: string;
+                      if (selectedNft.image.startsWith('data:')) {
+                        dataUrl = selectedNft.image;
+                      } else {
+                        const res = await fetch(selectedNft.image, { mode: 'cors' });
+                        const blob = await res.blob();
+                        dataUrl = await new Promise<string>((resolve, reject) => {
+                          const reader = new FileReader();
+                          reader.onload = () => resolve(String(reader.result));
+                          reader.onerror = () => reject(new Error('read failed'));
+                          reader.readAsDataURL(blob);
+                        });
+                      }
+                      const resp = await fetch('/api/upscale-2k', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ dataUrl, fileName: name }),
+                      });
+                      const text = await resp.text();
+                      const data = text ? (JSON.parse(text) as any) : {};
+                      if (!resp.ok || !data?.url) {
+                        throw new Error(typeof data?.error === 'string' ? data.error : 'Upscale failed');
+                      }
+                      const url = String(data.url);
+                      const r2 = await fetch(url, { mode: 'cors' });
+                      const b2 = await r2.blob();
+                      const obj = URL.createObjectURL(b2);
+                      const a = document.createElement('a');
+                      a.href = obj;
+                      a.download = name;
+                      a.click();
+                      URL.revokeObjectURL(obj);
+                    } catch (e) {
+                      console.error(e);
+                      alert('Failed to enhance to 2K image.');
+                    }
+                  }}
+                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-white/20"
+                >
+                  <span className="material-icons-round text-sm">high_quality</span>
+                  Enhance 2K
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     if (onShare) {
                       onShare(selectedNft.image);

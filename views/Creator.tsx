@@ -365,7 +365,37 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       setGeneratedNFT(storedImg);
       localStorage.setItem('generatedNFT', storedImg);
 
-      // Upscale 1K -> 2K via Upscayl, then upload to COS 2KUSERS/ with same name.
+      // 先把 1K 图写入用户档案（Wardrobe 立即可见）
+      let oneKUrl: string | undefined;
+      try {
+        const fileName = `${serialNumber.replace(/\./g, '_')}.webp`;
+        oneKUrl = await uploadImageToCloudBase(storedImg, { prefix: 'MINT/', fileName });
+        try {
+          await addNftToMyProfile({ cosUrl: oneKUrl, serialNumber, source: 'mint' });
+        } catch (e) {
+          console.error('Failed to record minted NFT in profile', e);
+        }
+        try {
+          const r = await fetch('/api/analyze-outfit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: oneKUrl }),
+          });
+          const t = await r.text();
+          const data = t ? (JSON.parse(t) as any) : {};
+          if (r.ok && data?.info) {
+            await upsertImageInfo({ serialNumber, imageUrl: oneKUrl, source: 'mint', info: data.info });
+          } else {
+            console.warn('Outfit analysis skipped', { status: r.status, error: data?.error });
+          }
+        } catch (e) {
+          console.warn('Outfit analysis failed (non-blocking)', e);
+        }
+      } catch (e) {
+        console.error('Upload 1K image or profile write failed', e);
+      }
+
+      // 2K 放大改为可选：用于更高清的下载，不影响档案中的 1K 图
       let cosUrl: string | undefined;
       try {
         const fileName = `${serialNumber.replace(/\./g, '_')}.webp`;
@@ -381,31 +411,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         }
         cosUrl = String(data.url);
       } catch (e) {
-        console.error('Upscale+upload to COS failed', e);
-      }
-
-      if (cosUrl) {
-        try {
-          await addNftToMyProfile({ cosUrl, serialNumber, source: 'mint' });
-        } catch (e) {
-          console.error('Failed to record minted NFT in profile', e);
-        }
-        try {
-          const r = await fetch('/api/analyze-outfit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ imageUrl: cosUrl }),
-          });
-          const t = await r.text();
-          const data = t ? (JSON.parse(t) as any) : {};
-          if (r.ok && data?.info) {
-            await upsertImageInfo({ serialNumber, imageUrl: cosUrl, source: 'mint', info: data.info });
-          } else {
-            console.warn('Outfit analysis skipped', { status: r.status, error: data?.error });
-          }
-        } catch (e) {
-          console.warn('Outfit analysis failed (non-blocking)', e);
-        }
+        console.error('Optional upscale+upload to COS 2K failed', e);
       }
 
       const nftDataObj: CyberCollectionItem = {
