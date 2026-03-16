@@ -54,6 +54,7 @@ type CreatorStateV1 = {
   creatureTexture: CreatureTexture;
   designMode: DesignMode;
   customDesign: { top: string; bottom: string; shoes: string };
+  aestheticStyle: 'Default' | '90s Haute Couture Runway';
   params: Record<string, number>;
   selectedSkinColor: string;
 };
@@ -72,6 +73,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     bottom: 'Pants',
     shoes: 'Sneakers'
   });
+  const [aestheticStyle, setAestheticStyle] = useState<CreatorStateV1['aestheticStyle']>('Default');
+  const [hbaImageBase64, setHbaImageBase64] = useState<string | null>(null);
   
   // NFT Themes and Traits for randomness
   const themes = ['High-Fashion Editorial', 'Urban Techwear', 'Minimalist Avant-Garde', 'Graphic Lookbook', 'Streetwear Culture', 'Avant-Garde Magazine', 'Modern Tech-Fashion'];
@@ -132,6 +135,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       creatureTexture: 'Hairy',
       designMode: 'Random',
       customDesign: { top: 'Coat', bottom: 'Pants', shoes: 'Sneakers' },
+      aestheticStyle: 'Default',
       params: {
         muscularity: 82,
         jawline: 45,
@@ -159,6 +163,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       if (parsed.creatureTexture) setCreatureTexture(parsed.creatureTexture);
       if (parsed.designMode) setDesignMode(parsed.designMode);
       if (parsed.customDesign) setCustomDesign(parsed.customDesign);
+      if (parsed.aestheticStyle) setAestheticStyle(parsed.aestheticStyle);
       if (parsed.params) setParams((prev) => ({ ...prev, ...parsed.params }));
       if (parsed.selectedSkinColor) setSelectedSkinColor(parsed.selectedSkinColor);
     } catch (e) {
@@ -176,6 +181,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         creatureTexture,
         designMode,
         customDesign,
+        aestheticStyle,
         params,
         selectedSkinColor,
       };
@@ -184,7 +190,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       // ignore quota errors; generation output is more important
       console.error('Failed to persist creatorState', e);
     }
-  }, [activeCategory, gender, creatureTexture, designMode, customDesign, params, selectedSkinColor, defaultCreatorState]);
+  }, [activeCategory, gender, creatureTexture, designMode, customDesign, aestheticStyle, params, selectedSkinColor, defaultCreatorState]);
 
   // Restore last generated NFT and metadata when returning to Creator
   useEffect(() => {
@@ -293,6 +299,9 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const colorStyle = params.chromaticity > 70 ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.` : params.chromaticity < 30 ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.' : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
+      if (aestheticStyle !== 'Default') {
+        finalStyleInstruction += ` The specific aesthetic style MUST be highly influenced by: ${aestheticStyle}.`;
+      }
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
       const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
@@ -302,9 +311,16 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? `A unique, otherworldly creature (alien, mutant, or bio-engineered beast). Texture: ${creatureTexture}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}.`
         : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
 
-      const outfitDesc = designMode === 'Custom'
-        ? `Outfit consists of: Top - ${customDesign.top}, Bottom - ${customDesign.bottom}, Footwear - ${customDesign.shoes}.`
-        : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
+      const aimShoeDesc =
+        'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
+      const hbaHoodieDesc =
+        "black double-layered hoodie with hood up. Outer layer has short sleeves with raw frayed edges over long black sleeves. Features white graphics: 'ANZIMA RACING' outlined text logo on chest, checkered flag graphic, circular logo, and a symmetrical tribal graphic on the front kangaroo pocket. Black drawstrings with silver metal tips and silver metal rivets on the pocket corners";
+      const topDesc = customDesign.top === 'HBA' ? `${hbaHoodieDesc}, exactly matching the reference` : customDesign.top;
+      const shoesDesc = customDesign.shoes === 'aim' ? `${aimShoeDesc}, exactly matching the reference` : customDesign.shoes;
+      const outfitDesc =
+        designMode === 'Custom'
+          ? `Outfit consists of: Top - ${topDesc}, Bottom - ${customDesign.bottom}, Footwear - ${shoesDesc}.`
+          : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
 
       const isSpecial = Math.random() < 0.1;
       let normalCount = parseInt(localStorage.getItem('normalMintCount') || '0', 10);
@@ -322,30 +338,102 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       }
 
       const backgroundInstruction = isSpecial
-        ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
-        : `Clean, minimalist studio setting (white, light grey, or soft neutral tones) with large, bold, artistic typography. The typography words and font style perfectly match the character's outfit vibe and the ${randomTheme} theme.`;
+        ? 'Solid vibrant backdrop (clean, no clutter).'
+        : `Minimal studio backdrop (white/grey/soft neutral) with bold typography matching the ${randomTheme} vibe.`;
 
-      const prompt = `A professional ${randomStyle} for a high-end fashion NFT. 
-      Theme: ${randomTheme}. 
-      The composition is a single, unified full-frame image featuring exactly ONE character.
-      FRAMING (MUST FOLLOW): FULL-BODY / full-length portrait from head-to-toe. The entire character MUST be visible, including full legs, feet, and footwear, with comfortable margin above the head and below the feet. Do NOT crop at the head, knees, ankles, or feet. Do NOT zoom-in tight on just the face or torso.
-      SAFETY: Absolutely no visible nipples, areola, or genitals. No explicit sex acts or pornographic content.
-      Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.
-      Background: ${backgroundInstruction}
-      Graphic Elements: Overlay the image with technical UI details, fine technical text, cross-hairs, and minimalist graphic annotations. Do NOT use QR codes.
-      Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).
-      ${outfitDesc}
-      Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.
-      Skin tone: ${selectedSkinColor}. 
-      Photography: High-end fashion photography, studio lighting, soft shadows, photorealistic, around 1024px on the long edge, sharp focus, realistic skin texture. 
-      The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean and modern.`;
+      const headwearStyle =
+        params.jawline < 30
+          ? 'No headwear.'
+          : params.jawline > 70
+            ? 'Sleek minimal futuristic headwear: a clean visor/helmet with smooth surfaces, no spikes, no messy protrusions, no random ornaments.'
+            : 'Minimal futuristic accessory: thin visor or subtle tech headband (clean lines).';
 
-      const parts: GeminiPart[] = [{ text: prompt }];
-      // NOTE: reference-image prompt logic temporarily disabled.
-      // The block that fetches aesthetic references and pushes inlineData parts
-      // has been kept for future use, but is not executed for now to simplify generation.
+      // Keep prompt compact for speed and consistency (mobile friendly).
+      const prompt =
+        `High-end fashion NFT, ${randomStyle}. Theme: ${randomTheme}.\n` +
+        `Single character, full-body head-to-toe, centered, do not crop.\n` +
+        `Background: ${backgroundInstruction}\n` +
+        `Overlay: minimal technical UI lines/crosshair (no QR codes, no watermarks).\n` +
+        `Character: ${characterDesc}\n` +
+        `Headwear rule: ${headwearStyle}\n` +
+        `${outfitDesc}\n` +
+        `Colors: ${colorStyle} ${finalStyleInstruction} Clothing amount: ${thicknessStyle}.\n` +
+        `Skin tone: ${selectedSkinColor}.\n` +
+        `Photo: studio lighting, photorealistic, ~1024px long edge, sharp, natural skin texture.\n` +
+        `Safety: no explicit nudity.`;
 
-      const imgData = await generateGeminiImage({ parts, model: 'gemini-2.5-flash-image' });
+      const parts: GeminiPart[] = [];
+
+      // Special Design options (from .upgrade6)
+      const usesSpecialDesignPrompts =
+        designMode === 'Custom' && (customDesign.top === 'HBA' || customDesign.shoes === 'aim');
+
+      const dataUrlToInlinePart = (dataUrl: string) => {
+        const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!m) return null;
+        return { inlineData: { mimeType: m[1]!, data: m[2]! } } as GeminiPart;
+      };
+
+      // Add 'HBA' top reference if selected (user-uploaded image)
+      if (designMode === 'Custom' && customDesign.top === 'HBA') {
+        if (hbaImageBase64) {
+          const inline = dataUrlToInlinePart(hbaImageBase64);
+          if (inline && 'inlineData' in inline) {
+            parts.push({
+              text:
+                'VIRTUAL TRY-ON TASK - GARMENT 1 (TOP): The following image shows the EXACT hoodie the character must wear. DO NOT redesign it. DO NOT alter the text, logos, graphics, or cut. Preserve the hoodie 100% identical to the reference.',
+            });
+            parts.push(inline);
+          } else {
+            parts.push({
+              text: `CRITICAL INSTRUCTION: The character MUST wear the exact hoodie described: ${hbaHoodieDesc}. The design, shape, graphics, and details of this hoodie must be perfectly replicated on the character.`,
+            });
+          }
+        } else {
+          parts.push({
+            text: `CRITICAL INSTRUCTION: The character MUST wear the exact hoodie described: ${hbaHoodieDesc}. The design, shape, graphics, and details of this hoodie must be perfectly replicated on the character.`,
+          });
+        }
+      }
+
+      // Add 'aim' shoe reference if selected (fixed reference URL)
+      if (designMode === 'Custom' && customDesign.shoes === 'aim') {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          const resp = await fetch(
+            'https://lh3.googleusercontent.com/aida-public/AB6AXuD--GjfU0623yeRTQGDPufUFR_AcyGbJCkDdfYQhfa33Z6nvca-1TOXhrwFVg2N5RiCHhhy3LLnHiNPE21vAD5DcA2Ybgp58Awi8kx4HgdooY_0bSzEqpbjpS_-iChDaVB9XFOMF0XySUyr9DnLfvAKLRMLpUF0--s_ZQjd6bE-PCd32yRsBhZZlVXDlRTVcQxdS8H7_Soy7rKtHqLCBYjz1d1plDnlgiynjzy3CuJtVjDwjEZDYaBtic2CIRWiQ6BOaehZHTtoXjrT',
+            { signal: controller.signal },
+          );
+          clearTimeout(timeout);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(String(reader.result || ''));
+              reader.onerror = () => reject(new Error('read fail'));
+              reader.readAsDataURL(blob);
+            });
+            const inline = dataUrlToInlinePart(dataUrl);
+            if (inline && 'inlineData' in inline) {
+              parts.push({
+                text: `VIRTUAL TRY-ON TASK - GARMENT 2 (SHOES): The following image shows the EXACT shoes the character must wear (${aimShoeDesc}). DO NOT change their design. Copy the shoes exactly onto the character's feet.`,
+              });
+              parts.push(inline);
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to fetch aim shoe reference image', e);
+        }
+      }
+
+      // Finally, add the main prompt text
+      parts.push({ text: prompt });
+
+      const imgData = await generateGeminiImage({
+        parts,
+        model: usesSpecialDesignPrompts ? 'gemini-3.1-flash-image-preview' : 'gemini-2.5-flash-image',
+      });
 
       const compressForStorage = async (dataUrl: string) => {
         try {
@@ -423,24 +511,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         }
       })();
 
-      // 2K 放大改为可选：用于更高清的下载，不影响档案中的 1K 图
-      let cosUrl: string | undefined;
-      try {
-        const fileName = `${serialNumber.replace(/\./g, '_')}.webp`;
-        const resp = await fetch('/api/upscale-2k', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dataUrl: storedImg, fileName }),
-        });
-        const text = await resp.text();
-        const data = text ? (JSON.parse(text) as any) : {};
-        if (!resp.ok || !data?.url) {
-          throw new Error(typeof data?.error === 'string' ? data.error : 'Upscale failed');
-        }
-        cosUrl = String(data.url);
-      } catch (e) {
-        console.error('Optional upscale+upload to COS 2K failed', e);
-      }
+      // 2K 放大仅在 Wardrobe 内点击“生成 2K”时执行，避免移动端铸造流程被网络/云托管卡住。
+      const cosUrl: string | undefined = undefined;
 
       const nftDataObj: CyberCollectionItem = {
         image: storedImg,
@@ -681,16 +753,51 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           { label: '短上衣', value: 'Crop Top' },
                           { label: 'T恤', value: 'T-Shirt' },
                           { label: '卫衣', value: 'Hoodie' },
+                          { label: 'HBA（特殊）', value: 'HBA' },
                         ].map((item) => (
                           <button
                             key={item.value}
                             onClick={() => setCustomDesign((p) => ({ ...p, top: item.value }))}
-                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.top === item.value ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
+                              customDesign.top === item.value
+                                ? item.value === 'HBA'
+                                  ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
+                                  : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
+                                : item.value === 'HBA'
+                                  ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
+                                  : 'border-white/10 text-white/60 hover:border-white/30'
+                            }`}
                           >
                             {item.label}
                           </button>
                         ))}
                       </div>
+                      {customDesign.top === 'HBA' && (
+                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                            上传 HBA 参考图（可选）
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onloadend = () => setHbaImageBase64(reader.result as string);
+                              reader.readAsDataURL(file);
+                            }}
+                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
+                          />
+                          {hbaImageBase64 && (
+                            <img
+                              src={hbaImageBase64}
+                              alt="HBA 参考图"
+                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">下装</span>
@@ -719,11 +826,20 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           { label: '战术靴', value: 'Combat Boots' },
                           { label: '拖鞋', value: 'Slippers' },
                           { label: '便鞋', value: 'Regular Shoes' },
+                          { label: 'AIM（特殊）', value: 'aim' },
                         ].map((item) => (
                           <button
                             key={item.value}
                             onClick={() => setCustomDesign((p) => ({ ...p, shoes: item.value }))}
-                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.shoes === item.value ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
+                              customDesign.shoes === item.value
+                                ? item.value === 'aim'
+                                  ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
+                                  : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
+                                : item.value === 'aim'
+                                  ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
+                                  : 'border-white/10 text-white/60 hover:border-white/30'
+                            }`}
                           >
                             {item.label}
                           </button>
@@ -752,6 +868,27 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all ${gender === g ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}
                         >
                           {GENDER_LABEL[g]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {activeCategory === 'Style' && (
+                  <div className="flex justify-between items-center mb-4 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">审美风格</span>
+                    <div className="flex gap-1 bg-white/5 p-1 rounded-lg overflow-x-auto no-scrollbar max-w-[60%]">
+                      {[
+                        { label: '默认', value: 'Default' as const },
+                        { label: "90's 高定", value: '90s Haute Couture Runway' as const },
+                      ].map((s) => (
+                        <button
+                          key={s.value}
+                          onClick={() => setAestheticStyle(s.value)}
+                          className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all whitespace-nowrap ${
+                            aestheticStyle === s.value ? 'bg-primary text-black' : 'text-white/50 hover:text-white'
+                          }`}
+                        >
+                          {s.label}
                         </button>
                       ))}
                     </div>
@@ -842,6 +979,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                 setSelectedSkinColor('#E0AC69');
                 setGender('Male');
                 setDesignMode('Random');
+                setAestheticStyle('Default');
                 setGeneratedNFT(null);
                 setNftMetadata(null);
                 setNftData(null);
