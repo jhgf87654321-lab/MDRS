@@ -54,6 +54,10 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
       alert('请填写标题。');
       return;
     }
+    if (!content.trim()) {
+      alert('请填写内容。');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -90,7 +94,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
         <h1 className="text-lg font-black tracking-tighter uppercase">新发布</h1>
         <button
           onClick={() => void submitPost()}
-          disabled={isSubmitting || mediaUrls.length === 0 || !title.trim()}
+          disabled={isSubmitting || mediaUrls.length === 0 || !title.trim() || !content.trim()}
           className="px-4 py-2 bg-primary text-black font-bold uppercase tracking-widest text-[10px] rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? '发布中…' : '发布'}

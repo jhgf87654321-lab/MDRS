@@ -71,7 +71,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       {/* Header with logo */}
       <header className="relative z-50 px-8 pt-12 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <img src={LokadaLogo} alt="LOKADA" className="h-10 w-auto" />
+          <img src={LokadaLogo} alt="LOKADA" className="h-12 w-auto" />
         </div>
 
         <div className="flex items-center">
