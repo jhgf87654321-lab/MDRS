@@ -100,10 +100,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('signIn');
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const skinColors = [
+  const skinColors: Array<{ name: string; hex: string; hint?: string }> = [
     { name: 'Light Bio', hex: '#FFDBAC' },
     { name: 'Warm Bio', hex: '#F1C27D' },
-    { name: 'Tan Bio', hex: '#E0AC69' },
+    { name: 'Tan Bio', hex: '#E0AC69', hint: '（亚洲人概率up）' },
     { name: 'Rich Bio', hex: '#8D5524' },
     { name: 'Deep Bio', hex: '#3B2219' },
     { name: 'Phantom', hex: '#E2E2E2' },
@@ -256,16 +256,16 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     switch (activeCategory) {
       case 'Body':
         return [
-          { label: 'Muscularity', key: 'muscularity', value: params.muscularity },
-          { label: 'Build (Skinny -> Heavy)', key: 'heavy', value: params.heavy },
-          { label: 'Height / Size', key: 'proportions', value: params.proportions },
-          { label: 'Headwear (Clean -> Complex)', key: 'jawline', value: params.jawline },
+          { label: '肌肉', key: 'muscularity', value: params.muscularity },
+          { label: '体型（瘦 → 壮）', key: 'heavy', value: params.heavy },
+          { label: '身高 / 比例', key: 'proportions', value: params.proportions },
+          { label: '头饰（简 → 繁）', key: 'jawline', value: params.jawline },
         ];
       case 'Style':
         return [
-          { label: 'Chromaticity', key: 'chromaticity', value: params.chromaticity },
-          { label: 'Era (Retro -> Modern)', key: 'era', value: params.era },
-          { label: 'Thickness (Sexy -> Heavy)', key: 'thickness', value: params.thickness },
+          { label: '色彩浓度', key: 'chromaticity', value: params.chromaticity },
+          { label: '年代（复古 → 未来）', key: 'era', value: params.era },
+          { label: '厚重（轻薄 → 厚重）', key: 'thickness', value: params.thickness },
         ];
       default:
         return [];
@@ -618,6 +618,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                       onClick={() => setSelectedSkinColor(color.hex)}
                       className="flex flex-col items-center gap-2 group"
                     >
+                      {color.hint ? (
+                        <span className="text-[7px] font-bold text-primary/80 uppercase tracking-widest">
+                          {color.hint}
+                        </span>
+                      ) : null}
                       <div 
                         className={`w-12 h-12 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center ${
                           selectedSkinColor === color.hex 

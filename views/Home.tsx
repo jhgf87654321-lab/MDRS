@@ -71,7 +71,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       {/* Header with logo */}
       <header className="relative z-50 px-8 pt-12 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <img src={LokadaLogo} alt="LOKADA" className="h-8 w-auto" />
+          <img src={LokadaLogo} alt="LOKADA" className="h-10 w-auto" />
         </div>
 
         <div className="flex items-center">
@@ -92,7 +92,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           className="relative w-full aspect-[4/5] mb-12 cursor-pointer group"
           onClick={() => {
             if (onNavigate) {
-              onNavigate(View.CREATOR);
+              onNavigate(View.SHARE_HUB);
             } else {
               onEnter();
             }
@@ -121,7 +121,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
             <div className="absolute bottom-12 left-8 flex flex-col items-start gap-2">
               <span className="text-[10px] font-bold text-primary uppercase tracking-[0.5em]">全域网络</span>
-              <span className="text-5xl font-display font-black text-white leading-none">
+              <span className="text-4xl font-display font-black text-white leading-none">
                 发现
                 <br />
                 与交易
@@ -145,7 +145,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             className="group relative bg-white text-black px-12 py-5 rounded-full flex items-center gap-16 overflow-hidden shadow-[0_30px_60px_rgba(212,255,0,0.1)] active:scale-95 transition-all"
           >
             <div className="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">开始铸造</span>
+            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">开始生成</span>
             <div className="relative z-10 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:bg-black transition-colors">
               <span className="material-icons-round text-lg group-hover:translate-x-1 transition-transform">east</span>
             </div>
