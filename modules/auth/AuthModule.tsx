@@ -287,7 +287,7 @@ export default function AuthModule({ onNavigate }: Props) {
               channel === 'email' ? 'bg-white text-black border-white' : 'bg-white/5 text-white/60 border-white/10'
             }`}
           >
-            Email
+            邮箱
           </button>
           <button
             onClick={() => setChannel('phone')}
@@ -295,7 +295,7 @@ export default function AuthModule({ onNavigate }: Props) {
               channel === 'phone' ? 'bg-white text-black border-white' : 'bg-white/5 text-white/60 border-white/10'
             }`}
           >
-            Phone
+            手机
           </button>
             </div>
 
@@ -304,20 +304,20 @@ export default function AuthModule({ onNavigate }: Props) {
             {mode === 'signUp' && (
               <div>
                 <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                  Username / Nickname
+                  用户名 / 昵称
                 </label>
                 <input
                   value={displayName}
                   onChange={(ev) => setDisplayName(ev.target.value)}
                   type="text"
-                  placeholder="Your name or handle"
+                  placeholder="输入昵称"
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white normal-case focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
                 />
               </div>
             )}
             <div>
               <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                {channel === 'email' ? 'Email' : 'Phone'}
+                {channel === 'email' ? '邮箱' : '手机号'}
               </label>
               <input
                 value={identifier}
@@ -330,7 +330,7 @@ export default function AuthModule({ onNavigate }: Props) {
 
             <div>
               <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                Password
+                密码
               </label>
               <input
                 value={password}
@@ -344,7 +344,7 @@ export default function AuthModule({ onNavigate }: Props) {
             {mode === 'signUp' && (
               <div>
                 <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block mb-2 ml-1">
-                  Confirm Password
+                  确认密码
                 </label>
                 <input
                   value={confirmPassword}
@@ -360,7 +360,7 @@ export default function AuthModule({ onNavigate }: Props) {
               <div>
               <div className="flex items-end justify-between gap-3 mb-2">
                 <label className="text-[10px] uppercase font-bold text-white/20 tracking-[0.3em] block ml-1">
-                  {channel === 'email' ? 'Email Code' : 'SMS Code'}
+                  {channel === 'email' ? '邮箱验证码' : '短信验证码'}
                 </label>
                 <button
                   type="button"
@@ -399,7 +399,7 @@ export default function AuthModule({ onNavigate }: Props) {
               disabled={status !== 'idle'}
               className="w-full bg-white text-black py-5 rounded-[2rem] font-black uppercase tracking-[0.25em] text-[12px] shadow-2xl active:scale-95 transition-all disabled:opacity-60"
             >
-              {status === 'submitting' ? 'Working...' : mode === 'signIn' ? 'Start Session' : 'Create Account'}
+              {status === 'submitting' ? '处理中…' : mode === 'signIn' ? '开始会话' : '创建账号'}
             </button>
 
             <div className="mt-8 text-center">

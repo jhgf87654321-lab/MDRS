@@ -138,15 +138,15 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
   const regularRecycleMystery: Product = {
     id: 'Regular Recycle Mystery',
-    name: 'Mystery Recycle NFT',
+    name: '神秘回收 NFT',
     price: 60,
-    type: 'Regular Recycle',
+    type: '常规回收',
     image: 'https://lokada-1254090729.cos.ap-shanghai.myqcloud.com/FUNCTION/header.jpg',
   };
 
   const userCollections = [
-    { id: 'col1', name: 'Regular Recycle', count: 0 },
-    { id: 'col2', name: 'Neon Dreams', count: 2 },
+    { id: 'col1', name: '常规回收', count: 0 },
+    { id: 'col2', name: '霓虹幻梦', count: 2 },
   ];
 
   return (
@@ -216,29 +216,29 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
            <span className="material-icons-round text-8xl">keyboard_double_arrow_right</span>
         </div>
         <div className="flex justify-between items-center mb-4 relative z-10">
-          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Special Event</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">限时活动</span>
           <span className="bg-black text-primary px-3 py-1 rounded-full text-[9px] font-black uppercase flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-            Limited Blind Box
+            限定盲盒
           </span>
         </div>
         <div className="flex items-center gap-4 relative z-10">
            <div className="flex flex-col items-center">
              <span className="font-display text-4xl font-black">{format(timeLeft.h)}</span>
-             <span className="text-[8px] font-bold uppercase opacity-50">Hours</span>
+             <span className="text-[8px] font-bold uppercase opacity-50">时</span>
            </div>
            <span className="font-display text-3xl font-black opacity-30">:</span>
            <div className="flex flex-col items-center">
              <span className="font-display text-4xl font-black">{format(timeLeft.m)}</span>
-             <span className="text-[8px] font-bold uppercase opacity-50">Mins</span>
+             <span className="text-[8px] font-bold uppercase opacity-50">分</span>
            </div>
            <span className="font-display text-3xl font-black opacity-30">:</span>
            <div className="flex flex-col items-center">
              <span className="font-display text-4xl font-black">{format(timeLeft.s)}</span>
-             <span className="text-[8px] font-bold uppercase opacity-50">Secs</span>
+             <span className="text-[8px] font-bold uppercase opacity-50">秒</span>
            </div>
            <div className="ml-auto text-right">
-             <span className="text-[10px] font-black uppercase tracking-tighter block">Tap to Access</span>
+             <span className="text-[10px] font-black uppercase tracking-tighter block">点击进入</span>
              <span className="material-icons-round text-3xl italic opacity-40">bolt</span>
            </div>
         </div>
@@ -246,10 +246,10 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
       <div className="flex justify-between items-end mb-6">
         <div>
-          <h3 className="font-display text-2xl font-black italic uppercase leading-none">Style Series</h3>
-          <p className="text-white/40 text-xs font-bold mt-1">Mystery NFT Blind Boxes</p>
+          <h3 className="font-display text-2xl font-black italic uppercase leading-none">风格系列</h3>
+          <p className="text-white/40 text-xs font-bold mt-1">神秘 NFT 盲盒</p>
         </div>
-        <button className="text-primary text-[10px] font-black uppercase tracking-widest">See All</button>
+        <button className="text-primary text-[10px] font-black uppercase tracking-widest">查看全部</button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-10">
@@ -282,9 +282,9 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         ))}
       </div>
 
-      {/* Categories Navigation */}
+      {/* 分类导航 */}
       <div className="mb-6">
-        <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">Categories</h3>
+        <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">分类</h3>
         <div className="flex flex-col gap-3">
           {userCollections.map((col, idx) => {
             const isRegular = idx === 0;
@@ -325,7 +325,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
                       onOpenCart?.();
                     }}
                     className="relative w-12 h-12 rounded-2xl bg-primary text-black shadow-[0_0_20px_rgba(212,255,0,0.35)] active:scale-90 transition-transform flex items-center justify-center overflow-hidden"
-                    title="Buy mystery recycle NFT"
+                    title="购买神秘回收 NFT"
                   >
                     <span className="material-icons-round text-lg">help</span>
                   </button>

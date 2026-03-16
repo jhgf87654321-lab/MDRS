@@ -122,15 +122,15 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                 <div className="w-8 h-1.5 bg-primary/60 rounded-full shadow-[0_0_10px_#D4FF00]"></div>
                 <div className="w-1.5 h-1.5 bg-white/10 rounded-full"></div>
               </div>
-              <span className="text-xl font-black text-white/80 tracking-tighter uppercase">SHARE_HUB</span>
+              <span className="text-xl font-black text-white/80 tracking-tighter uppercase">分享中心</span>
             </div>
 
             <div className="absolute bottom-12 left-8 flex flex-col items-start gap-2">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.5em]">Global Network</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.5em]">全域网络</span>
               <span className="text-5xl font-display font-black text-white leading-none">
-                DISCOVER
+                发现
                 <br />
-                & TRADE
+                与交易
               </span>
             </div>
           </div>
@@ -151,7 +151,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             className="group relative bg-white text-black px-12 py-5 rounded-full flex items-center gap-16 overflow-hidden shadow-[0_30px_60px_rgba(212,255,0,0.1)] active:scale-95 transition-all"
           >
             <div className="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">Start Mint</span>
+            <span className="relative z-10 font-black uppercase tracking-[0.3em] text-[12px]">开始铸造</span>
             <div className="relative z-10 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:bg-black transition-colors">
               <span className="material-icons-round text-lg group-hover:translate-x-1 transition-transform">east</span>
             </div>
@@ -162,8 +162,8 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         <div className="flex flex-col gap-6 mb-32">
           <div className="flex justify-between items-end mb-2">
             <div>
-              <h3 className="text-3xl font-black italic uppercase tracking-tighter leading-none">CORE FUNCTIONS</h3>
-              <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Neural Network Subsystems</p>
+              <h3 className="text-3xl font-black italic uppercase tracking-tighter leading-none">核心功能</h3>
+              <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">神经网络子系统</p>
             </div>
             <div className="w-12 h-[2px] bg-primary/30"></div>
           </div>
@@ -205,10 +205,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       {/* Footer Vertical Mark */}
       <footer className="relative z-10 px-8 pb-40">
         <div className="font-black text-[56px] leading-[0.85] tracking-tighter opacity-10 select-none">
-          FUT<br/>URE
+          未<br/>来
         </div>
         <div className="mt-8 flex justify-between items-center border-t border-white/5 pt-8">
-           <span className="text-[8px] font-bold text-white/20 uppercase tracking-[0.5em]">Protocol V.2.1-AXON</span>
+           <span className="text-[8px] font-bold text-white/20 uppercase tracking-[0.5em]">协议 V.2.1-AXON</span>
            <div className="flex gap-4">
               <span className="w-2 h-2 rounded-full bg-primary/20"></span>
               <span className="w-2 h-2 rounded-full bg-primary/20"></span>
@@ -233,21 +233,21 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                 <div className="w-28 h-28 bg-primary rounded-full flex items-center justify-center text-black mb-10 animate-pulse shadow-[0_0_60px_rgba(212,255,0,0.5)]">
                   <span className="material-icons-round text-6xl">sync</span>
                 </div>
-                <h3 className="text-3xl font-black mb-2 uppercase text-white tracking-tighter leading-none">Protocol<br/>Synced</h3>
-                <p className="text-white/30 text-[11px] uppercase tracking-[0.4em] font-bold mt-2">Neural Node Online</p>
+                <h3 className="text-3xl font-black mb-2 uppercase text-white tracking-tighter leading-none">协议<br/>同步</h3>
+                <p className="text-white/30 text-[11px] uppercase tracking-[0.4em] font-bold mt-2">神经节点在线</p>
               </div>
             ) : (
               <div className="flex flex-col">
                 <div className="mb-14">
-                  <span className="text-[11px] font-bold text-primary uppercase tracking-[0.5em] mb-4 block underline underline-offset-8">Auth V.2.1</span>
+                  <span className="text-[11px] font-bold text-primary uppercase tracking-[0.5em] mb-4 block underline underline-offset-8">认证 V.2.1</span>
                   <h3 className="text-4xl font-black leading-[0.9] uppercase tracking-tighter text-white">
-                    {authMode === 'signIn' ? <>Establish<br/>Link</> : <>Avatar<br/>Genesis</>}
+                    {authMode === 'signIn' ? <>建立<br/>连接</> : <>形象<br/>初始</>}
                   </h3>
                 </div>
 
                 <form onSubmit={handleAuthSubmit} className="space-y-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Address</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">账号</label>
                     <input 
                       required
                       type="email" 
@@ -256,7 +256,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Key</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">密码</label>
                     <input 
                       required
                       type="password" 
@@ -268,7 +268,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                     type="submit"
                     className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking-[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
                   >
-                    <span>{authMode === 'signIn' ? 'Initiate' : 'Establish'}</span>
+                    <span>{authMode === 'signIn' ? '开始' : '建立'}</span>
                     <div className="bg-primary p-3 rounded-2xl text-black group-hover:scale-110 transition-transform">
                       <span className="material-icons-round text-lg">{authMode === 'signIn' ? 'vpn_key' : 'fingerprint'}</span>
                     </div>
@@ -279,7 +279,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                   onClick={toggleMode} 
                   className="mt-12 text-[10px] text-white/30 uppercase tracking-[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
                 >
-                  {authMode === 'signIn' ? "Request Protocol access" : "Node already active?"}
+                  {authMode === 'signIn' ? '请求协议接入' : '节点已激活？'}
                 </button>
               </div>
             )}

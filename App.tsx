@@ -59,7 +59,7 @@ const App: React.FC = () => {
     // Only the mystery recycle item has a real fulfillment flow right now.
     const mystery = items.find((x) => x.id === 'Regular Recycle Mystery');
     if (!mystery) {
-      alert('Checkout is not connected for these items yet.');
+      alert('这些商品暂未接入结算。');
       return;
     }
 

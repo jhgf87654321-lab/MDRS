@@ -180,7 +180,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
             <span className="material-icons-round">west</span>
           </button>
           <div className="text-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">Item Decryption</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">物品解密</p>
             <h2 className="text-xl font-future font-black tracking-tighter uppercase">PROTOCOL_{selectedItem.id.replace('#','')}</h2>
           </div>
           <div className="w-12"></div>
@@ -204,20 +204,20 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
               <div>
                 <h3 className="text-3xl font-display font-black uppercase tracking-tighter leading-none">{selectedItem.name}</h3>
                 <div className="flex gap-2 mt-2">
-                  <span className="text-[10px] bg-primary/20 text-primary px-3 py-1 rounded-full font-bold uppercase tracking-widest">Authenticated</span>
+                  <span className="text-[10px] bg-primary/20 text-primary px-3 py-1 rounded-full font-bold uppercase tracking-widest">已认证</span>
                   {selectedItem.colorName && <span className="text-[10px] bg-white/10 text-white/60 px-3 py-1 rounded-full font-bold uppercase tracking-widest">Tint: {selectedItem.colorName}</span>}
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-primary text-2xl font-display font-black">${selectedItem.price}</p>
-                <p className="text-[8px] opacity-40 uppercase font-bold tracking-[0.2em]">Market Value</p>
+                <p className="text-[8px] opacity-40 uppercase font-bold tracking-[0.2em]">市场价值</p>
               </div>
             </div>
 
             <div className="glass rounded-[2rem] p-6 space-y-6 border border-white/5">
               <div className="flex justify_between items-center">
                 <div>
-                  <p className="text-[9px] font-bold text-white/30 uppercase tracking_[0.3em] mb-1">Acquisition Date</p>
+                  <p className="text-[9px] font-bold text-white/30 uppercase tracking_[0.3em] mb-1">获取日期</p>
                   <p className="text-lg font-display font-black text-white">{selectedItem.purchaseDate}</p>
                 </div>
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -228,7 +228,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
               <div className="h-px bg-white/10"></div>
 
               <div>
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em] mb-4">Value Trajectory</p>
+                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em] mb-4">价值走势</p>
                 <div className="space-y-4">
                   {selectedItem.priceHistory.map((history, idx) => (
                     <div key={idx} className="flex justify_between items-center group">
@@ -299,22 +299,22 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <span className="material-icons-round text-5xl text-primary mb-2">public</span>
             <h2 className="font-display text-4xl font-black text-white leading-none mb-2">
-              SHARE
+              分享
               <br />
-              PLATFORM
+              平台
             </h2>
-            <p className="text-[10px] text-white/60 uppercase tracking-widest mb-4">Discover & Trade User NFTs</p>
+            <p className="text-[10px] text-white/60 uppercase tracking-widest mb-4">发现与交易用户 NFT</p>
             <button
               onClick={() => {
                 if (onOpenShareHub) {
                   onOpenShareHub();
                 } else {
-                  alert('Opening Share Platform...');
+                  alert('正在打开分享平台…');
                 }
               }}
               className="bg-white text-black px-6 py-2 rounded-full font-bold text-xs flex items-center gap-1 active:scale-95 transition-all"
             >
-              <span>Enter Platform</span>
+              <span>进入平台</span>
               <span className="material-icons-round text-sm">east</span>
             </button>
           </div>
@@ -324,8 +324,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
         <div className="mb-6">
           <div className="flex justify_between items-end mb-4">
             <div>
-              <h3 className="font-display text-2xl font-black italic uppercase leading-none">My Cyber Collection</h3>
-              <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">Your Generated Assets</p>
+              <h3 className="font-display text-2xl font-black italic uppercase leading-none">我的藏品</h3>
+              <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">你的生成资产</p>
             </div>
           </div>
           
@@ -345,11 +345,11 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                         className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                       />
                       <div className="absolute top-2 right-2 bg-primary text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase">
-                        {item.isSpecial ? 'Special' : 'Minted'}
+                        {item.isSpecial ? '特别' : '已铸造'}
                       </div>
                     </button>
                     <h4 className="font-display text-[11px] uppercase font-bold leading-tight mb-1 line-clamp-1">
-                      {item.theme || 'Genesis Avatar'}
+                      {item.theme || '初代形象'}
                     </h4>
                     <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">
                       {item.serialNumber}
@@ -363,8 +363,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                   <span className="material-icons-round text-2xl">person_outline</span>
                 </div>
                 <div className="text-center">
-                  <span className="text-sm font-display font-bold uppercase block mb-1">No Assets Found</span>
-                  <span className="text-[10px] text-white/60 uppercase tracking-widest">Generate an Avatar in the Creator tab</span>
+                  <span className="text-sm font-display font-bold uppercase block mb-1">暂无资产</span>
+                  <span className="text-[10px] text-white/60 uppercase tracking-widest">请在“形象”中生成你的 NFT</span>
                 </div>
               </div>
             )}
@@ -377,9 +377,9 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                     onShare(generatedNFT);
                     return;
                   }
-                  alert('Uploaded to Share Platform successfully!');
+                  alert('已上传到分享平台！');
                 } else {
-                  alert('Please generate an Avatar NFT first.');
+                  alert('请先生成形象 NFT。');
                 }
               }}
               className="col-span-2 border-2 border-dashed border-primary/30 bg-primary/5 rounded-[2rem] p-4 flex flex-col items-center justify-center gap-2 hover:bg-primary/10 transition-colors active:scale-95 mt-4"
@@ -387,7 +387,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                 <span className="material-icons-round">cloud_upload</span>
               </div>
-              <span className="text-[10px] font-display font-bold uppercase text-center text-primary">Upload to<br/>Share Platform</span>
+              <span className="text-[10px] font-display font-bold uppercase text-center text-primary">上传到<br/>分享平台</span>
             </button>
           </div>
         </div>
@@ -405,10 +405,10 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
             </button>
             <div className="mb-4">
               <p className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-1">
-                {selectedNft.isSpecial ? 'Special Edition NFT' : 'Standard NFT'}
+                {selectedNft.isSpecial ? '特别版 NFT' : '标准版 NFT'}
               </p>
               <h3 className="text-xl font-display font-black uppercase tracking-tight">
-                {selectedNft.theme || 'Avatar NFT'}
+                {selectedNft.theme || '形象 NFT'}
               </h3>
               <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.3em] mt-1">
                 {selectedNft.serialNumber}
@@ -448,7 +448,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                   className="flex-1 py-3 rounded-2xl bg-primary/20 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-primary/40"
                 >
                   <span className="material-icons-round text-sm">download</span>
-                  Save
+                  保存
                 </button>
                 <button
                   type="button"
@@ -492,13 +492,13 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                       URL.revokeObjectURL(obj);
                     } catch (e) {
                       console.error(e);
-                      alert('Failed to enhance to 2K image.');
+                      alert('生成 2K 失败。');
                     }
                   }}
                   className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-white/20"
                 >
                   <span className="material-icons-round text-sm">high_quality</span>
-                  Enhance 2K
+                  生成 2K
                 </button>
                 <button
                   type="button"
@@ -507,12 +507,12 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                       onShare(selectedNft.image);
                       return;
                     }
-                    alert('Uploaded to Share Platform successfully!');
+                    alert('已上传到分享平台！');
                   }}
                   className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1"
                 >
                   <span className="material-icons-round text-sm">public</span>
-                  Share
+                  分享
                 </button>
                 <button
                   type="button"
@@ -524,7 +524,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                   }}
                   className="w-28 py-3 rounded-2xl bg-red-500/10 border border-red-500/40 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/30"
                 >
-                  Recycle
+                  回收
                 </button>
               </div>
             </div>

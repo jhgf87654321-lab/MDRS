@@ -43,15 +43,15 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
   const submitPost = async () => {
     const me = await getMe();
     if (!me) {
-      alert('Please sign in to post.');
+      alert('请先登录后再发布。');
       return;
     }
     if (mediaUrls.length === 0) {
-      alert('Please add at least one image or video.');
+      alert('请至少添加一张图片或视频。');
       return;
     }
     if (!title.trim()) {
-      alert('Title is required.');
+      alert('请填写标题。');
       return;
     }
 
@@ -72,7 +72,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
       onSuccess();
     } catch (error) {
       console.error('Error creating post', error);
-      alert('Failed to create post.');
+      alert('发布失败。');
     } finally {
       setIsSubmitting(false);
     }
@@ -87,13 +87,13 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
         >
           <span className="material-icons-round text-lg">close</span>
         </button>
-        <h1 className="text-lg font-black tracking-tighter uppercase">New Post</h1>
+        <h1 className="text-lg font-black tracking-tighter uppercase">新发布</h1>
         <button
           onClick={() => void submitPost()}
           disabled={isSubmitting || mediaUrls.length === 0 || !title.trim()}
           className="px-4 py-2 bg-primary text-black font-bold uppercase tracking-widest text-[10px] rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Posting...' : 'Publish'}
+          {isSubmitting ? '发布中…' : '发布'}
         </button>
       </header>
 
@@ -106,7 +106,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
           className="space-y-6"
         >
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Media</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">媒体</label>
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
               {mediaUrls.map((url, index) => (
                 <div key={index} className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-white/10 group">
@@ -128,7 +128,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
                   className="flex-shrink-0 w-24 h-24 rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center gap-1 hover:border-primary/50 hover:text-primary transition-colors text-white/40"
                 >
                   <span className="material-icons-round text-2xl">add_photo_alternate</span>
-                  <span className="text-[8px] font-bold uppercase tracking-widest">Add</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest">添加</span>
                 </button>
               )}
             </div>
@@ -146,7 +146,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
             <input
               required
               type="text"
-              placeholder="Add a catchy title..."
+              placeholder="输入标题…"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full bg-transparent text-xl font-bold placeholder:text-white/20 focus:outline-none normal-case"
@@ -157,7 +157,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
           <div className="space-y-2">
             <textarea
               required
-              placeholder="Share your thoughts, outfit details, or inspiration..."
+              placeholder="写点内容、穿搭细节或灵感…"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="w-full h-40 bg-transparent text-sm text-white/80 placeholder:text-white/20 focus:outline-none resize-none normal-case"

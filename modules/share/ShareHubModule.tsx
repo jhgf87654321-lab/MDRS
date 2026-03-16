@@ -26,7 +26,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
       } catch (e) {
         console.error('Failed to fetch posts', e);
         if (!isMounted) return;
-        setError('Failed to load posts.');
+        setError('加载内容失败。');
       } finally {
         if (!isMounted) return;
         setIsLoading(false);
@@ -42,7 +42,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
   const handleLike = async (postId: string) => {
     const me = await getMe();
     if (!me) {
-      alert('Please sign in to like posts.');
+      alert('请先登录后再点赞。');
       return;
     }
 
@@ -57,7 +57,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
       setPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, likesCount: Math.max(0, p.likesCount - 1) } : p)),
       );
-      alert('Failed to like post.');
+      alert('点赞失败。');
     }
   };
 
@@ -75,7 +75,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
             }`}
             onClick={() => setActiveTab('explore')}
           >
-            Explore
+            探索
           </button>
           <button
             className={`text-xl font-black tracking-tighter uppercase ${
@@ -83,7 +83,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
             }`}
             onClick={() => setActiveTab('exchange')}
           >
-            Exchanging
+            交换
           </button>
         </div>
         <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
@@ -104,7 +104,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-white/40">
             <span className="material-icons-round text-4xl mb-2">grid_off</span>
-            <p className="text-sm font-bold uppercase tracking-widest">No posts yet</p>
+            <p className="text-sm font-bold uppercase tracking-widest">暂无内容</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">

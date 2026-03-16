@@ -122,7 +122,7 @@ export default function AdminModule() {
       }
     } catch (error) {
       console.error('Auth failed', error);
-      alert(error instanceof Error ? error.message : 'Auth failed');
+      alert(error instanceof Error ? error.message : '认证失败');
     }
   };
 
@@ -137,7 +137,7 @@ export default function AdminModule() {
       setGeneratedImage(img);
     } catch (error) {
       console.error('Generation error', error);
-      alert('Failed to generate image.');
+      alert('生成失败。');
     } finally {
       setIsGenerating(false);
     }
@@ -146,7 +146,7 @@ export default function AdminModule() {
   const handleRate = async (rating: number) => {
     if (!generatedImage || rating !== 5) {
       if (rating !== 5) {
-        alert('Only 5-star images are saved to the reference library.');
+        alert('仅 5 星图片会保存到参考库。');
         setGeneratedImage(null);
       }
       return;
@@ -161,11 +161,11 @@ export default function AdminModule() {
         : prepared;
       setSaveStage('saving');
       await saveAestheticReference({ imageUrl, prompt });
-      alert('Saved to Aesthetic Reference Library!');
+      alert('已保存到审美参考库！');
       setGeneratedImage(null);
     } catch (error) {
       console.error('Error saving reference', error);
-      alert('Failed to save reference.');
+      alert('保存失败。');
     } finally {
       setSaveStage('idle');
       setIsSaving(false);
@@ -173,22 +173,22 @@ export default function AdminModule() {
   };
 
   if (isLoading) {
-    return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">加载中…</div>;
   }
 
   if (!user || user.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background-dark text-white p-8 flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-display font-black mb-4">Admin Access Required</h1>
+        <h1 className="text-3xl font-display font-black mb-4">需要管理员权限</h1>
         <p className="text-white/60 mb-8 text-center">
-          You must be logged in as an administrator to access the Aesthetic Training System.
+          你需要以管理员身份登录，才能访问审美训练系统。
         </p>
 
         {user ? (
           <div className="flex flex-col items-center gap-4">
-            <p className="text-sm text-primary">Logged in as: {user.email} (Not Admin)</p>
+            <p className="text-sm text-primary">当前登录：{user.email}（非管理员）</p>
             <button onClick={() => void signOut()} className="px-6 py-2 bg-white/10 rounded-full hover:bg-white/20">
-              Sign Out
+              退出登录
             </button>
           </div>
         ) : (
@@ -200,7 +200,7 @@ export default function AdminModule() {
                   authMode === 'signIn' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
                 }`}
               >
-                Sign In
+                登录
               </button>
               <button
                 onClick={() => setAuthMode('signUp')}
@@ -208,7 +208,7 @@ export default function AdminModule() {
                   authMode === 'signUp' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
                 }`}
               >
-                Sign Up
+                注册
               </button>
             </div>
 
@@ -216,14 +216,14 @@ export default function AdminModule() {
               value={authEmail}
               onChange={(e) => setAuthEmail(e.target.value)}
               type="email"
-              placeholder="Email"
+              placeholder="邮箱"
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50"
             />
             <input
               value={authPassword}
               onChange={(e) => setAuthPassword(e.target.value)}
               type="password"
-              placeholder="Password (min 8 chars)"
+              placeholder="密码（至少 8 位）"
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50"
             />
             <button
@@ -231,7 +231,7 @@ export default function AdminModule() {
               className="w-full px-8 py-3 bg-primary text-black font-bold rounded-full uppercase tracking-widest"
               disabled={!authEmail || !authPassword}
             >
-              {authMode === 'signUp' ? 'Create Account' : 'Sign In'}
+              {authMode === 'signUp' ? '创建账号' : '登录'}
             </button>
           </div>
         )}
@@ -243,17 +243,17 @@ export default function AdminModule() {
     <div className="min-h-screen bg-background-dark text-white p-6 overflow-y-auto pb-24">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-display font-black uppercase tracking-tighter text-primary">Aesthetic Training</h1>
-          <p className="text-[10px] text-white/40 uppercase tracking-widest">Admin Test Node</p>
+          <h1 className="text-2xl font-display font-black uppercase tracking-tighter text-primary">审美训练</h1>
+          <p className="text-[10px] text-white/40 uppercase tracking-widest">管理测试节点</p>
         </div>
         <button onClick={() => void signOut()} className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white">
-          Sign Out
+          退出
         </button>
       </div>
 
       <div className="space-y-6">
         <div className="glass p-4 rounded-2xl border border-white/10">
-          <label className="block text-xs font-bold uppercase tracking-widest text-white/60 mb-2">Test Prompt</label>
+          <label className="block text-xs font-bold uppercase tracking-widest text-white/60 mb-2">测试提示词</label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -266,11 +266,11 @@ export default function AdminModule() {
           >
             {isGenerating ? (
               <>
-                <span className="material-icons-round animate-spin">sync</span> Generating...
+                <span className="material-icons-round animate-spin">sync</span> 生成中…
               </>
             ) : (
               <>
-                <span className="material-icons-round">auto_awesome</span> Generate Test Image
+                <span className="material-icons-round">auto_awesome</span> 生成测试图片
               </>
             )}
           </button>
@@ -278,14 +278,12 @@ export default function AdminModule() {
 
         {generatedImage && (
           <div className="glass p-4 rounded-2xl border border-primary/30 animate-in fade-in slide-in-from-bottom-4">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-center mb-4">Evaluate Result</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-center mb-4">结果评估</h2>
             <div className="aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-white/10">
-              <img src={generatedImage} alt="Generated Test" className="w-full h-full object-cover" />
+              <img src={generatedImage} alt="测试生成图" className="w-full h-full object-cover" />
             </div>
 
-            <p className="text-xs text-center text-white/60 mb-4">
-              Rate this image. Only 5-star images will be saved to the reference library.
-            </p>
+            <p className="text-xs text-center text-white/60 mb-4">为图片打分。只有 5 星会保存到参考库。</p>
 
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -307,7 +305,7 @@ export default function AdminModule() {
             {isSaving && (
               <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
                 <span className="material-icons-round animate-spin text-sm">sync</span>
-                {saveStage === 'uploading' ? 'Uploading to COS…' : saveStage === 'saving' ? 'Saving reference…' : 'Working…'}
+                {saveStage === 'uploading' ? '上传到 COS…' : saveStage === 'saving' ? '保存参考…' : '处理中…'}
               </div>
             )}
           </div>

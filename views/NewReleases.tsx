@@ -32,8 +32,8 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
           <span className="material-icons-round">west</span>
         </button>
         <div className="text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">Priority Access</p>
-          <h2 className="text-2xl font-future font-black tracking-tighter uppercase">CHRONO DROP</h2>
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">优先通道</p>
+          <h2 className="text-2xl font-future font-black tracking-tighter uppercase">限时发售</h2>
         </div>
         <button className="w-12 h-12 glass rounded-full flex items-center justify-center">
           <span className="material-icons-round">share</span>
@@ -58,7 +58,7 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
 
           <div className="absolute bottom-8 left-8">
             <span className="bg-black text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
-              Serial: {currentDrop.id}
+              编号：{currentDrop.id}
             </span>
           </div>
         </div>
@@ -68,7 +68,7 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
           <div className="flex justify-between items-end">
             <div>
               <h3 className="text-4xl font-display font-black uppercase tracking-tighter leading-none">{currentDrop.name.split(' ').map((word, i) => <React.Fragment key={i}>{word}{i === 1 ? <br/> : ' '}</React.Fragment>)}</h3>
-              <p className="text-white/40 text-sm mt-2 font-space">Hyper-adaptive neural sole for urban agility.</p>
+              <p className="text-white/40 text-sm mt-2 font-space">超自适应神经鞋底，为城市敏捷而生。</p>
             </div>
             <div className="text-right">
               <p className="text-primary text-3xl font-display font-black">${currentDrop.price}</p>
@@ -79,17 +79,17 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
           <div className="grid grid-cols-3 gap-3">
              <div className="glass p-4 rounded-3xl text-center">
                 <span className="material-icons-round text-primary text-lg mb-1 block">bolt</span>
-                <span className="text-[8px] font-bold uppercase opacity-40 block">Response</span>
+                <span className="text-[8px] font-bold uppercase opacity-40 block">响应</span>
                 <span className="text-xs font-black">ULTRA</span>
              </div>
              <div className="glass p-4 rounded-3xl text-center">
                 <span className="material-icons-round text-primary text-lg mb-1 block">blur_on</span>
-                <span className="text-[8px] font-bold uppercase opacity-40 block">Traction</span>
+                <span className="text-[8px] font-bold uppercase opacity-40 block">抓地</span>
                 <span className="text-xs font-black">X-GRID</span>
              </div>
              <div className="glass p-4 rounded-3xl text-center">
                 <span className="material-icons-round text-primary text-lg mb-1 block">auto_fix_high</span>
-                <span className="text-[8px] font-bold uppercase opacity-40 block">Link</span>
+                <span className="text-[8px] font-bold uppercase opacity-40 block">链接</span>
                 <span className="text-xs font-black">A-SYNC</span>
              </div>
           </div>
@@ -98,7 +98,7 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
             onClick={() => onAddToCart?.(currentDrop)}
             className="w-full bg-white text-black py-6 rounded-[2rem] flex items-center justify-between px-10 group active:scale-95 transition-all shadow-2xl"
           >
-            <span className="text-lg font-black uppercase tracking-widest">Secure Gear</span>
+            <span className="text-lg font-black uppercase tracking-widest">立即购买</span>
             <div className="bg-primary p-2 rounded-xl text-black flex items-center justify-center">
               <span className="material-icons-round">shopping_cart</span>
             </div>

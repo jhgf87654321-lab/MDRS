@@ -197,7 +197,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         if (parsed && parsed.theme) {
           setNftMetadata((prev) => ({
             theme: parsed.theme || prev?.theme || 'High-Fashion Editorial',
-            rarity: prev?.rarity || 'Common',
+            rarity: prev?.rarity || '普通',
           }));
         }
       }
@@ -264,7 +264,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const randomTheme = themes[Math.floor(Math.random() * themes.length)];
       const randomMaterial = materials[Math.floor(Math.random() * materials.length)];
       const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-      const rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+      const rarities = ['普通', '不凡', '稀有', '史诗', '传奇', '神话'];
       const randomRarity = rarities[Math.floor(Math.random() * rarities.length)];
 
       const colorPalettes = ['Neon Pink & Cyan', 'Blood Orange & Slate', 'Electric Blue & Silver', 'Acid Green & Charcoal', 'Crimson & Gold', 'Lavender & Mint', 'Cyber Yellow & Black'];
@@ -473,8 +473,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       <header className="relative z-50 px-8 pt-12 flex justify-between items-center mb-6">
         <div>
-          <h1 className="font-future font-black text-3xl leading-none text-white tracking-tighter uppercase">NFT<br/>MINT</h1>
-          <p className="text-[10px] mt-2 tracking-[0.4em] uppercase text-white/40 font-bold leading-none">NFT Collection V.1</p>
+          <h1 className="font-future font-black text-3xl leading-none text-white tracking-tighter uppercase">NFT<br/>铸造</h1>
+          <p className="text-[10px] mt-2 tracking-[0.4em] uppercase text-white/40 font-bold leading-none">NFT 系列 V.1</p>
         </div>
         
         <button 
@@ -494,10 +494,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           <div className="bg-white/5 border-b border-white/5 px-8 py-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_#D4FF00]"></span>
-              <span className="text-[9px] font-black uppercase text-primary tracking-[0.2em]">Blockchain Node: Active</span>
+              <span className="text-[9px] font-black uppercase text-primary tracking-[0.2em]">区块节点：在线</span>
             </div>
             <div className="text-[7px] font-mono text-white/30 uppercase tracking-widest">
-              NFT ID: #0x8277_MINT
+              NFT 编号：#0x8277_MINT
             </div>
           </div>
           
@@ -516,7 +516,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
              {/* Preview Metadata */}
              <div className="absolute top-1/2 -translate-y-1/2 left-8 flex flex-col gap-6">
                 <div className="space-y-1">
-                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">Rarity</span>
+                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">稀有度</span>
                   <span className={`text-[9px] font-mono font-bold ${
                     nftMetadata?.rarity === 'Mythic' ? 'text-accent' : 
                     nftMetadata?.rarity === 'Legendary' ? 'text-yellow-400' : 
@@ -524,17 +524,17 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   }`}>{nftMetadata?.rarity || '---'}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">Theme</span>
+                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">主题</span>
                   <span className="text-[9px] font-mono text-white font-bold tracking-tighter">{nftMetadata?.theme || '---'}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">Network</span>
+                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">网络</span>
                   <span className="text-[9px] font-mono text-white/40 font-bold">AXON_MAINNET</span>
                 </div>
              </div>
 
              <div className="absolute bottom-10 left-10 flex flex-col gap-1">
-                <span className="text-[6px] font-bold text-white/40 uppercase tracking-[0.4em]">Minting Progress</span>
+                <span className="text-[6px] font-bold text-white/40 uppercase tracking-[0.4em]">铸造进度</span>
                 <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
                    <div className={`h-full bg-primary shadow-[0_0_10px_#D4FF00] transition-all duration-1000 ${isGenerating ? 'w-1/2 animate-pulse' : generatedNFT ? 'w-full' : 'w-0'}`}></div>
                 </div>
@@ -542,7 +542,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
              <div className="absolute bottom-10 right-10 flex items-center gap-3">
                 <div className="text-right">
-                  <span className="text-[6px] font-bold text-white/40 uppercase tracking-[0.3em] block">Frame Rate</span>
+                  <span className="text-[6px] font-bold text-white/40 uppercase tracking-[0.3em] block">帧率</span>
                   <span className="text-[10px] font-black text-white">120.00</span>
                 </div>
                 <div className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center">
@@ -555,7 +555,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                {isGenerating && !generatedNFT ? (
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] animate-pulse">Minting NFT...</span>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] animate-pulse">铸造中…</span>
                   </div>
                 ) : (
                   <img 
@@ -718,7 +718,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
               disabled={isGenerating}
               className="flex-1 bg-white text-black py-4.5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl font-black uppercase tracking-[0.2em] text-[12px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{isGenerating ? 'Minting...' : 'Generate Unique NFT'}</span>
+              <span>{isGenerating ? '铸造中…' : '生成专属 NFT'}</span>
               <span className="material-icons-round text-sm">{isGenerating ? 'hourglass_top' : 'token'}</span>
             </button>
             {generatedNFT && (
@@ -749,7 +749,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   }
                 }}
                 className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 hover:bg-primary hover:text-black transition-colors"
-                title="Save 2K image"
+                title="保存 2K 图片"
               >
                 <span className="material-icons-round">download</span>
               </button>
@@ -792,20 +792,20 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   <span className="material-icons-round text-4xl">{authMode === 'signIn' ? 'login' : 'how_to_reg'}</span>
                 </div>
                 <h3 className="text-3xl font-black mb-2 uppercase text-white tracking-tighter leading-none">{authMode === 'signIn' ? 'Synchronized' : 'Initialized'}</h3>
-                <p className="text-white/30 text-[11px] uppercase tracking-[0.4em] font-bold mt-2">Neural Node Online</p>
+                <p className="text-white/30 text-[11px] uppercase tracking-[0.4em] font-bold mt-2">神经节点在线</p>
               </div>
             ) : (
               <div className="flex flex-col">
                 <div className="mb-14">
                   <span className="text-[11px] font-bold text-primary uppercase tracking-[0.5em] mb-4 block underline underline-offset-8">Web3 V.1.0</span>
                   <h3 className="text-4xl font-black leading-[0.9] uppercase tracking-tighter text-white">
-                    {authMode === 'signIn' ? <>Establish<br/>Wallet</> : <>NFT<br/>Minting</>}
+                    {authMode === 'signIn' ? <>连接<br/>钱包</> : <>NFT<br/>铸造</>}
                   </h3>
                 </div>
 
                 <form onSubmit={handleAuthSubmit} className="space-y-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Address</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">账号</label>
                     <input 
                       required
                       type="email" 
@@ -814,7 +814,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">Key</label>
+                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">密码</label>
                     <input 
                       required
                       type="password" 
@@ -826,7 +826,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                     type="submit"
                     className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking-[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
                   >
-                    <span>{authMode === 'signIn' ? 'Initiate' : 'Establish'}</span>
+                    <span>{authMode === 'signIn' ? '开始' : '建立'}</span>
                     <div className="bg-primary p-3 rounded-2xl text-black group-hover:scale-110 transition-transform">
                       <span className="material-icons-round text-lg">{authMode === 'signIn' ? 'vpn_key' : 'fingerprint'}</span>
                     </div>
@@ -837,7 +837,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   onClick={toggleMode} 
                   className="mt-12 text-[10px] text-white/30 uppercase tracking-[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
                 >
-                  {authMode === 'signIn' ? "Request Protocol access" : "Node already active?"}
+                  {authMode === 'signIn' ? '请求协议接入' : '节点已激活？'}
                 </button>
               </div>
             )}

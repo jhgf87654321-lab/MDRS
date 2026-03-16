@@ -55,14 +55,14 @@ const Collection: React.FC<CollectionProps> = ({ onBack, onAddToCart }) => {
           <span className="material-icons-round">west</span>
         </button>
         <div className="text-right">
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">Decentralized Mall</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">去中心商场</p>
           <h2 className="text-2xl font-future font-black tracking-tighter uppercase">AXON_COLLECTION</h2>
         </div>
       </header>
 
       <main className="relative z-10 px-6 space-y-6">
         <div className="flex flex-col">
-          <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.6em] mb-4 ml-2">Load_Grid_Sequence_001</span>
+          <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.6em] mb-4 ml-2">加载_网格_序列_001</span>
           
           {/* Aligned Bento Grid Layout */}
           <div className="grid grid-cols-2 gap-4">
@@ -80,7 +80,7 @@ const Collection: React.FC<CollectionProps> = ({ onBack, onAddToCart }) => {
                   />
                   <div className="absolute top-4 left-4 flex gap-1.5 items-center">
                     <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_#D4FF00]"></div>
-                    <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em]">Live</span>
+                    <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em]">在线</span>
                   </div>
                 </div>
 
@@ -111,12 +111,12 @@ const Collection: React.FC<CollectionProps> = ({ onBack, onAddToCart }) => {
           </div>
         </div>
 
-        {/* Neural Customizer Banner - Aligned with Grid */}
+        {/* 神经定制器横幅 - 与网格对齐 */}
         <div className="glass rounded-[3rem] p-8 border border-primary/20 bg-primary/5 flex items-center justify-between group overflow-hidden relative shadow-2xl">
           <div className="relative z-10">
-            <h3 className="text-xl font-future font-black tracking-tighter text-white mb-2 uppercase">Neural Customizer</h3>
+            <h3 className="text-xl font-future font-black tracking-tighter text-white mb-2 uppercase">神经定制器</h3>
             <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest leading-relaxed max-w-[200px]">
-              Sync your biometric data to generate procedural garments.
+              同步你的生物数据，生成程序化服装。
             </p>
           </div>
           <div className="relative z-10">
@@ -131,7 +131,7 @@ const Collection: React.FC<CollectionProps> = ({ onBack, onAddToCart }) => {
       </main>
 
       <footer className="px-8 mt-16 text-center opacity-10 pointer-events-none">
-        <span className="text-[8px] font-black uppercase tracking-[1em]">END_OF_CATALOG_SEQUENCE</span>
+        <span className="text-[8px] font-black uppercase tracking-[1em]">目录_结束</span>
       </footer>
     </div>
   );

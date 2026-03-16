@@ -104,7 +104,7 @@ export default function TryOnModule() {
         }
       } catch (e) {
         console.error('Error accessing camera', e);
-        alert('Failed to access camera.');
+        alert('无法访问相机。');
       }
     };
 
@@ -124,7 +124,7 @@ export default function TryOnModule() {
       const result = event.target?.result;
       if (typeof result !== 'string') {
         console.error('Unexpected FileReader result', result);
-        alert('Failed to read file.');
+        alert('读取文件失败。');
         return;
       }
       try {
@@ -138,7 +138,7 @@ export default function TryOnModule() {
     };
     reader.onerror = (err) => {
       console.error('FileReader error', err);
-      alert('Failed to read file.');
+      alert('读取文件失败。');
     };
     reader.readAsDataURL(file);
   };
@@ -158,7 +158,7 @@ export default function TryOnModule() {
   const handleApplyStyle = async () => {
     if (cooldownUntil && Date.now() < cooldownUntil) {
       const secs = Math.ceil((cooldownUntil - Date.now()) / 1000);
-      alert(`Gemini quota is cooling down. Please try again in ~${secs}s.`);
+      alert(`Gemini 配额冷却中，请在约 ${secs}s 后再试。`);
       return;
     }
 
@@ -166,11 +166,11 @@ export default function TryOnModule() {
     if (cameraMode !== 'off') baseImage = captureFrame();
 
     if (!baseImage) {
-      alert('Please upload an image or turn on the camera.');
+      alert('请上传图片或打开相机。');
       return;
     }
     if (!generatedNFT) {
-      alert('Please generate an NFT first in the Creator tab.');
+      alert('请先在“形象”中生成 NFT。');
       return;
     }
 
@@ -219,9 +219,9 @@ export default function TryOnModule() {
       if (status === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
         // 60s client cooldown to prevent hammering
         setCooldownUntil(Date.now() + 60_000);
-        alert('Gemini quota exhausted (429). Please wait 1-2 minutes and try again.');
+        alert('Gemini 配额已用尽（429），请等待 1-2 分钟后重试。');
       } else {
-        alert('Failed to apply style.');
+        alert('换装失败。');
       }
     } finally {
       setIsApplying(false);
@@ -235,7 +235,7 @@ export default function TryOnModule() {
           <div className="w-8 h-8 bg-white flex items-center justify-center rounded-lg">
             <span className="material-icons-round text-black text-xl">blur_on</span>
           </div>
-          <span className="text-2xl font-display font-black tracking-tighter">FUTR</span>
+          <span className="text-2xl font-display font-black tracking-tighter">试穿</span>
         </div>
         <div className="bg-primary text-black px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase animate-pulse-fast">
           AI Active
@@ -288,7 +288,7 @@ export default function TryOnModule() {
 
           {uploadedImage && generatedNFT && cameraMode === 'off' && (
             <div className="absolute top-4 left-4 z-30 px-3 py-1 rounded-full bg-black/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70">
-              Tap to toggle: {viewMode === 'tryon' ? 'Try-on' : 'NFT'}
+              点击切换：{viewMode === 'tryon' ? '试穿' : 'NFT'}
             </div>
           )}
         </button>
@@ -306,7 +306,7 @@ export default function TryOnModule() {
                 setCameraMode('off');
                 return;
               }
-              alert('Please generate an NFT first in the Creator tab.');
+              alert('请先在“形象”中生成 NFT。');
             }}
           >
             {myCyberCollection.length > 0 ? (
@@ -389,7 +389,7 @@ export default function TryOnModule() {
         <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="w-full max-w-[380px] glass rounded-[2.5rem] border border-white/10 p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-primary">My Cyber Collection</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-primary">我的藏品</h3>
               <button
                 onClick={() => setIsCollectionModalOpen(false)}
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:text-white"

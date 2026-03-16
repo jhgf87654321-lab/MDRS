@@ -19,7 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           className={`flex flex-col items-center gap-1 transition-all ${activeView === View.STORE ? 'text-primary' : 'text-white/40'}`}
         >
           <span className="material-icons-round">shopping_bag</span>
-          <span className="text-[8px] font-bold uppercase">Store</span>
+          <span className="text-[8px] font-bold uppercase">商店</span>
         </button>
         
         <button 
@@ -27,7 +27,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           className={`flex flex-col items-center gap-1 transition-all ${activeView === View.WARDROBE ? 'text-primary' : 'text-white/40'}`}
         >
           <span className="material-icons-round">checkroom</span>
-          <span className="text-[8px] font-bold uppercase">Wardrobe</span>
+          <span className="text-[8px] font-bold uppercase">衣橱</span>
         </button>
 
         <button 
@@ -42,7 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           className={`flex flex-col items-center gap-1 transition-all ${activeView === View.CREATOR ? 'text-primary' : 'text-white/40'}`}
         >
           <span className="material-icons-round">person_outline</span>
-          <span className="text-[8px] font-bold uppercase">Avatar</span>
+          <span className="text-[8px] font-bold uppercase">形象</span>
         </button>
 
         <button 
@@ -50,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           className={`flex flex-col items-center gap-1 transition-all ${activeView === View.HOME ? 'text-primary' : 'text-white/40'}`}
         >
           <span className="material-icons-round">home</span>
-          <span className="text-[8px] font-bold uppercase">Home</span>
+          <span className="text-[8px] font-bold uppercase">主页</span>
         </button>
       </div>
     </nav>

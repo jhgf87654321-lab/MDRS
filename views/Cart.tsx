@@ -26,8 +26,8 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
           <span className="material-icons-round">west</span>
         </button>
         <div className="text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">Loadout Summary</p>
-          <h2 className="text-2xl font-future font-black tracking-tighter uppercase">GEAR BAG</h2>
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">购物摘要</p>
+          <h2 className="text-2xl font-future font-black tracking-tighter uppercase">装备袋</h2>
         </div>
         <div className="w-12 h-12"></div> {/* Spacer */}
       </header>
@@ -76,7 +76,7 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
             <span className="material-icons-round text-6xl mb-4">inventory_2</span>
-            <p className="text-sm font-display font-bold uppercase tracking-widest">Loadout Empty</p>
+            <p className="text-sm font-display font-bold uppercase tracking-widest">购物车为空</p>
           </div>
         )}
       </div>
@@ -84,16 +84,16 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
       <div className="mt-10 pb-32 space-y-6">
         <div className="glass rounded-[2.5rem] p-6 space-y-3">
           <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
-            <span className="text-white/40">Base Subtotal</span>
+            <span className="text-white/40">小计</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
-            <span className="text-white/40">Neural Processing</span>
+            <span className="text-white/40">平台服务费</span>
             <span className="text-primary">+${processingFee.toFixed(2)}</span>
           </div>
           <div className="h-px bg-white/10 my-2"></div>
           <div className="flex justify-between items-end">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">Total Payload</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">合计</span>
             <span className="text-3xl font-display font-black text-white">${total.toFixed(2)}</span>
           </div>
         </div>
@@ -114,7 +114,7 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
           {items.length > 0 && (
             <div className="absolute inset-0 bg-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
           )}
-          <span className="relative z-10 text-lg font-black uppercase tracking-widest">{deploying ? 'Deploying…' : 'Deploy Loadout'}</span>
+          <span className="relative z-10 text-lg font-black uppercase tracking-widest">{deploying ? '处理中…' : '确认购买'}</span>
           <div className={`relative z-10 p-2 rounded-xl flex items-center justify-center ${items.length === 0 ? 'bg-white/5 text-white/10' : 'bg-primary text-black'}`}>
             <span className="material-icons-round">{deploying ? 'hourglass_top' : 'near_me'}</span>
           </div>
