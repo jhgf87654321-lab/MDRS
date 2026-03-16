@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-
 import { View } from '../types';
+import LokadaLogo from '../assets/lokada.png';
 
 interface HomeProps {
   onEnter: () => void;
@@ -30,31 +30,31 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
   const features = [
     {
-      title: 'Genesis Creator',
-      desc: 'V.2 Biometric Identity Node',
+      title: '形象生成器',
+      desc: 'V.2 生物身份节点',
       icon: 'biotech',
-      stats: 'ACTIVE',
+      stats: '已激活',
       view: View.CREATOR,
     },
     {
-      title: 'AI Scanned Try-On',
-      desc: '98.5% Fit Precision Protocol',
+      title: 'AI 试穿扫描',
+      desc: '98.5% 拟合精度协议',
       icon: 'view_in_ar',
-      stats: 'LIVE SYNC',
+      stats: '实时同步',
       view: View.TRY_ON,
     },
     {
-      title: 'Virtual Wardrobe',
-      desc: 'Secured NFT Asset Management',
+      title: '虚拟衣橱',
+      desc: 'NFT 资产安全管理',
       icon: 'grid_view',
-      stats: '42+ ASSETS',
+      stats: '42+ 资产',
       view: View.WARDROBE,
     },
     {
-      title: 'Admin Test',
-      desc: 'Aesthetic Training Node',
+      title: '管理测试',
+      desc: '审美训练节点',
       icon: 'admin_panel_settings',
-      stats: '5★ ONLY',
+      stats: '仅 5★',
       view: View.ADMIN,
     },
   ];
@@ -68,16 +68,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         <div className="absolute inset-0 grid-bg opacity-10"></div>
       </div>
 
-      {/* Redesigned Header: Unified size and position */}
+      {/* Header with logo */}
       <header className="relative z-50 px-8 pt-12 flex justify-between items-center">
-        <div className="flex flex-col items-start">
-          <div className="mb-3 px-3 py-1 border border-primary/30 rounded-full text-[7px] font-black uppercase tracking-[0.4em] bg-primary/10 text-primary shadow-[0_0_15px_rgba(212,255,0,0.2)] animate-pulse">
-            System Online
-          </div>
-          <div className="text-[72px] font-black tracking-[-0.3em] leading-[0.55] flex items-end">
-            <span className="inline-block transform -skew-x-[20deg] origin-bottom">A</span>
-            <span className="inline-block transform skew-x-[20deg] origin-bottom -ml-5">X</span>
-          </div>
+        <div className="flex items-center gap-3">
+          <img src={LokadaLogo} alt="LOKADA" className="h-8 w-auto" />
         </div>
 
         <div className="flex items-center">

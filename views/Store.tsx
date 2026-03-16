@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LokadaLogo from '../assets/lokada.png';
 import { Product } from '../types';
 
 interface StoreProps {
@@ -153,10 +154,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     <div className="p-6 pb-32">
        <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-            <span className="material-icons-round text-black text-xl">token</span>
-          </div>
-          <span className="font-display font-bold tracking-[0.2em] text-xl">AXON</span>
+          <img src={LokadaLogo} alt="LOKADA" className="h-8 w-auto" />
         </div>
         <div className="flex items-center gap-3">
           <button className="w-10 h-10 glass rounded-full flex items-center justify-center">

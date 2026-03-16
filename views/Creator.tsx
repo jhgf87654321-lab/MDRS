@@ -14,6 +14,24 @@ type Gender = 'Male' | 'Female' | 'Creature';
 type CreatureTexture = 'Hairy' | 'Hairless';
 type DesignMode = 'Random' | 'Custom';
 
+const CATEGORY_LABEL: Record<Category, string> = {
+  Body: '身体',
+  Skin: '肤色',
+  Style: '风格',
+  Design: '设计',
+};
+
+const DESIGN_MODE_LABEL: Record<DesignMode, string> = {
+  Random: '随机',
+  Custom: '自定义',
+};
+
+const GENDER_LABEL: Record<Gender, string> = {
+  Male: '男',
+  Female: '女',
+  Creature: '生物',
+};
+
 interface ParameterSet {
   label: string;
   key: string;
@@ -623,10 +641,16 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
               /* Design Mode Layout */
               <div className="animate-in fade-in zoom-in-95 duration-300">
                 <div className="flex justify-between items-center mb-6">
-                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Design Mode</span>
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">设计模式</span>
                   <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
-                    {['Random', 'Custom'].map(m => (
-                      <button key={m} onClick={() => setDesignMode(m as DesignMode)} className={`px-4 py-1.5 rounded text-[9px] uppercase font-bold transition-all ${designMode === m ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}>{m}</button>
+                    {(['Random', 'Custom'] as DesignMode[]).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setDesignMode(m)}
+                        className={`px-4 py-1.5 rounded text-[9px] uppercase font-bold transition-all ${designMode === m ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}
+                      >
+                        {DESIGN_MODE_LABEL[m]}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -634,26 +658,60 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                 {designMode === 'Custom' && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Top</span>
+                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">上装</span>
                       <div className="flex flex-wrap gap-2">
-                        {['Coat', 'Puffer', 'Crop Top', 'T-Shirt', 'Hoodie'].map(item => (
-                          <button key={item} onClick={() => setCustomDesign(p => ({...p, top: item}))} className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.top === item ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}>{item}</button>
+                        {[
+                          { label: '大衣', value: 'Coat' },
+                          { label: '羽绒', value: 'Puffer' },
+                          { label: '短上衣', value: 'Crop Top' },
+                          { label: 'T恤', value: 'T-Shirt' },
+                          { label: '卫衣', value: 'Hoodie' },
+                        ].map((item) => (
+                          <button
+                            key={item.value}
+                            onClick={() => setCustomDesign((p) => ({ ...p, top: item.value }))}
+                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.top === item.value ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                          >
+                            {item.label}
+                          </button>
                         ))}
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Bottom</span>
+                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">下装</span>
                       <div className="flex flex-wrap gap-2">
-                        {['Shorts', 'Pants', 'Skirt', 'Long Skirt'].map(item => (
-                          <button key={item} onClick={() => setCustomDesign(p => ({...p, bottom: item}))} className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.bottom === item ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}>{item}</button>
+                        {[
+                          { label: '短裤', value: 'Shorts' },
+                          { label: '长裤', value: 'Pants' },
+                          { label: '短裙', value: 'Skirt' },
+                          { label: '长裙', value: 'Long Skirt' },
+                        ].map((item) => (
+                          <button
+                            key={item.value}
+                            onClick={() => setCustomDesign((p) => ({ ...p, bottom: item.value }))}
+                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.bottom === item.value ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                          >
+                            {item.label}
+                          </button>
                         ))}
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Shoes</span>
+                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">鞋履</span>
                       <div className="flex flex-wrap gap-2">
-                        {['Sneakers', 'Combat Boots', 'Slippers', 'Regular Shoes'].map(item => (
-                          <button key={item} onClick={() => setCustomDesign(p => ({...p, shoes: item}))} className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.shoes === item ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}>{item}</button>
+                        {[
+                          { label: '运动鞋', value: 'Sneakers' },
+                          { label: '战术靴', value: 'Combat Boots' },
+                          { label: '拖鞋', value: 'Slippers' },
+                          { label: '便鞋', value: 'Regular Shoes' },
+                        ].map((item) => (
+                          <button
+                            key={item.value}
+                            onClick={() => setCustomDesign((p) => ({ ...p, shoes: item.value }))}
+                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.shoes === item.value ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                          >
+                            {item.label}
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -661,7 +719,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                 )}
                 {designMode === 'Random' && (
                   <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/5">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest">AI will generate a random outfit</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest">AI 将随机生成一套造型</span>
                   </div>
                 )}
               </div>
@@ -670,10 +728,16 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
               <div className="space-y-6">
                 {activeCategory === 'Body' && (
                   <div className="flex justify-between items-center mb-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Gender / Type</span>
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">性别 / 类型</span>
                     <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
-                      {['Male', 'Female', 'Creature'].map(g => (
-                        <button key={g} onClick={() => setGender(g as Gender)} className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all ${gender === g ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}>{g}</button>
+                      {(['Male', 'Female', 'Creature'] as Gender[]).map((g) => (
+                        <button
+                          key={g}
+                          onClick={() => setGender(g)}
+                          className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all ${gender === g ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}
+                        >
+                          {GENDER_LABEL[g]}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -697,7 +761,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 mt-8">
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <button 
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -707,7 +771,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   : 'glass text-white/40 hover:text-white/70'
                 }`}
               >
-                {cat}
+                {CATEGORY_LABEL[cat]}
               </button>
             ))}
           </div>
