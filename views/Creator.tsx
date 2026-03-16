@@ -383,16 +383,28 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       setGeneratedNFT(storedImg);
       localStorage.setItem('generatedNFT', storedImg);
 
-      // 先把 1K 图写入用户档案（Wardrobe 立即可见）
-      let oneKUrl: string | undefined;
-      try {
-        const fileName = `${serialNumber.replace(/\./g, '_')}.webp`;
-        oneKUrl = await uploadImageToCloudBase(storedImg, { prefix: 'MINT/', fileName });
+      // IMPORTANT (mobile performance + cross-device safety):
+      // - Do NOT block the UI/mint job on network uploads or DB writes.
+      // - Do NOT use serialNumber as the COS object key (it collides across devices and causes "other users' images" to appear).
+      //   Use a unique filename instead, while keeping serialNumber as metadata in the profile/db.
+      void (async () => {
+        let oneKUrl: string | undefined;
+        try {
+          const uniqueSuffix = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+          const fileName = `${serialNumber.replace(/\./g, '_')}_${uniqueSuffix}.webp`;
+          oneKUrl = await uploadImageToCloudBase(storedImg, { prefix: 'MINT/', fileName });
+        } catch (e) {
+          console.error('Upload 1K image failed', e);
+          return;
+        }
+
         try {
           await addNftToMyProfile({ cosUrl: oneKUrl, serialNumber, source: 'mint' });
+          window.dispatchEvent(new Event('axon:collection-updated'));
         } catch (e) {
           console.error('Failed to record minted NFT in profile', e);
         }
+
         try {
           const r = await fetch('/api/analyze-outfit', {
             method: 'POST',
@@ -409,9 +421,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         } catch (e) {
           console.warn('Outfit analysis failed (non-blocking)', e);
         }
-      } catch (e) {
-        console.error('Upload 1K image or profile write failed', e);
-      }
+      })();
 
       // 2K 放大改为可选：用于更高清的下载，不影响档案中的 1K 图
       let cosUrl: string | undefined;
