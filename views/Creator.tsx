@@ -616,10 +616,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                     <button
                       key={color.hex}
                       onClick={() => setSelectedSkinColor(color.hex)}
-                      className="flex flex-col items-center gap-2 group"
+                      className="flex flex-col items-center gap-2 group relative"
                     >
                       {color.hint ? (
-                        <span className="text-[7px] font-bold text-primary/80 uppercase tracking-widest">
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-primary/80 uppercase tracking-widest whitespace-nowrap">
                           {color.hint}
                         </span>
                       ) : null}

@@ -62,7 +62,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
   };
 
   if (activeTab === 'exchange') {
-    return <ExchangeModule />;
+    return <ExchangeModule onBackToExplore={() => setActiveTab('explore')} />;
   }
 
   return (

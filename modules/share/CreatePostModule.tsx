@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { createPost, getMe, uploadImageToCloudBase } from '../../lib/apiClient';
-import { ensureUserProfile } from '../../lib/userProfile';
 
 interface CreatePostProps {
   initialMedia?: string[];
@@ -61,16 +60,8 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
 
     setIsSubmitting(true);
     try {
-      // Prefer the user's profile displayName for social posts
-      let authorName: string | undefined;
-      try {
-        const profile = await ensureUserProfile(me.uid);
-        if (profile?.displayName && String(profile.displayName).trim()) {
-          authorName = String(profile.displayName).trim();
-        }
-      } catch {
-        // ignore; server will fallback to email prefix
-      }
+      // Use the same identity as the post session (email prefix) to avoid mismatches.
+      const authorName = me.email?.split('@')[0] || undefined;
       const urls = await Promise.all(mediaUrls.map((m) => uploadImageToCloudBase(m)));
       await createPost({ mediaUrls: urls, title: title.trim(), content: content.trim(), hashtags: selectedTags, authorName });
       onSuccess();

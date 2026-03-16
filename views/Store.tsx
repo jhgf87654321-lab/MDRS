@@ -154,7 +154,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     <div className="p-6 pb-32">
        <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-2">
-          <img src={LokadaLogo} alt="LOKADA" className="h-12 w-auto" />
+          <img src={LokadaLogo} alt="LOKADA" className="h-20 w-auto" />
         </div>
         <div className="flex items-center gap-3">
           <button className="w-10 h-10 glass rounded-full flex items-center justify-center">

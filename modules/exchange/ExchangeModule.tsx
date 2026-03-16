@@ -3,7 +3,7 @@ import React from 'react';
 type Tab = 'listed' | 'sold';
 type Scope = 'all' | 'mine' | 'participated';
 
-export default function ExchangeModule() {
+export default function ExchangeModule(props?: { onBackToExplore?: () => void }) {
   const [tab, setTab] = React.useState<Tab>('listed');
   const [scope, setScope] = React.useState<Scope>('all');
 
@@ -14,9 +14,9 @@ export default function ExchangeModule() {
       seller: 'WeChat User',
       avatar:
         'https://lh3.googleusercontent.com/a-/AFdZucqvGx-avatar=s64',
-      title: 'UR赏 异极工作室',
+      title: 'SSP未来风鞋',
       serialNumber: 'No.198000011',
-      price: 2120,
+      price: 2000,
       image:
         'https://lh3.googleusercontent.com/aida-public/AB6AXuCiEQCORVh-kLhp7NqmkpZ5HoOtxiVu4RhVvexm7jzjha_PPv68KVc_6CZjD5j4H9-IQBYqUWhiHWDqHgrEnNRDWagTRNXhjjt2pJ-sylQoTie7ASgZ_6m-VA3P0TG0s6MNwdHoLK33prSYM7Sdzmip7OBqpOxXu2MPOhsCe92UTT7dtqqS5LU2_KYbScFHF2hgeCVnhUJtKKywrRluBFqJi8_VRUUKkJl7kcyV658iG4d8u6IqCvNYX-zczx4bRuWS-4JRUgxsC4Xt',
     },
@@ -24,8 +24,21 @@ export default function ExchangeModule() {
 
   return (
     <div className="min-h-screen bg-background-dark text-white flex flex-col font-future">
+      {/* Explore / Exchange links */}
+      <div className="px-6 pt-10 pb-2 flex items-center gap-4 text-xl font-black tracking-tighter uppercase">
+        <button
+          className="text-white/40"
+          onClick={() => {
+            props?.onBackToExplore?.();
+          }}
+        >
+          探索
+        </button>
+        <button className="text-white">交换</button>
+      </div>
+
       {/* Header with tabs */}
-      <header className="px-6 pt-12 pb-4 bg-background-dark/80 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center">
+      <header className="px-6 pt-2 pb-4 bg-background-dark/80 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center">
         <div className="flex gap-4">
           <button
             className={`text-xl font-black tracking-tighter ${
@@ -120,12 +133,12 @@ export default function ExchangeModule() {
                 </div>
                 <div className="mt-2 flex justify-between items-center">
                   <button className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/40 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                    赏币买入
+                    积分购买
                   </button>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[11px] text-white/60">一口价</span>
                     <span className="text-lg font-display font-black text-primary">
-                      ¥{item.price}
+                      {item.price} 积分
                     </span>
                   </div>
                 </div>
