@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { generateGeminiImage } from '../../lib/geminiClient';
-import { uploadImageToCloudBase } from '../../lib/apiClient';
 
 type CameraMode = 'front' | 'rear' | 'off';
 
@@ -32,21 +31,19 @@ function getStylePromptFromLocalStorage(): string {
 
 async function compressDataUrl(dataUrl: string, maxDim: number, quality: number): Promise<string> {
   if (!dataUrl.startsWith('data:')) return dataUrl;
-  const img = new Image();
-  img.src = dataUrl;
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error('Failed to load image'));
-  });
-  const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
-  const w = Math.max(1, Math.round((img.width || 1) * scale));
-  const h = Math.max(1, Math.round((img.height || 1) * scale));
+  // Faster + avoids main-thread <img> decode stalls on large images.
+  const resp = await fetch(dataUrl);
+  const blob = await resp.blob();
+  const bmp = await createImageBitmap(blob);
+  const scale = Math.min(1, maxDim / Math.max(bmp.width || 1, bmp.height || 1));
+  const w = Math.max(1, Math.round((bmp.width || 1) * scale));
+  const h = Math.max(1, Math.round((bmp.height || 1) * scale));
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) return dataUrl;
-  ctx.drawImage(img, 0, 0, w, h);
+  ctx.drawImage(bmp, 0, 0, w, h);
   try {
     const webp = canvas.toDataURL('image/webp', quality);
     if (webp) return webp;
@@ -54,6 +51,22 @@ async function compressDataUrl(dataUrl: string, maxDim: number, quality: number)
     // ignore
   }
   return canvas.toDataURL('image/jpeg', quality);
+}
+
+function dataUrlToInlinePart(dataUrl: string) {
+  if (!dataUrl.startsWith('data:')) return null;
+  const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return null;
+  return { inlineData: { mimeType: m[1]!, data: m[2]! } } as const;
+}
+
+async function sha256Base64(input: string) {
+  const buf = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  const bytes = new Uint8Array(hash);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]!);
+  return btoa(bin).replace(/=+$/g, '');
 }
 
 export default function TryOnModule() {
@@ -176,11 +189,12 @@ export default function TryOnModule() {
 
     setIsApplying(true);
     try {
-      try {
-        baseImage = await compressDataUrl(baseImage, 1280, 0.85);
-      } catch {
-        // ignore
-      }
+      // Preprocess both images for faster inference + faster transport.
+      // Keep TryOn as "fast preview"; higher-res can be added later as an explicit action.
+      const [basePrepared, nftPrepared] = await Promise.all([
+        compressDataUrl(baseImage, 1024, 0.82).catch(() => baseImage),
+        compressDataUrl(generatedNFT, 1024, 0.82).catch(() => generatedNFT),
+      ]);
 
       const stylePrompt = getStylePromptFromLocalStorage();
       const prompt =
@@ -196,20 +210,38 @@ export default function TryOnModule() {
         `8）整体效果要看起来就像图1原始照片中，这个人真实穿上了图2这整套服装（含鞋子和头饰），人物姿势与背景完全不变。\n` +
         (stylePrompt ? `9）服装细节和整体气质尽量贴合以下风格描述（仅作为风格倾向，不得改变服装设计本体）：${stylePrompt}。\n` : '');
 
-      // Upload both images to COS and send URLs to backend
-      const [baseUrl, nftUrl] = await Promise.all([
-        uploadImageToCloudBase(baseImage),
-        uploadImageToCloudBase(generatedNFT),
-      ]);
+      // Cache: identical inputs should return instantly (no re-generation).
+      const cacheKey = await sha256Base64([basePrepared, nftPrepared, prompt].join('|'));
+      const cacheStorageKey = `tryon_cache_${cacheKey}`;
+      const cached = localStorage.getItem(cacheStorageKey);
+      if (cached && cached.startsWith('data:image/')) {
+        setUploadedImage(cached);
+        localStorage.setItem('tryOnLastImage', cached);
+        setViewMode('tryon');
+        setCameraMode('off');
+        return;
+      }
+
+      // No COS needed: send inlineData directly.
+      const basePart = dataUrlToInlinePart(basePrepared);
+      const nftPart = dataUrlToInlinePart(nftPrepared);
+      if (!basePart || !nftPart) {
+        throw new Error('输入图片格式不支持，请重新选择图片。');
+      }
 
       const newImgData = await generateGeminiImage({
-        prompt,
-        imageUrls: [baseUrl, nftUrl],
-        // Prefer a widely-available image model; backend will fallback if unsupported.
+        parts: [basePart, nftPart, { text: prompt }],
+        // 不改模型（仅优化本地处理/请求）；如需更快可另开“极速模式”切换模型。
         model: 'gemini-3.1-flash-image-preview',
       });
       setUploadedImage(newImgData);
       localStorage.setItem('tryOnLastImage', newImgData);
+      try {
+        // Best-effort cache for future instant reruns.
+        localStorage.setItem(cacheStorageKey, newImgData);
+      } catch {
+        // ignore storage quota errors
+      }
       setViewMode('tryon');
       setCameraMode('off');
     } catch (error) {
