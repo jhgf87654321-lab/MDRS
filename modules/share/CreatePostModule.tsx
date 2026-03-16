@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { createPost, getMe, uploadImageToCloudBase } from '../../lib/apiClient';
+import { getCloudbaseAuth } from '../../lib/cloudbase';
+import { ensureUserProfile } from '../../lib/userProfile';
 
 interface CreatePostProps {
   initialMedia?: string[];
@@ -60,8 +62,19 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
 
     setIsSubmitting(true);
     try {
-      // Use the same identity as the post session (email prefix) to avoid mismatches.
-      const authorName = me.email?.split('@')[0] || undefined;
+      // Prefer CloudBase profile nickname for social UI.
+      let authorName: string | undefined = me.email?.split('@')[0] || undefined;
+      try {
+        const cbUser = await getCloudbaseAuth().getCurrentUser();
+        const cbUid = (cbUser as any)?.uid as string | undefined;
+        if (cbUid) {
+          const profile = await ensureUserProfile(cbUid);
+          const dn = profile?.displayName ? String(profile.displayName).trim() : '';
+          if (dn) authorName = dn;
+        }
+      } catch {
+        // ignore nickname lookup failures
+      }
       const urls = await Promise.all(mediaUrls.map((m) => uploadImageToCloudBase(m)));
       await createPost({ mediaUrls: urls, title: title.trim(), content: content.trim(), hashtags: selectedTags, authorName });
       onSuccess();

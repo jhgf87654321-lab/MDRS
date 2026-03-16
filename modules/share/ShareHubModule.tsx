@@ -128,6 +128,11 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
 
                 <div className="px-1">
                   <h3 className="text-sm font-bold line-clamp-2 leading-tight mb-2">{post.title}</h3>
+                  {post.content ? (
+                    <div className="text-[10px] text-white/45 leading-snug line-clamp-2 -mt-1 mb-2">
+                      {post.content}
+                    </div>
+                  ) : null}
                   {Array.isArray((post as any).hashtags) && (post as any).hashtags.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {((post as any).hashtags as string[]).slice(0, 10).map((t) => (
