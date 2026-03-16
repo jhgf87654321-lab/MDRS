@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View } from '../../types';
 import { getMe, likePost, listPosts, type Post } from '../../lib/apiClient';
+import ExchangeModule from '../exchange/ExchangeModule';
 
 interface ShareHubProps {
   onNavigate: (view: View) => void;
@@ -10,6 +11,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'explore' | 'exchange'>('explore');
 
   useEffect(() => {
     let isMounted = true;
@@ -59,12 +61,30 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
     }
   };
 
+  if (activeTab === 'exchange') {
+    return <ExchangeModule />;
+  }
+
   return (
     <div className="min-h-screen bg-background-dark text-white flex flex-col font-future">
       <header className="relative z-50 px-6 pt-12 pb-4 flex justify-between items-center bg-background-dark/80 backdrop-blur-md sticky top-0">
         <div className="flex items-center gap-4">
-          <button className="text-xl font-black tracking-tighter uppercase">Explore</button>
-          <button className="text-xl font-black tracking-tighter uppercase text-white/40">Following</button>
+          <button
+            className={`text-xl font-black tracking-tighter uppercase ${
+              activeTab === 'explore' ? '' : 'text-white/40'
+            }`}
+            onClick={() => setActiveTab('explore')}
+          >
+            Explore
+          </button>
+          <button
+            className={`text-xl font-black tracking-tighter uppercase ${
+              activeTab === 'exchange' ? '' : 'text-white/40'
+            }`}
+            onClick={() => setActiveTab('exchange')}
+          >
+            Exchanging
+          </button>
         </div>
         <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
           <span className="material-icons-round text-lg">search</span>

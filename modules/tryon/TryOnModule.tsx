@@ -252,24 +252,24 @@ export default function TryOnModule() {
           className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10 text-left"
         >
           {cameraMode !== 'off' ? (
-            <div className="w-full h-full p-4 flex items-center justify-center bg-black/10">
+            <div className="w-full h-full flex items-center justify-center bg-black/10">
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className={`max-w-full max-h-full object-contain ${cameraMode === 'front' ? 'scale-x-[-1]' : ''}`}
+                className={`w-full h-full object-contain ${cameraMode === 'front' ? 'scale-x-[-1]' : ''}`}
               />
             </div>
           ) : (
-            <div className="w-full h-full p-4 flex items-center justify-center bg-black/10">
+            <div className="w-full h-full flex items-center justify-center bg-black/10">
               <img
                 src={
                   (viewMode === 'nft' ? generatedNFT : uploadedImage) ||
                   'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45'
                 }
                 alt="Portrait"
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
                 referrerPolicy="no-referrer"
               />
             </div>
