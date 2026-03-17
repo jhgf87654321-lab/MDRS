@@ -296,7 +296,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       setNftMetadata({ theme: randomTheme, rarity: randomRarity });
 
-      const colorStyle = params.chromaticity > 70 ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.` : params.chromaticity < 30 ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.' : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
+      const colorStyleBase =
+        params.chromaticity > 70
+          ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.`
+          : params.chromaticity < 30
+            ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.'
+            : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
       if (aestheticStyle !== 'Default') {
@@ -348,10 +353,19 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             ? 'Sleek minimal futuristic headwear: a clean visor/helmet with smooth surfaces, no spikes, no messy protrusions, no random ornaments.'
             : 'Minimal futuristic accessory: thin visor or subtle tech headband (clean lines).';
 
+      // Special Design options (from .upgrade6)
+      const usesSpecialDesignPrompts =
+        designMode === 'Custom' && (customDesign.top === 'HBA' || customDesign.shoes === 'aim');
+
+      const colorStyle = usesSpecialDesignPrompts
+        ? 'Do NOT recolor or add colored trims/piping/stitching to the referenced garments. Keep the garment colors and graphics exactly as the reference (no extra neon accents).'
+        : colorStyleBase;
+
       // Keep prompt compact for speed and consistency (mobile friendly).
       const prompt =
         `High-end fashion NFT, ${randomStyle}. Theme: ${randomTheme}.\n` +
         `Single character, full-body head-to-toe, centered, do not crop.\n` +
+        `Pose: dynamic high-fashion editorial / magazine cover pose (confident, stylish, not stiff).\n` +
         `Background: ${backgroundInstruction}\n` +
         `Overlay: minimal technical UI lines/crosshair (no QR codes, no watermarks).\n` +
         `Character: ${characterDesc}\n` +
@@ -363,10 +377,6 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         `Safety: no explicit nudity.`;
 
       const parts: GeminiPart[] = [];
-
-      // Special Design options (from .upgrade6)
-      const usesSpecialDesignPrompts =
-        designMode === 'Custom' && (customDesign.top === 'HBA' || customDesign.shoes === 'aim');
 
       const dataUrlToInlinePart = (dataUrl: string) => {
         const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -381,7 +391,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           if (inline && 'inlineData' in inline) {
             parts.push({
               text:
-                'VIRTUAL TRY-ON TASK - GARMENT 1 (TOP): The following image shows the EXACT hoodie the character must wear. DO NOT redesign it. DO NOT alter the text, logos, graphics, or cut. Preserve the hoodie 100% identical to the reference.',
+                'VIRTUAL TRY-ON TASK - GARMENT 1 (TOP): The following image shows the EXACT hoodie the character must wear. DO NOT redesign it. DO NOT alter the colors, text, logos, graphics, stitching colors, or cut. Do NOT add colored piping/edges/neon accents. Preserve the hoodie 100% identical to the reference.',
             });
             parts.push(inline);
           } else {
@@ -391,7 +401,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           }
         } else {
           parts.push({
-            text: `CRITICAL INSTRUCTION: The character MUST wear the exact hoodie described: ${hbaHoodieDesc}. The design, shape, graphics, and details of this hoodie must be perfectly replicated on the character.`,
+            text: `CRITICAL INSTRUCTION: The character MUST wear the exact hoodie described: ${hbaHoodieDesc}. Do NOT recolor it and do NOT add colored trims/piping/stitching. The design, shape, graphics, and details of this hoodie must be perfectly replicated on the character.`,
           });
         }
       }
