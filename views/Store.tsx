@@ -255,8 +255,13 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         {blindBoxes.map(p => (
           <div key={p.id} className="glass rounded-[2.5rem] p-3 flex flex-col group">
             <div className="aspect-[4/5] bg-white/5 rounded-[2rem] overflow-hidden relative mb-4 flex flex-col items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
-               <span className="material-icons-round text-6xl text-primary/80 mb-2 drop-shadow-[0_0_15px_rgba(212,255,0,0.5)]">redeem</span>
-               <span className="absolute text-3xl font-display font-black text-black -mt-2">?</span>
+               <img
+                 src={p.image}
+                 alt={p.name}
+                 className="w-full h-full object-cover"
+                 referrerPolicy="no-referrer"
+               />
+               <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                <button className="absolute top-3 right-3 w-8 h-8 glass rounded-full flex items-center justify-center">
                  <span className="material-icons-round text-primary text-sm">favorite</span>
                </button>
