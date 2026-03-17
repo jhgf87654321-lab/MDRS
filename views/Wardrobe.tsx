@@ -454,6 +454,20 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                   type="button"
                   onClick={async () => {
                     try {
+                      const fetchBlobNoCache = async (url: string) => {
+                        // Some CDNs/COS may respond 304 without a usable body for fetch(),
+                        // so we force a fresh response and retry with a cache-buster.
+                        const first = await fetch(url, { mode: 'cors', cache: 'no-store' });
+                        if (first.ok) return await first.blob();
+                        const busted =
+                          url + (url.includes('?') ? '&' : '?') + `cb=${Date.now().toString(16)}`;
+                        const second = await fetch(busted, { mode: 'cors', cache: 'reload' });
+                        if (!second.ok) {
+                          throw new Error(`Failed to fetch image (${second.status})`);
+                        }
+                        return await second.blob();
+                      };
+
                       const name =
                         (selectedNft.serialNumber || 'nft')
                           .replace(/\s/g, '_')
@@ -462,8 +476,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                       if (selectedNft.image.startsWith('data:')) {
                         dataUrl = selectedNft.image;
                       } else {
-                        const res = await fetch(selectedNft.image, { mode: 'cors' });
-                        const blob = await res.blob();
+                        const blob = await fetchBlobNoCache(selectedNft.image);
+                        if (!blob.size) throw new Error('Empty image blob');
                         dataUrl = await new Promise<string>((resolve, reject) => {
                           const reader = new FileReader();
                           reader.onload = () => resolve(String(reader.result));
@@ -482,8 +496,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                         throw new Error(typeof data?.error === 'string' ? data.error : 'Upscale failed');
                       }
                       const url = String(data.url);
-                      const r2 = await fetch(url, { mode: 'cors' });
-                      const b2 = await r2.blob();
+                      const b2 = await fetchBlobNoCache(url);
+                      if (!b2.size) throw new Error('Empty 2K image blob');
                       const obj = URL.createObjectURL(b2);
                       const a = document.createElement('a');
                       a.href = obj;
