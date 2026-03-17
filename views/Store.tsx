@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LokadaLogo from '../assets/lokada.png';
+import HbaHoodieImg from '../assets/hba-hoodie.png';
 import { Product } from '../types';
 
 interface StoreProps {
@@ -122,11 +123,11 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
   const blindBoxes: Product[] = [
     { 
-      id: 'Cyberpunk Series', 
-      name: 'Cyberpunk Series',
-      price: 100, 
-      type: 'Blind Box',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7EiJ_hhLJf-3T-E0UgXeAz6trCapwiGJ84ObO6-z-gvVifDsOqxOaTck0RXXTU9Yke84Te_E52cOrV4thgrqhLjS9gjzgJ-nnvkndpvptlJO42_dBEs8BQP7cs32gAhPu2mMQCi2j2huJF4FrH37r5SEC4NY2D-ldbp4Nutcw_ustrhw6104cNAB89YE0uHB2CRWaqPzeN8-G3-1sjECcFEmKQbfw1wjOweqocYpon-mT3R-28Bhic_G__hKzOG8SMf66nuzpNwF6'
+      id: 'HBA Hoodie', 
+      name: 'HBA Hoodie',
+      price: 5000, 
+      type: 'Cyber Pro',
+      image: HbaHoodieImg,
     },
     { 
       id: 'Retro Wave Series', 
