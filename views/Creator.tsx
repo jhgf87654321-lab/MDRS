@@ -335,9 +335,25 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           : gender === 'Male' && params.heavy > 80
             ? 'Fully clothed with chest completely covered. No open chest, no deep V, no shirtless look.'
             : '';
+
+      const creatureArchetypes = [
+        'biomechanical deep-sea organism',
+        'crystalline alien lifeform',
+        'fungal/moss symbiote creature',
+        'insectoid exoskeleton being',
+        'levitating energy entity with a physical shell',
+        'amphibious mutant with translucent membranes',
+        'carbon-fiber plated cyber-beast',
+        'serpentine chimera with modular limbs',
+      ];
+      const creatureArchetype = creatureArchetypes[Math.floor(Math.random() * creatureArchetypes.length)];
+      const creatureFeatures =
+        'Non-human anatomy: avoid human face and human proportions. Add imaginative features such as extra limbs, asymmetrical body plan, unique sensory organs (multiple eyes/bioluminescent nodes), unusual joints, armored plates, tendrils, antennae, fins, horns, or a tail. Hands/feet do NOT have to look human.';
+      const creatureNegatives =
+        'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask.';
       
       const characterDesc = gender === 'Creature'
-        ? `A unique, otherworldly creature (alien, mutant, or bio-engineered beast). Texture: ${creatureTexture}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}.`
+        ? `A highly imaginative, non-human creature (${creatureArchetype}) — alien/mutant/bio-engineered beast. Texture: ${creatureTexture}. ${creatureFeatures} ${creatureNegatives} Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build/Mass: ${buildDesc}. Headwear/Attachments: ${headwearDesc} (as integrated biological/cybernetic structures, not human accessories).`
         : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}. ${chestCoverage}`.trim();
 
       const aimShoeDesc =
