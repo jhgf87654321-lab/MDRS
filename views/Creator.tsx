@@ -340,17 +340,17 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         'biomechanical deep-sea organism',
         'crystalline alien lifeform',
         'fungal/moss symbiote creature',
-        'insectoid exoskeleton being',
         'levitating energy entity with a physical shell',
         'amphibious mutant with translucent membranes',
         'carbon-fiber plated cyber-beast',
         'serpentine chimera with modular limbs',
+        'sleek synthetic lifeform with elegant geometry',
       ];
       const creatureArchetype = creatureArchetypes[Math.floor(Math.random() * creatureArchetypes.length)];
       const creatureFeatures =
-        'Non-human anatomy: avoid human face and human proportions. Add imaginative features such as extra limbs, asymmetrical body plan, unique sensory organs (multiple eyes/bioluminescent nodes), unusual joints, armored plates, tendrils, antennae, fins, horns, or a tail. Hands/feet do NOT have to look human.';
+        'Non-human anatomy: avoid human face and human proportions. Add imaginative features such as elegant extra limbs, asymmetrical body plan, unique sensory organs (glowing nodes / soft light), unusual joints, armored plates, smooth tendrils, fins, horns, or a tail. Hands/feet do NOT have to look human. Keep the design sleek and aesthetically pleasing.';
       const creatureNegatives =
-        'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask.';
+        'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask. Avoid insectoid look: no compound eyes, no full exoskeleton, no bug mouthparts. Antennae and fangs are allowed, but keep them sleek and aesthetically pleasing. Avoid grotesque/ugly/horror: no gore, no rot, no deformities.';
       
       const characterDesc = gender === 'Creature'
         ? `A highly imaginative, non-human creature (${creatureArchetype}) — alien/mutant/bio-engineered beast. Texture: ${creatureTexture}. ${creatureFeatures} ${creatureNegatives} Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build/Mass: ${buildDesc}. Headwear/Attachments: ${headwearDesc} (as integrated biological/cybernetic structures, not human accessories).`
