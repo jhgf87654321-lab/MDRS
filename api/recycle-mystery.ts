@@ -14,7 +14,7 @@ async function getCosClient() {
   return new COS({ SecretId, SecretKey });
 }
 
-function pickOne<T>(arr: T[]) {
+function pickOne<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -49,6 +49,8 @@ export default async function handler(
   const Bucket = process.env.COS_BUCKET;
   const Region = process.env.COS_REGION;
   if (!Bucket || !Region) return res.status(500).json({ error: 'COS_BUCKET or COS_REGION is not configured' });
+  const bucket = Bucket;
+  const region = Region;
 
   try {
     const cos = await getCosClient();
@@ -70,7 +72,7 @@ export default async function handler(
     });
 
     const contents = isRecord(data) && Array.isArray((data as any).Contents) ? (data as any).Contents : [];
-    const keys = contents
+    const keys: string[] = contents
       .map((item: any) => String(item.Key || ''))
       .filter((key: string) => key.startsWith(Prefix))
       .filter((key: string) => /\.(png|jpe?g|webp)$/i.test(key));
@@ -83,13 +85,14 @@ export default async function handler(
     const fileName = `${serialNumber.replace(/\./g, '_')}.${ext === 'jpeg' ? 'jpg' : ext}`;
     const dstKey = `${targetPrefix}${fileName}`;
 
-    const CopySource = `${Bucket}.cos.${Region}.myqcloud.com/${encodeURIComponent(srcKey)}`;
+    const encodedSrcKey = srcKey.split('/').map((seg) => encodeURIComponent(seg)).join('/');
+    const CopySource = `${bucket}.cos.${region}.myqcloud.com/${encodedSrcKey}`;
 
     await new Promise<void>((resolve, reject) => {
       cos.putObjectCopy(
         {
-          Bucket,
-          Region,
+          Bucket: bucket,
+          Region: region,
           Key: dstKey,
           CopySource,
           MetadataDirective: 'Copy',
@@ -101,7 +104,7 @@ export default async function handler(
       );
     });
 
-    const url = `https://${Bucket}.cos.${Region}.myqcloud.com/${dstKey}`;
+    const url = `https://${bucket}.cos.${region}.myqcloud.com/${dstKey}`;
     return res.status(200).json({ ok: true, serialNumber, isSpecial, url, key: dstKey, sourceKey: srcKey });
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error';

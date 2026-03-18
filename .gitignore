@@ -4,3 +4,5 @@ dist/
 .upgrade*/
 everything-claude-code/
 
+
+.vercel

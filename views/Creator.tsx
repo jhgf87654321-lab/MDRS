@@ -337,20 +337,20 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             : '';
 
       const creatureArchetypes = [
-        'biomechanical deep-sea organism',
-        'crystalline alien lifeform',
-        'fungal/moss symbiote creature',
-        'levitating energy entity with a physical shell',
-        'amphibious mutant with translucent membranes',
-        'carbon-fiber plated cyber-beast',
-        'serpentine chimera with modular limbs',
-        'sleek synthetic lifeform with elegant geometry',
+        'majestic cyber-mammal (feline/canine/deer-like silhouette)',
+        'biomechanical guardian beast with smooth armor plates',
+        'crystalline alien lifeform with prismatic facets',
+        'levitating energy entity with a clean physical shell',
+        'soft bioluminescent mammalian alien with gentle features',
+        'carbon-fiber plated cyber-beast with elegant geometry',
+        'synthetic lifeform with sleek minimal design language',
+        'astral creature: glowing core + translucent membranes (not scary)',
       ];
       const creatureArchetype = creatureArchetypes[Math.floor(Math.random() * creatureArchetypes.length)];
       const creatureFeatures =
-        'Non-human anatomy: avoid human face and human proportions. Add imaginative features such as elegant extra limbs, asymmetrical body plan, unique sensory organs (glowing nodes / soft light), unusual joints, armored plates, smooth tendrils, fins, horns, or a tail. Hands/feet do NOT have to look human. Keep the design sleek and aesthetically pleasing.';
+        'Non-human anatomy: avoid human face and human proportions. Prefer mammalian-inspired silhouettes or clean biomech/crystal/energy-body forms. Add imaginative but elegant features such as smooth armor plates, crystalline growths, soft bioluminescent nodes, unusual joints, fins, horns, a tail, or sleek antennae. Hands/feet do NOT have to look human. Keep the design sleek, premium, and aesthetically pleasing (fashion creature, not monster).';
       const creatureNegatives =
-        'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask. Avoid insectoid look: no compound eyes, no full exoskeleton, no bug mouthparts. Antennae and fangs are allowed, but keep them sleek and aesthetically pleasing. Avoid grotesque/ugly/horror: no gore, no rot, no deformities.';
+        'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask. Avoid insectoid look: no compound eyes, no full exoskeleton, no bug mouthparts. Antennae and small fangs are allowed, but they must look sleek, cute/majestic, and non-threatening (no horror). Avoid grotesque/ugly/horror: no gore, no rot, no deformities, no creepy vibe, no demonic/evil styling, no scary teeth, no horror lighting.';
       
       const characterDesc = gender === 'Creature'
         ? `A highly imaginative, non-human creature (${creatureArchetype}) — alien/mutant/bio-engineered beast. Texture: ${creatureTexture}. ${creatureFeatures} ${creatureNegatives} Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build/Mass: ${buildDesc}. Headwear/Attachments: ${headwearDesc} (as integrated biological/cybernetic structures, not human accessories).`
