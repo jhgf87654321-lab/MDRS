@@ -347,13 +347,29 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         'astral creature: glowing core + translucent membranes (not scary)',
       ];
       const creatureArchetype = creatureArchetypes[Math.floor(Math.random() * creatureArchetypes.length)];
-      const creatureFeatures =
-        'Non-human anatomy: avoid human face and human proportions. Prefer mammalian-inspired silhouettes or clean biomech/crystal/energy-body forms. Add imaginative but elegant features such as smooth armor plates, crystalline growths, soft bioluminescent nodes, unusual joints, fins, horns, a tail, or sleek antennae. Hands/feet do NOT have to look human. Keep the design sleek, premium, and aesthetically pleasing (fashion creature, not monster).';
+
+      // Match .upgrade8 hairless behavior: sub-style randomization + strong studio/color constraints.
+      let creatureTextureDesc = '';
+      let creatureSpecialInstructions = '';
+      if (creatureTexture === 'Hairless') {
+        const hairlessSubStyles = [
+          'Bio-mechanical/Cybernetic: Neo-minimalist biomechanical, Cyber-Gothic. Hairless bionic humanoid creature, faceless white ceramic head, sleek aerodynamic exoskeleton. Exposed intricate internal wires, carbon fiber body, sharp aggressive spikes, glowing optic slits. High-fashion techwear, flowing black capes, tactical robes, carrying katana, minimalist aesthetic. Clean gray studio background, cinematic rim lighting, high contrast (Black and White dominance). DO NOT INCLUDE: human skin, human face, eyes, nose, mouth, hair, fur, organic texture, colorful, messy, low-tech, rustic.',
+          'Ethereal Divinity: Highly sacred and divine presence. The creature has translucent skin with a gel-like white surface, while the inner color glows with the selected skin tone. Large, expressive, and divine eyes. Majestic horns, gold filigree, surreal fantasy, ethereal atmosphere.',
+          'Avant-garde/Fabric: striking hairless feline facial structure, sleek Sphynx cat face shape and skin texture, optional delicate lace veil (non-essential element), textile textures, fashion editorial, high contrast, mysterious cat-like features, cat ears silhouette.',
+        ];
+        const selectedHairlessStyle = hairlessSubStyles[Math.floor(Math.random() * hairlessSubStyles.length)];
+        creatureTextureDesc = `Sleek hairless creature, humanoid monster, avant-garde style, biomechanical or ethereal details, intricate headpiece. Sub-style: ${selectedHairlessStyle}`;
+        creatureSpecialInstructions =
+          'CRITICAL CREATURE INSTRUCTION: Absolutely NO fur, NO fluffy textures. The overall color palette should be constrained to black, white, and grey, but allow the selected skin tone to act as a vibrant inner glow or accent. Lighting MUST be studio lighting with sharp rim light against a minimalist grey or white background.';
+      } else {
+        creatureTextureDesc =
+          'Non-human anatomy: avoid human face and human proportions. Covered in high-fashion, meticulously groomed fur or soft hair. Prefer mammalian-inspired silhouettes or clean biomech/crystal/energy-body forms that still feel warm and alive. Add imaginative but elegant features such as smooth armor plates, crystalline growths, soft bioluminescent nodes, unusual joints, fins, horns, a tail, or sleek antennae. Hands/feet do NOT have to look human. Keep the design sleek, premium, and aesthetically pleasing (fashion creature, not monster).';
+      }
       const creatureNegatives =
         'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask. Avoid insectoid look: no compound eyes, no full exoskeleton, no bug mouthparts. Antennae and small fangs are allowed, but they must look sleek, cute/majestic, and non-threatening (no horror). Avoid grotesque/ugly/horror: no gore, no rot, no deformities, no creepy vibe, no demonic/evil styling, no scary teeth, no horror lighting.';
       
       const characterDesc = gender === 'Creature'
-        ? `A highly imaginative, non-human creature (${creatureArchetype}) — alien/mutant/bio-engineered beast. Texture: ${creatureTexture}. ${creatureFeatures} ${creatureNegatives} Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build/Mass: ${buildDesc}. Headwear/Attachments: ${headwearDesc} (as integrated biological/cybernetic structures, not human accessories).`
+        ? `A highly imaginative, non-human creature (${creatureArchetype}) — alien/mutant/bio-engineered beast. Texture/Vibe: ${creatureTextureDesc} ${creatureNegatives} ${creatureSpecialInstructions} Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build/Mass: ${buildDesc}. Headwear/Attachments: ${headwearDesc} (as integrated biological/cybernetic structures, not human accessories).`
         : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}. ${chestCoverage}`.trim();
 
       const aimShoeDesc =
