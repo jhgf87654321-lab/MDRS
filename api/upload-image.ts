@@ -42,7 +42,7 @@ function normalizePrefix(prefix: string) {
 }
 
 function isAllowedPrefix(prefix: string) {
-  const allowed = new Set(['share-posts/', 'aesthetic-references/', 'MINT/', 'SP/', 'REF/']);
+  const allowed = new Set(['share-posts/', 'aesthetic-references/', 'MINT/', 'SP/', 'REF/', 'userhead/']);
   return allowed.has(prefix);
 }
 

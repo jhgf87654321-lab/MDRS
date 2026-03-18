@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
-import { addNftToMyProfile } from '../lib/userProfile';
+import { addNftToMyProfile, ensureUserProfile } from '../lib/userProfile';
 import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
 import { upsertImageInfo } from '../lib/imageInfo';
 
@@ -78,7 +78,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   
   // NFT Themes and Traits for randomness
   const themes = ['High-Fashion Editorial', 'Urban Techwear', 'Minimalist Avant-Garde', 'Graphic Lookbook', 'Streetwear Culture', 'Avant-Garde Magazine', 'Modern Tech-Fashion'];
-  const materials = ['Technical Nylon', 'Patterned Silk', 'Matte Polymer', 'Transparent Vinyl', 'Heavy Cotton', 'Reflective Fabric'];
+  const materials = ['Matte Nylon', 'Crisp Cotton', 'Heavy Wool', 'Premium Leather', 'Textured Denim', 'Fine Linen'];
   const styles = ['Magazine Cover Layout', 'Editorial Studio Portrait', 'High-End Fashion Photography', 'Cinematic Character Shot', 'Futuristic Fashion Portrait'];
 
   // Parameter states for each category
@@ -98,6 +98,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
   const [nftData, setNftData] = useState<CyberCollectionItem | null>(null);
   const [nftMetadata, setNftMetadata] = useState<{ theme: string; rarity: string } | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signIn');
@@ -191,6 +192,22 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       console.error('Failed to persist creatorState', e);
     }
   }, [activeCategory, gender, creatureTexture, designMode, customDesign, aestheticStyle, params, selectedSkinColor, defaultCreatorState]);
+
+  useEffect(() => {
+    let mounted = true;
+    ensureUserProfile()
+      .then((doc) => {
+        if (!mounted) return;
+        const url = doc?.avatarUrl ? String(doc.avatarUrl).trim() : '';
+        setAvatarUrl(url || null);
+      })
+      .catch(() => {
+        if (mounted) setAvatarUrl(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Restore last generated NFT and metadata when returning to Creator
   useEffect(() => {
@@ -298,10 +315,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       const colorStyleBase =
         params.chromaticity > 70
-          ? `The clothing has vibrant, highly saturated, and numerous colors, prominently featuring ${randomColor}. The background and skin tone must remain natural and unaffected by the clothing colors.`
+          ? `The clothing features a bold, clean, high-contrast color design, prominently featuring ${randomColor}. The design may include tasteful prints or patterns, but they must be clean, premium, and elegant. Absolutely avoid overly dense, messy, chaotic, or "dirty" patterns (no tie-dye, no cluttered prints). The background and skin tone must remain natural and unaffected by the clothing colors.`
           : params.chromaticity < 30
             ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.'
-            : `The clothing has subtle color accents of ${randomColor}. The background and skin tone must remain natural.`;
+            : `The clothing has subtle, clean color accents of ${randomColor}. The design may include tasteful patterns, but avoid anything dense, chaotic, or dirty-looking. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
       if (aestheticStyle !== 'Default') {
@@ -311,10 +328,17 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
       const isTanBio = selectedSkinColor === '#E0AC69';
+
+      const chestCoverage =
+        params.thickness < 30
+          ? ''
+          : gender === 'Male' && params.heavy > 80
+            ? 'Fully clothed with chest completely covered. No open chest, no deep V, no shirtless look.'
+            : '';
       
       const characterDesc = gender === 'Creature'
         ? `A unique, otherworldly creature (alien, mutant, or bio-engineered beast). Texture: ${creatureTexture}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}.`
-        : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
+        : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}. ${chestCoverage}`.trim();
 
       const aimShoeDesc =
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
@@ -363,17 +387,18 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       // Keep prompt compact for speed and consistency (mobile friendly).
       const prompt =
-        `High-end fashion NFT, ${randomStyle}. Theme: ${randomTheme}.\n` +
+        `High-end luxury fashion photography, ${randomStyle}. Theme: ${randomTheme}. Clean, premium, and modern.\n` +
         `Single character, full-body head-to-toe, centered, do not crop.\n` +
         `Pose: dynamic high-fashion editorial / magazine cover pose (confident, stylish, not stiff).\n` +
         `Background: ${backgroundInstruction}\n` +
-        `Overlay: minimal technical UI lines/crosshair (no QR codes, no watermarks).\n` +
+        `Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n` +
         `Character: ${characterDesc}\n` +
         `Headwear rule: ${headwearStyle}\n` +
         `${outfitDesc}\n` +
         `Colors: ${colorStyle} ${finalStyleInstruction} Clothing amount: ${thicknessStyle}.\n` +
         `Skin tone: ${selectedSkinColor}.\n` +
-        `Photo: studio lighting, photorealistic, ~1024px long edge, sharp, natural skin texture.\n` +
+        `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a real photograph. Holographic/reflective/laser-like materials are allowed ONLY if they look like real physical fabrics photographed in a studio (not like an illustration, 3D render, or hand-drawn art). Avoid cheap plastic-looking materials.\n` +
+        `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, ~1024px long edge, sharp, natural skin texture.\n` +
         `Safety: no explicit nudity.`;
 
       const parts: GeminiPart[] = [];
@@ -593,7 +618,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           }}
           className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
         >
-          <img src="https://picsum.photos/100/100?seed=axon_prime" alt="User" className="w-14 h-14 rounded-full object-cover" />
+          <img
+            src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'}
+            alt="User"
+            className="w-14 h-14 rounded-full object-cover"
+            referrerPolicy="no-referrer"
+          />
         </button>
       </header>
 

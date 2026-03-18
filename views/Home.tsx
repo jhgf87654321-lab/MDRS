@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from '../types';
 import LokadaLogo from '../assets/lokada.png';
+import { ensureUserProfile } from '../lib/userProfile';
 
 interface HomeProps {
   onEnter: () => void;
@@ -14,6 +15,23 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signIn');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    ensureUserProfile()
+      .then((doc) => {
+        if (!mounted) return;
+        const url = doc?.avatarUrl ? String(doc.avatarUrl).trim() : '';
+        setAvatarUrl(url || null);
+      })
+      .catch(() => {
+        if (mounted) setAvatarUrl(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +99,12 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             }}
             className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
           >
-            <img src="https://picsum.photos/100/100?seed=axon_prime" alt="User" className="w-14 h-14 rounded-full object-cover" />
+            <img
+              src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'}
+              alt="User"
+              className="w-14 h-14 rounded-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </button>
         </div>
       </header>

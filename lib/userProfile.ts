@@ -13,6 +13,8 @@ export type UserProfileDoc = {
   updatedAt: number;
   // 用户自定义显示名，仅用于前端展示，不参与登录
   displayName?: string;
+  // 用户自定义头像 URL（COS）
+  avatarUrl?: string;
   ownedNfts: OwnedNftRef[];
 };
 
@@ -59,6 +61,7 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       ...(doc.displayName ? { displayName: doc.displayName } : {}),
+      ...(doc.avatarUrl ? { avatarUrl: doc.avatarUrl } : {}),
       ownedNfts: doc.ownedNfts,
     });
   } catch (err: any) {
@@ -142,9 +145,43 @@ export async function setMyDisplayName(displayName: string) {
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       displayName: doc.displayName,
+      avatarUrl: doc.avatarUrl,
       ownedNfts: doc.ownedNfts,
     });
   console.log('[userProfile] setMyDisplayName result', res);
+  return doc;
+}
+
+export async function setMyAvatarUrl(avatarUrl: string) {
+  const uid = await getUid();
+  const now = Date.now();
+  const existing = await getProfileDoc(uid);
+  const base: UserProfileDoc =
+    existing ?? {
+      uid,
+      createdAt: now,
+      updatedAt: now,
+      ownedNfts: [],
+    };
+  const doc: UserProfileDoc = {
+    ...base,
+    avatarUrl: avatarUrl.trim(),
+    updatedAt: now,
+  };
+
+  const db = getCloudbaseDb();
+  const res = await db
+    .collection(COLLECTION)
+    .doc(uid)
+    .update({
+      uid: doc.uid,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      displayName: doc.displayName,
+      avatarUrl: doc.avatarUrl,
+      ownedNfts: doc.ownedNfts,
+    });
+  console.log('[userProfile] setMyAvatarUrl result', res);
   return doc;
 }
 

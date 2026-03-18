@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from '../../types';
 import { getCloudbaseAuth } from '../../lib/cloudbase';
-import { ensureUserProfile, setMyDisplayName } from '../../lib/userProfile';
+import { uploadImageToCloudBase } from '../../lib/apiClient';
+import { ensureUserProfile, setMyAvatarUrl, setMyDisplayName } from '../../lib/userProfile';
 
 type Mode = 'signIn' | 'signUp';
 type Channel = 'email' | 'phone';
@@ -56,6 +57,7 @@ function formatSignInError(err: unknown) {
 
 export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<Mode>('signIn');
   const [channel, setChannel] = useState<Channel>('email');
   const [identifier, setIdentifier] = useState('');
@@ -68,6 +70,8 @@ export default function AuthModule({ onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<{ uid?: string; email?: string } | null>(null);
   const [signedInDisplayName, setSignedInDisplayName] = useState<string | null>(null);
+  const [signedInAvatarUrl, setSignedInAvatarUrl] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -89,20 +93,47 @@ export default function AuthModule({ onNavigate }: Props) {
   useEffect(() => {
     if (!me?.uid) {
       setSignedInDisplayName(null);
+      setSignedInAvatarUrl(null);
       return;
     }
     let mounted = true;
     ensureUserProfile(me.uid)
       .then((doc) => {
         if (mounted && doc?.displayName) setSignedInDisplayName(doc.displayName);
+        if (mounted && doc?.avatarUrl) setSignedInAvatarUrl(String(doc.avatarUrl));
       })
       .catch(() => {
         if (mounted) setSignedInDisplayName(null);
+        if (mounted) setSignedInAvatarUrl(null);
       });
     return () => {
       mounted = false;
     };
   }, [me?.uid]);
+
+  const uploadAvatar = async (file: File) => {
+    if (!me?.uid) return;
+    setIsUploadingAvatar(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('read failed'));
+        reader.readAsDataURL(file);
+      });
+      const url = await uploadImageToCloudBase(dataUrl, {
+        prefix: 'userhead/',
+        fileName: `${me.uid}_${Date.now()}_${Math.random().toString(16).slice(2)}.webp`,
+      });
+      await setMyAvatarUrl(url);
+      setSignedInAvatarUrl(url);
+    } catch (e) {
+      console.error('upload avatar failed', e);
+      alert('上传头像失败。');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const sendCode = async () => {
     setError(null);
@@ -260,7 +291,44 @@ export default function AuthModule({ onNavigate }: Props) {
         {me?.uid ? (
           <div className="glass rounded-[2.5rem] border border-white/10 p-8">
             <div className="text-[10px] uppercase tracking-[0.35em] text-white/40 font-bold mb-2">SIGNED IN</div>
-            <div className="text-sm font-bold break-all">{signedInDisplayName || me.email || me.uid}</div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="w-14 h-14 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center active:scale-95 transition-transform"
+                title="上传头像"
+                disabled={isUploadingAvatar}
+              >
+                {signedInAvatarUrl ? (
+                  <img src={signedInAvatarUrl} alt="avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <span className="material-icons-round text-white/60">person</span>
+                )}
+              </button>
+              <div className="min-w-0">
+                <div className="text-sm font-bold break-all">{signedInDisplayName || me.email || me.uid}</div>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-primary/80 hover:text-primary disabled:opacity-60"
+                  disabled={isUploadingAvatar}
+                >
+                  {isUploadingAvatar ? 'Uploading...' : '上传头像'}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    void uploadAvatar(f);
+                    e.currentTarget.value = '';
+                  }}
+                />
+              </div>
+            </div>
 
             <div className="mt-6 space-y-3">
               <button
