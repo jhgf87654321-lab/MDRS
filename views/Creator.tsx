@@ -325,7 +325,61 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         finalStyleInstruction += ` The specific aesthetic style MUST be highly influenced by: ${aestheticStyle}.`;
       }
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
-      const headwearDesc = params.jawline < 30 ? 'bareheaded, clean hair, no head accessories' : params.jawline > 70 ? 'complex, elaborate headwear, masks, or heavy accessories' : 'simple head accessories';
+
+      // Align headwear keyword logic with .upgrade10 (Avatar -> Body -> headwear slider).
+      const complexHeadwearStyles = [
+        'Dark Mecha: heavy mechanical full-face mask, intricate robotic parts, matte black and dark grey, exposed red wires, glowing sensor eyes, decal stickers, cybernetic mecha aesthetic',
+        'Sleek Minimalist: sleek minimalist glossy black glass visor covering eyes, aerodynamic design, sci-fi minimalist',
+        'Neon Cyberpunk: translucent orange futuristic visor and industrial headphones, neon light reflections, UI interface graphics on the glass, detailed mechanical textures',
+        'Fantasy Cyber: stylized cybernetic kitsune mask on the side of the head, traditional elements fused with high-tech armor, intricate gold micro-chips, artistic cyberpunk',
+      ];
+      const randomComplexHeadwear = complexHeadwearStyles[Math.floor(Math.random() * complexHeadwearStyles.length)];
+
+      const coreAccessories = [
+        'cybernetic facial decals and micro-circuitry',
+        'oni/kitsune half-mask with horns',
+        'oversized translucent visor',
+        'tactical HUD goggles with digital displays',
+        'bionic filigree implants',
+        'mechanical chin guard and heavy neck collar',
+        'cybernetic ear-mounted sensors',
+      ];
+      const headwearMaterials = [
+        'translucent neon acrylic',
+        'matte white ceramic',
+        'polished silver chrome',
+        'glowing LED filaments',
+        'carbon fiber and tech-mesh',
+        'digital glitch patterns',
+      ];
+      const headwearDetails = [
+        'typography decals and warning labels',
+        'integrated antennas',
+        'exoskeleton ribs',
+        'ornate engravings',
+        'cybernetic face plates',
+      ];
+      const headwearStyles = [
+        'techwear aesthetic',
+        'avant-garde fashion',
+        'cyber-samurai / cyber-ninja vibe',
+        'mechanical doll aesthetic',
+        'vaporwave / glitchcore style',
+      ];
+      const getRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
+      let headwearDesc = '';
+      if (params.jawline > 70) {
+        headwearDesc = `complex headwear (${randomComplexHeadwear})`;
+      } else if (params.jawline < 10) {
+        headwearDesc = 'bareheaded, clean hair, no head accessories';
+      } else if (params.jawline < 30) {
+        headwearDesc = `subtle head accessory: ${getRandom(coreAccessories)}`;
+      } else if (params.jawline < 50) {
+        headwearDesc = `moderate head accessory: ${getRandom(coreAccessories)} made of ${getRandom(headwearMaterials)}`;
+      } else {
+        headwearDesc = `detailed head accessory: ${getRandom(coreAccessories)} made of ${getRandom(headwearMaterials)}, featuring ${getRandom(headwearDetails)}, ${getRandom(headwearStyles)}`;
+      }
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
       const isTanBio = selectedSkinColor === '#E0AC69';
 
@@ -402,13 +456,6 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? 'Solid vibrant backdrop (clean, no clutter).'
         : `Minimal studio backdrop (white/grey/soft neutral) with bold typography matching the ${randomTheme} vibe.`;
 
-      const headwearStyle =
-        params.jawline < 30
-          ? 'No headwear.'
-          : params.jawline > 70
-            ? 'Sleek minimal futuristic headwear: a clean visor/helmet with smooth surfaces, no spikes, no messy protrusions, no random ornaments.'
-            : 'Minimal futuristic accessory: thin visor or subtle tech headband (clean lines).';
-
       // Special Design options (from .upgrade6)
       const usesSpecialDesignPrompts =
         designMode === 'Custom' && (customDesign.top === 'HBA' || customDesign.shoes === 'aim');
@@ -425,7 +472,6 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         `Background: ${backgroundInstruction}\n` +
         `Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n` +
         `Character: ${characterDesc}\n` +
-        `Headwear rule: ${headwearStyle}\n` +
         `${outfitDesc}\n` +
         `Colors: ${colorStyle} ${finalStyleInstruction} Clothing amount: ${thicknessStyle}.\n` +
         `Skin tone: ${selectedSkinColor}.\n` +
