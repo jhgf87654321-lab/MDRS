@@ -452,7 +452,9 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       }
       const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
 
-      // Align headwear keyword logic with .upgrade10 (Avatar -> Body -> headwear slider).
+      // Sync headwear keyword logic with .upgrade11.
+      // - First branch: if params.era > 50 => "modern" headwear pool; otherwise => "retro" pool
+      // - Second branch: then use params.jawline thresholds to generate bare/subtle/moderate/detailed.
       const complexHeadwearStyles = [
         'Dark Mecha: heavy mechanical full-face mask, intricate robotic parts, matte black and dark grey, exposed red wires, glowing sensor eyes, decal stickers, cybernetic mecha aesthetic',
         'Sleek Minimalist: sleek minimalist glossy black glass visor covering eyes, aerodynamic design, sci-fi minimalist',
@@ -461,50 +463,88 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       ];
       const randomComplexHeadwear = complexHeadwearStyles[Math.floor(Math.random() * complexHeadwearStyles.length)];
 
-      const coreAccessories = [
-        'cybernetic facial decals and micro-circuitry',
-        'oni/kitsune half-mask with horns',
-        'oversized translucent visor',
-        'tactical HUD goggles with digital displays',
-        'bionic filigree implants',
-        'mechanical chin guard and heavy neck collar',
-        'cybernetic ear-mounted sensors',
+      const headwearArchetypes = [
+        {
+          core: 'bionic filigree implants and cybernetic facial decals',
+          material: 'polished silver chrome and matte white ceramic',
+          detail: 'ornate engravings and cybernetic face plates',
+          style: 'avant-garde fashion, mechanical doll aesthetic',
+        },
+        {
+          core: 'oni/kitsune half-mask with horns and tactical HUD goggles',
+          material: 'matte white ceramic with glowing LED filaments',
+          detail: 'exoskeleton ribs',
+          style: 'cyber-samurai / cyber-ninja vibe',
+        },
+        {
+          core: 'oversized translucent visor',
+          material: 'translucent neon acrylic and digital glitch patterns',
+          detail: 'integrated antennas',
+          style: 'vaporwave / glitchcore style',
+        },
+        {
+          core: 'mechanical chin guard and cybernetic ear-mounted sensors',
+          material: 'carbon fiber and tech-mesh',
+          detail: 'typography decals and warning labels',
+          style: 'techwear aesthetic',
+        },
       ];
-      const headwearMaterials = [
-        'translucent neon acrylic',
-        'matte white ceramic',
-        'polished silver chrome',
-        'glowing LED filaments',
-        'carbon fiber and tech-mesh',
-        'digital glitch patterns',
+      const selectedArchetype = headwearArchetypes[Math.floor(Math.random() * headwearArchetypes.length)];
+
+      const retroComplexHeadwearStyles = [
+        'Minimalist Noir: wide slightly transparent silk ribbon tied as a blindfold, dramatic shadows, chiaroscuro lighting, stark high contrast, minimalist aesthetic, elegant and cinematic',
+        'Deconstructed Architecture: huge architectural pleated conical hat or structural headpiece, neutral and grey tones, deconstructed silhouette, high-fashion runway look, sharp editorial lighting, minimalist yet dramatic',
+        'Minimalist Hacker: sleek rectangular glowing white LED visor, matte tactical balaclava hood, moody cinematic environment, high-tech noir, sharp silhouettes',
       ];
-      const headwearDetails = [
-        'typography decals and warning labels',
-        'integrated antennas',
-        'exoskeleton ribs',
-        'ornate engravings',
-        'cybernetic face plates',
+      const randomRetroComplexHeadwear = retroComplexHeadwearStyles[Math.floor(Math.random() * retroComplexHeadwearStyles.length)];
+
+      const retroHeadwearArchetypes = [
+        {
+          core: 'silk ribbon blindfold',
+          material: 'slightly transparent glossy silk and sheer velvet',
+          detail: 'dramatic shadows and chiaroscuro lighting',
+          style: 'gothic aesthetic, monochrome photography, elegant and cinematic',
+        },
+        {
+          core: 'architectural wide-brimmed hat or pleated conical headpiece',
+          material: 'sheer lace & mesh with exaggerated proportions',
+          detail: 'hard studio lighting and sharp silhouettes',
+          style: 'editorial photography, deconstructed silhouette, minimalist yet dramatic',
+        },
+        {
+          core: 'tactical balaclava hood with a glowing LED rectangular visor',
+          material: 'matte velvet',
+          detail: 'sharp editorial lighting',
+          style: 'minimalist futurology, high-tech noir',
+        },
       ];
-      const headwearStyles = [
-        'techwear aesthetic',
-        'avant-garde fashion',
-        'cyber-samurai / cyber-ninja vibe',
-        'mechanical doll aesthetic',
-        'vaporwave / glitchcore style',
-      ];
-      const getRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+      const selectedRetroArchetype = retroHeadwearArchetypes[Math.floor(Math.random() * retroHeadwearArchetypes.length)];
 
       let headwearDesc = '';
-      if (params.jawline > 70) {
-        headwearDesc = `complex headwear (${randomComplexHeadwear})`;
-      } else if (params.jawline < 10) {
-        headwearDesc = 'bareheaded, clean hair, no head accessories';
-      } else if (params.jawline < 30) {
-        headwearDesc = `subtle head accessory: ${getRandom(coreAccessories)}`;
-      } else if (params.jawline < 50) {
-        headwearDesc = `moderate head accessory: ${getRandom(coreAccessories)} made of ${getRandom(headwearMaterials)}`;
+      if (params.era > 50) {
+        if (params.jawline > 70) {
+          headwearDesc = `complex headwear (${randomComplexHeadwear})`;
+        } else if (params.jawline < 10) {
+          headwearDesc = 'bareheaded, clean hair, no head accessories';
+        } else if (params.jawline < 30) {
+          headwearDesc = `subtle head accessory: ${selectedArchetype.core}`;
+        } else if (params.jawline < 50) {
+          headwearDesc = `moderate head accessory: ${selectedArchetype.core} made of ${selectedArchetype.material}`;
+        } else {
+          headwearDesc = `detailed head accessory: ${selectedArchetype.core} made of ${selectedArchetype.material}, featuring ${selectedArchetype.detail}, ${selectedArchetype.style}`;
+        }
       } else {
-        headwearDesc = `detailed head accessory: ${getRandom(coreAccessories)} made of ${getRandom(headwearMaterials)}, featuring ${getRandom(headwearDetails)}, ${getRandom(headwearStyles)}`;
+        if (params.jawline > 70) {
+          headwearDesc = `complex headwear (${randomRetroComplexHeadwear})`;
+        } else if (params.jawline < 10) {
+          headwearDesc = 'bareheaded, clean hair, no head accessories';
+        } else if (params.jawline < 30) {
+          headwearDesc = `subtle head accessory: ${selectedRetroArchetype.core}`;
+        } else if (params.jawline < 50) {
+          headwearDesc = `moderate head accessory: ${selectedRetroArchetype.core} made of ${selectedRetroArchetype.material}`;
+        } else {
+          headwearDesc = `detailed head accessory: ${selectedRetroArchetype.core} made of ${selectedRetroArchetype.material}, featuring ${selectedRetroArchetype.detail}, ${selectedRetroArchetype.style}`;
+        }
       }
       const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
       const isTanBio = selectedSkinColor === '#E0AC69';
