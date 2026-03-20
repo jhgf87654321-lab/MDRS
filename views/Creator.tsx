@@ -1,8 +1,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { GoogleGenAI } from '@google/genai';
+
 import { View } from '../types';
-import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
+import { getMe, getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 import { addNftToMyProfile, ensureUserProfile } from '../lib/userProfile';
 import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
@@ -75,6 +77,15 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   });
   const [aestheticStyle, setAestheticStyle] = useState<CreatorStateV1['aestheticStyle']>('Default');
   const [hbaImageBase64, setHbaImageBase64] = useState<string | null>(null);
+  const [customTopImage, setCustomTopImage] = useState<string | null>(null);
+  const [customTopDesc, setCustomTopDesc] = useState<string | null>(null);
+  const [isAnalyzingTop, setIsAnalyzingTop] = useState(false);
+  const [customBottomImage, setCustomBottomImage] = useState<string | null>(null);
+  const [customBottomDesc, setCustomBottomDesc] = useState<string | null>(null);
+  const [isAnalyzingBottom, setIsAnalyzingBottom] = useState(false);
+  const [customShoesImage, setCustomShoesImage] = useState<string | null>(null);
+  const [customShoesDesc, setCustomShoesDesc] = useState<string | null>(null);
+  const [isAnalyzingShoes, setIsAnalyzingShoes] = useState(false);
   
   // NFT Themes and Traits for randomness
   const themes = ['High-Fashion Editorial', 'Urban Techwear', 'Minimalist Avant-Garde', 'Graphic Lookbook', 'Streetwear Culture', 'Avant-Garde Magazine', 'Modern Tech-Fashion'];
@@ -299,6 +310,67 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     setParams(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleCustomUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: 'top' | 'bottom' | 'shoes',
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+
+      if (type === 'top') {
+        setCustomTopImage(base64);
+        setIsAnalyzingTop(true);
+      } else if (type === 'bottom') {
+        setCustomBottomImage(base64);
+        setIsAnalyzingBottom(true);
+      } else {
+        setCustomShoesImage(base64);
+        setIsAnalyzingShoes(true);
+      }
+
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const base64Data = base64.split(',')[1];
+        const mimeType = base64.split(';')[0].split(':')[1];
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-preview',
+          contents: {
+            parts: [
+              {
+                text: `Analyze this image of a clothing item (${type}). Provide a highly detailed, concise description of its design, color, material, graphics, cut, and specific details. Do not include any introductory text, just the description.`,
+              },
+              {
+                inlineData: { data: base64Data, mimeType },
+              },
+            ],
+          },
+        });
+
+        const desc = response.text?.trim() || `custom ${type} matching the reference image`;
+        if (type === 'top') setCustomTopDesc(desc);
+        else if (type === 'bottom') setCustomBottomDesc(desc);
+        else setCustomShoesDesc(desc);
+      } catch (error) {
+        console.error(`Failed to analyze ${type} image`, error);
+        const fallbackDesc = `custom ${type} matching the reference image`;
+        if (type === 'top') setCustomTopDesc(fallbackDesc);
+        else if (type === 'bottom') setCustomBottomDesc(fallbackDesc);
+        else setCustomShoesDesc(fallbackDesc);
+      } finally {
+        if (type === 'top') setIsAnalyzingTop(false);
+        else if (type === 'bottom') setIsAnalyzingBottom(false);
+        else setIsAnalyzingShoes(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const generateNFT = async () => {
     const run = async (): Promise<MintJobResult> => {
       // Randomize traits for high variety
@@ -430,14 +502,30 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
       const hbaHoodieDesc =
         "black double-layered hoodie with hood up. Outer layer has short sleeves with raw frayed edges over long black sleeves. Features white graphics: 'ANZIMA RACING' outlined text logo on chest, checkered flag graphic, circular logo, and a symmetrical tribal graphic on the front kangaroo pocket. Black drawstrings with silver metal tips and silver metal rivets on the pocket corners";
-      const topDesc = customDesign.top === 'HBA' ? `${hbaHoodieDesc}, exactly matching the reference` : customDesign.top;
-      const shoesDesc = customDesign.shoes === 'aim' ? `${aimShoeDesc}, exactly matching the reference` : customDesign.shoes;
+      const topDesc =
+        customDesign.top === 'HBA'
+          ? `${hbaHoodieDesc}, exactly matching the reference`
+          : customDesign.top === 'Custom'
+            ? `${customTopDesc || 'custom top matching the reference image'}, exactly matching the reference`
+            : customDesign.top;
+      const bottomDesc =
+        customDesign.bottom === 'Custom'
+          ? `${customBottomDesc || 'custom bottom matching the reference image'}, exactly matching the reference`
+          : customDesign.bottom;
+      const shoesDesc =
+        customDesign.shoes === 'aim'
+          ? `${aimShoeDesc}, exactly matching the reference`
+          : customDesign.shoes === 'Custom'
+            ? `${customShoesDesc || 'custom shoes matching the reference image'}, exactly matching the reference`
+            : customDesign.shoes;
       const outfitDesc =
         designMode === 'Custom'
-          ? `Outfit consists of: Top - ${topDesc}, Bottom - ${customDesign.bottom}, Footwear - ${shoesDesc}.`
+          ? `Outfit consists of: Top - ${topDesc}, Bottom - ${bottomDesc}, Footwear - ${shoesDesc}.`
           : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
 
-      const isSpecial = Math.random() < 0.1;
+      const me = await getMe();
+      const isAdminTest = me?.role === 'admin';
+      const isSpecial = isAdminTest ? true : Math.random() < 0.1;
       let normalCount = parseInt(localStorage.getItem('normalMintCount') || '0', 10);
       let specialCount = parseInt(localStorage.getItem('specialMintCount') || '0', 10);
 
@@ -453,16 +541,25 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       }
 
       const backgroundInstruction = isSpecial
-        ? 'Solid vibrant backdrop (clean, no clutter).'
+        ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
         : `Minimal studio backdrop (white/grey/soft neutral) with bold typography matching the ${randomTheme} vibe.`;
 
       // Special Design options (from .upgrade6)
       const usesSpecialDesignPrompts =
-        designMode === 'Custom' && (customDesign.top === 'HBA' || customDesign.shoes === 'aim');
+        designMode === 'Custom' &&
+        (customDesign.top === 'HBA' ||
+          customDesign.top === 'Custom' ||
+          customDesign.bottom === 'Custom' ||
+          customDesign.shoes === 'aim' ||
+          customDesign.shoes === 'Custom');
 
       const colorStyle = usesSpecialDesignPrompts
         ? 'Do NOT recolor or add colored trims/piping/stitching to the referenced garments. Keep the garment colors and graphics exactly as the reference (no extra neon accents).'
         : colorStyleBase;
+
+      const overlayInstruction = isSpecial
+        ? ''
+        : 'Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n';
 
       // Keep prompt compact for speed and consistency (mobile friendly).
       const prompt =
@@ -470,7 +567,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         `Single character, full-body head-to-toe, centered, do not crop.\n` +
         `Pose: dynamic high-fashion editorial / magazine cover pose (confident, stylish, not stiff).\n` +
         `Background: ${backgroundInstruction}\n` +
-        `Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n` +
+        overlayInstruction +
         `Character: ${characterDesc}\n` +
         `${outfitDesc}\n` +
         `Colors: ${colorStyle} ${finalStyleInstruction} Clothing amount: ${thicknessStyle}.\n` +
@@ -509,6 +606,30 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         }
       }
 
+      // Add 'Custom' top reference (upload) if selected
+      if (designMode === 'Custom' && customDesign.top === 'Custom' && customTopImage) {
+        const inline = dataUrlToInlinePart(customTopImage);
+        if (inline && 'inlineData' in inline) {
+          parts.push({
+            text:
+              'VIRTUAL TRY-ON TASK - GARMENT 1 (TOP): The following image shows the EXACT top the character must wear. DO NOT redesign it. DO NOT alter the text, logos, graphics, or cut. You MUST preserve the exact graphics, exact cut, exact textures, and exact proportions. If the image shows a mannequin, replace the mannequin with the character described later, but leave the top 100% untouched and identical to this reference.',
+          });
+          parts.push(inline);
+        }
+      }
+
+      // Add 'Custom' bottom reference (upload) if selected
+      if (designMode === 'Custom' && customDesign.bottom === 'Custom' && customBottomImage) {
+        const inline = dataUrlToInlinePart(customBottomImage);
+        if (inline && 'inlineData' in inline) {
+          parts.push({
+            text:
+              'VIRTUAL TRY-ON TASK - GARMENT 2 (BOTTOM): The following image shows the EXACT bottom the character must wear. DO NOT redesign it. DO NOT alter the text, logos, graphics, or cut. You MUST preserve the exact graphics, exact cut, exact textures, and exact proportions. If the image shows a mannequin, replace the mannequin with the character described later, but leave the bottom 100% untouched and identical to this reference.',
+          });
+          parts.push(inline);
+        }
+      }
+
       // Add 'aim' shoe reference if selected (fixed reference URL)
       if (designMode === 'Custom' && customDesign.shoes === 'aim') {
         try {
@@ -530,13 +651,21 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             const inline = dataUrlToInlinePart(dataUrl);
             if (inline && 'inlineData' in inline) {
               parts.push({
-                text: `VIRTUAL TRY-ON TASK - GARMENT 2 (SHOES): The following image shows the EXACT shoes the character must wear (${aimShoeDesc}). DO NOT change their design. Copy the shoes exactly onto the character's feet.`,
+                text: `VIRTUAL TRY-ON TASK - GARMENT 3 (SHOES): The following image shows the EXACT shoes the character must wear (${aimShoeDesc}). DO NOT change their design. Copy the shoes exactly onto the character's feet.`,
               });
               parts.push(inline);
             }
           }
         } catch (e) {
           console.warn('Failed to fetch aim shoe reference image', e);
+        }
+      } else if (designMode === 'Custom' && customDesign.shoes === 'Custom' && customShoesImage) {
+        const inline = dataUrlToInlinePart(customShoesImage);
+        if (inline && 'inlineData' in inline) {
+          parts.push({
+            text: 'VIRTUAL TRY-ON TASK - GARMENT 3 (SHOES): The following image shows the EXACT shoes the character must wear. DO NOT change their design. Copy the shoes exactly as they appear in the reference image onto the character\'s feet.',
+          });
+          parts.push(inline);
         }
       }
 
@@ -872,16 +1001,17 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           { label: 'T恤', value: 'T-Shirt' },
                           { label: '卫衣', value: 'Hoodie' },
                           { label: 'HBA（特殊）', value: 'HBA' },
+                          { label: 'Custom（上传）', value: 'Custom' },
                         ].map((item) => (
                           <button
                             key={item.value}
                             onClick={() => setCustomDesign((p) => ({ ...p, top: item.value }))}
                             className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
                               customDesign.top === item.value
-                                ? item.value === 'HBA'
+                                ? item.value === 'HBA' || item.value === 'Custom'
                                   ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
                                   : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                                : item.value === 'HBA'
+                                : item.value === 'HBA' || item.value === 'Custom'
                                   ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
                                   : 'border-white/10 text-white/60 hover:border-white/30'
                             }`}
@@ -916,6 +1046,31 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           )}
                         </div>
                       )}
+
+                      {customDesign.top === 'Custom' && (
+                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                            上传 Custom 上装参考图（可选）
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => void handleCustomUpload(e, 'top')}
+                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
+                          />
+                          {isAnalyzingTop && <span className="text-[10px] text-primary animate-pulse ml-2">Analyzing...</span>}
+                          {customTopImage && (
+                            <img
+                              src={customTopImage}
+                              alt="Custom Top"
+                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
+                            />
+                          )}
+                          {customTopDesc && (
+                            <p className="mt-2 text-[8px] text-white/60 leading-tight">{customTopDesc}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">下装</span>
@@ -925,16 +1080,50 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           { label: '长裤', value: 'Pants' },
                           { label: '短裙', value: 'Skirt' },
                           { label: '长裙', value: 'Long Skirt' },
+                          { label: 'Custom（上传）', value: 'Custom' },
                         ].map((item) => (
                           <button
                             key={item.value}
                             onClick={() => setCustomDesign((p) => ({ ...p, bottom: item.value }))}
-                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${customDesign.bottom === item.value ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
+                              customDesign.bottom === item.value
+                                ? item.value === 'Custom'
+                                  ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
+                                  : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
+                                : item.value === 'Custom'
+                                  ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
+                                  : 'border-white/10 text-white/60 hover:border-white/30'
+                            }`}
                           >
                             {item.label}
                           </button>
                         ))}
                       </div>
+
+                      {customDesign.bottom === 'Custom' && (
+                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                            上传 Custom 下装参考图（可选）
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => void handleCustomUpload(e, 'bottom')}
+                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
+                          />
+                          {isAnalyzingBottom && <span className="text-[10px] text-primary animate-pulse ml-2">Analyzing...</span>}
+                          {customBottomImage && (
+                            <img
+                              src={customBottomImage}
+                              alt="Custom Bottom"
+                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
+                            />
+                          )}
+                          {customBottomDesc && (
+                            <p className="mt-2 text-[8px] text-white/60 leading-tight">{customBottomDesc}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">鞋履</span>
@@ -945,16 +1134,17 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           { label: '拖鞋', value: 'Slippers' },
                           { label: '便鞋', value: 'Regular Shoes' },
                           { label: 'AIM（特殊）', value: 'aim' },
+                          { label: 'Custom（上传）', value: 'Custom' },
                         ].map((item) => (
                           <button
                             key={item.value}
                             onClick={() => setCustomDesign((p) => ({ ...p, shoes: item.value }))}
                             className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
                               customDesign.shoes === item.value
-                                ? item.value === 'aim'
+                                ? item.value === 'aim' || item.value === 'Custom'
                                   ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
                                   : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                                : item.value === 'aim'
+                                : item.value === 'aim' || item.value === 'Custom'
                                   ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
                                   : 'border-white/10 text-white/60 hover:border-white/30'
                             }`}
@@ -963,6 +1153,31 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                           </button>
                         ))}
                       </div>
+
+                      {customDesign.shoes === 'Custom' && (
+                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                            上传 Custom 鞋履参考图（可选）
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => void handleCustomUpload(e, 'shoes')}
+                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
+                          />
+                          {isAnalyzingShoes && <span className="text-[10px] text-primary animate-pulse ml-2">Analyzing...</span>}
+                          {customShoesImage && (
+                            <img
+                              src={customShoesImage}
+                              alt="Custom Shoes"
+                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
+                            />
+                          )}
+                          {customShoesDesc && (
+                            <p className="mt-2 text-[8px] text-white/60 leading-tight">{customShoesDesc}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
