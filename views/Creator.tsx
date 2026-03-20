@@ -667,7 +667,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         `Colors: ${colorStyle} ${finalStyleInstruction} Clothing amount: ${thicknessStyle}.\n` +
         `Skin tone: ${selectedSkinColor}.\n` +
         `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a real photograph. Holographic/reflective/laser-like materials are allowed ONLY if they look like real physical fabrics photographed in a studio (not like an illustration, 3D render, or hand-drawn art). Avoid cheap plastic-looking materials.\n` +
-        `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, ~1024px long edge, sharp, natural skin texture.\n` +
+        `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, 2K square (1:1, ~2048x2048), sharp, natural skin texture.\n` +
         `Safety: no explicit nudity.`;
 
       const parts: GeminiPart[] = [];
@@ -780,17 +780,23 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             img.onload = () => resolve();
             img.onerror = () => reject(new Error('load failed'));
           });
-          // Keep 1K preview (do not downscale to 768) so upscaler gets better input.
-          const maxDim = 1024;
-          const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
-          const w = Math.max(1, Math.round((img.width || 1) * scale));
-          const h = Math.max(1, Math.round((img.height || 1) * scale));
+          // Directly output 2K square (1:1) so the "形象" result is already 2K.
+          const size = 2048;
+          const srcW = img.width || 1;
+          const srcH = img.height || 1;
+          const sideSrc = Math.min(srcW, srcH);
+          const sx = Math.max(0, Math.round((srcW - sideSrc) / 2));
+          const sy = Math.max(0, Math.round((srcH - sideSrc) / 2));
+          const sw = Math.max(1, Math.round(sideSrc));
+          const sh = Math.max(1, Math.round(sideSrc));
+
           const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
+          canvas.width = size;
+          canvas.height = size;
           const ctx = canvas.getContext('2d');
           if (!ctx) return dataUrl;
-          ctx.drawImage(img, 0, 0, w, h);
+          // Center-crop to square, then resize to 2048x2048.
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
           try {
             const webp = canvas.toDataURL('image/webp', 0.82);
             if (webp) return webp;
@@ -818,7 +824,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           const fileName = `${serialNumber.replace(/\./g, '_')}_${uniqueSuffix}.webp`;
           oneKUrl = await uploadImageToCloudBase(storedImg, { prefix: 'MINT/', fileName });
         } catch (e) {
-          console.error('Upload 1K image failed', e);
+          console.error('Upload 2K image failed', e);
           return;
         }
 
