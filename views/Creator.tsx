@@ -310,6 +310,53 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     setParams(prev => ({ ...prev, [key]: value }));
   };
 
+  const MAX_CUSTOM_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+  const compressDataUrlForGeminiInline = async (dataUrl: string): Promise<string> => {
+    // Only compress data URLs (base64 payload) to reduce /api/gemini request size.
+    if (!dataUrl.startsWith('data:')) return dataUrl;
+
+    const img = new Image();
+    img.src = dataUrl;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('load failed'));
+      });
+    } catch {
+      return dataUrl;
+    }
+
+    const maxDim = 1024;
+    const w0 = img.width || 1;
+    const h0 = img.height || 1;
+    const scale = Math.min(1, maxDim / Math.max(w0, h0));
+    const w = Math.max(1, Math.round(w0 * scale));
+    const h = Math.max(1, Math.round(h0 * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return dataUrl;
+
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Prefer WebP to shrink base64 size.
+    try {
+      const webp = canvas.toDataURL('image/webp', 0.82);
+      if (webp) return webp;
+    } catch {
+      // ignore
+    }
+
+    try {
+      return canvas.toDataURL('image/jpeg', 0.82);
+    } catch {
+      return dataUrl;
+    }
+  };
+
   const handleCustomUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     type: 'top' | 'bottom' | 'shoes',
@@ -317,25 +364,32 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > MAX_CUSTOM_UPLOAD_BYTES) {
+      alert('上传图片大小超过 10MB，请换小一点的图片后再试。');
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = async () => {
-      const base64 = reader.result as string;
+      const rawDataUrl = reader.result as string;
+      const dataUrl = await compressDataUrlForGeminiInline(rawDataUrl);
 
       if (type === 'top') {
-        setCustomTopImage(base64);
+        setCustomTopImage(dataUrl);
         setIsAnalyzingTop(true);
       } else if (type === 'bottom') {
-        setCustomBottomImage(base64);
+        setCustomBottomImage(dataUrl);
         setIsAnalyzingBottom(true);
       } else {
-        setCustomShoesImage(base64);
+        setCustomShoesImage(dataUrl);
         setIsAnalyzingShoes(true);
       }
 
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const base64Data = base64.split(',')[1];
-        const mimeType = base64.split(';')[0].split(':')[1];
+        const base64Data = dataUrl.split(',')[1];
+        const mimeType = dataUrl.split(';')[0].split(':')[1];
 
         const response = await ai.models.generateContent({
           model: 'gemini-3.1-flash-preview',
