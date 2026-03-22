@@ -458,8 +458,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       // - Second branch: params.jawline thresholds => bare / subtle / moderate / detailed / complex
       const complexHeadwearStyles = [
         'Dark Mecha: heavy mechanical full-face mask, intricate robotic parts, matte black and dark grey, exposed red wires, glowing sensor eyes, decal stickers, cybernetic mecha aesthetic',
-        'Sleek Minimalist: sleek minimalist glossy black glass visor covering eyes, aerodynamic design, sci-fi minimalist',
-        'Neon Cyberpunk: translucent orange futuristic visor and industrial headphones, neon light reflections, UI interface graphics on the glass, detailed mechanical textures',
+        'Sleek Minimalist: sleek minimalist glossy glass visor covering eyes, aerodynamic design, sci-fi minimalist',
+        'Neon Cyberpunk: fully enclosed reflective helmet, sealed wraparound visor, seamless shell covering head and jaw, environmental reflections on the surface, subtle integrated readout graphics, detailed mechanical textures',
         'Fantasy Cyber: stylized cybernetic kitsune mask on the side of the head, traditional elements fused with high-tech armor, intricate gold micro-chips, artistic cyberpunk',
       ];
       const randomComplexHeadwear = complexHeadwearStyles[Math.floor(Math.random() * complexHeadwearStyles.length)];
