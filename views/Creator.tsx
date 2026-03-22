@@ -653,8 +653,13 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           'Experimental Fabrics: Translucent PVC raincoat, glowing optic fibers, plissé fabric, ethereal flowing drapes.',
         ];
         const selectedClothingBranch = clothingBranches[Math.floor(Math.random() * clothingBranches.length)];
+        // 性别锁：避免未来分支泛生成单一性别体态（不在这里写发型/头饰，由模型与其它滑杆自由呈现）。
+        const futuristicGenderLock =
+          gender === 'Male'
+            ? 'CRITICAL GENDER: The subject MUST be an adult MALE fashion model. Masculine facial bone structure (brow, jaw, nose), male torso and shoulders; flat chest. Do NOT render a woman, do NOT use feminine makeup or feminine silhouette. The figure must read clearly as male.'
+            : 'CRITICAL GENDER: The subject MUST be an adult FEMALE fashion model. Feminine facial features and female body proportions appropriate for high-fashion editorial. Do NOT render a man or a masculine face/body. The figure must read clearly as female.';
         const characterIdentity =
-          'Artificial Beauty: porcelain-like clean skin, cold and detached expression, sharp or lifeless eyes (inorganic feel). Cyborg/Android: partial precision mechanical embedding, such as mechanical devices on the ears, neck interfaces, or mechanized lower legs. Hairstyle: minimalist silver-white short hair, sleek bob, or completely enclosed by a high-tech helmet.';
+          'Artificial Beauty: porcelain-like clean skin, cold and detached expression, sharp or lifeless eyes (inorganic feel). Cyborg/Android: partial precision mechanical embedding (for example neck interfaces or mechanized lower legs).';
         const materialDefinition =
           'Materials: Polished enamel, matte carbon fiber, liquid-like PVC, high-density nylon, iridescent fabric.';
         const composition =
@@ -675,7 +680,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional high-end luxury fashion NFT.\n` +
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
-          `Character: A highly advanced humanoid model. ${characterIdentity} Skin tone: ${selectedSkinColor}.\n` +
+          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model. ${futuristicGenderLock} ${characterIdentity} Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
           `Style Keywords: ${selectedStylizedKeywords}\n` +
