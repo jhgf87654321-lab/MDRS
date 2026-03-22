@@ -658,7 +658,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             ? 'CRITICAL GENDER: The subject MUST be an adult MALE fashion model. Masculine facial bone structure (brow, jaw, nose), male torso and shoulders; flat chest. Do NOT render a woman, do NOT use feminine makeup or feminine silhouette. The figure must read clearly as male.'
             : 'CRITICAL GENDER: The subject MUST be an adult FEMALE fashion model. Feminine facial features and female body proportions appropriate for high-fashion editorial. Do NOT render a man or a masculine face/body. The figure must read clearly as female.';
         const characterIdentity =
-          'Artificial Beauty: porcelain-like clean skin, cold and detached expression, sharp or lifeless eyes (inorganic feel). Cyborg/Android: partial precision mechanical embedding (for example neck interfaces or mechanized lower legs).';
+          'Artificial Beauty: porcelain-like clean skin, cold and detached expression, sharp or lifeless eyes (inorganic feel). Cyborg/Android: partial precision mechanical embedding.';
         // 未写具体发型时模型易把女性渲成光头；仅约束「有头发、非光头」，不指定款式/颜色/头饰。
         const futuristicHairNote =
           gender === 'Female'
