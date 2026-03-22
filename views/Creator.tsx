@@ -660,6 +660,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             : 'CRITICAL GENDER: The subject MUST be an adult FEMALE fashion model. Feminine facial features and female body proportions appropriate for high-fashion editorial. Do NOT render a man or a masculine face/body. The figure must read clearly as female.';
         const characterIdentity =
           'Artificial Beauty: porcelain-like clean skin, cold and detached expression, sharp or lifeless eyes (inorganic feel). Cyborg/Android: partial precision mechanical embedding (for example neck interfaces or mechanized lower legs).';
+        // 未写具体发型时模型易把女性渲成光头；仅约束「有头发、非光头」，不指定款式/颜色/头饰。
+        const futuristicHairNote =
+          gender === 'Female'
+            ? 'CRITICAL HAIR: The character MUST have a normal full head of hair (hair clearly visible; NOT bald, NOT shaved head, NOT bare chrome/glass scalp). Do NOT prescribe haircut, length, or color.'
+            : 'CRITICAL HAIR: The character MUST have visible hair on the head (NOT bald, NOT shaved), unless the outfit naturally includes a hood covering hair in-frame. Do NOT prescribe haircut, length, or color.';
         const materialDefinition =
           'Materials: Polished enamel, matte carbon fiber, liquid-like PVC, high-density nylon, iridescent fabric.';
         const composition =
@@ -680,7 +685,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional high-end luxury fashion NFT.\n` +
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
-          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model. ${futuristicGenderLock} ${characterIdentity} Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
+          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model. ${futuristicGenderLock} ${characterIdentity} ${futuristicHairNote} Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
           `Style Keywords: ${selectedStylizedKeywords}\n` +
