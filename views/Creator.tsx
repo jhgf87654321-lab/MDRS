@@ -653,7 +653,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           'Experimental Fabrics: Translucent PVC raincoat, glowing optic fibers, plissé fabric, ethereal flowing drapes.',
         ];
         const selectedClothingBranch = clothingBranches[Math.floor(Math.random() * clothingBranches.length)];
-        // 性别锁：避免未来分支泛生成单一性别体态（不在这里写发型/头饰，由模型与其它滑杆自由呈现）。
+        // 性别锁：避免未来分支泛生成单一性别体态。头饰仍沿用与主线相同的 headwearDesc（jawline + era 分支）。
         const futuristicGenderLock =
           gender === 'Male'
             ? 'CRITICAL GENDER: The subject MUST be an adult MALE fashion model. Masculine facial bone structure (brow, jaw, nose), male torso and shoulders; flat chest. Do NOT render a woman, do NOT use feminine makeup or feminine silhouette. The figure must read clearly as male.'
@@ -663,8 +663,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         // 未写具体发型时模型易把女性渲成光头；仅约束「有头发、非光头」，不指定款式/颜色/头饰。
         const futuristicHairNote =
           gender === 'Female'
-            ? 'CRITICAL HAIR: The character MUST have a normal full head of hair (hair clearly visible; NOT bald, NOT shaved head, NOT bare chrome/glass scalp). Do NOT prescribe haircut, length, or color.'
-            : 'CRITICAL HAIR: The character MUST have visible hair on the head (NOT bald, NOT shaved), unless the outfit naturally includes a hood covering hair in-frame. Do NOT prescribe haircut, length, or color.';
+            ? 'CRITICAL HAIR: Hair must be clearly visible (NOT bald, NOT shaved, NOT bare chrome/glass scalp). Length: short to medium only—above the shoulders or chin-length; bob, pixie, lob, or neat tied-back are OK. Do NOT render very long hair, waist-length hair, or hair flowing past the shoulder blades. Hair color not prescribed.'
+            : 'CRITICAL HAIR: The character MUST have visible hair on the head (NOT bald, NOT shaved), unless the outfit naturally includes a hood covering hair in-frame. Prefer short-to-medium length; avoid extreme waist-length hair. Do NOT prescribe exact haircut or color.';
         const materialDefinition =
           'Materials: Polished enamel, matte carbon fiber, liquid-like PVC, high-density nylon, iridescent fabric.';
         const composition =
@@ -676,8 +676,6 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ];
         const selectedStylizedKeywords =
           stylizedKeywordsOptions[Math.floor(Math.random() * stylizedKeywordsOptions.length)];
-        const colorControl =
-          'Color Palette: [Main: White/Black/Grey] + [Accent: Electric Blue/Neon Green/Cherry Blossom Pink]. NO messy colors. (monochromatic base:1.3), (single neon accent color:1.2).';
         const detailDensity =
           '(intricate mechanical joints:1.2), (complex garment construction:1.1), (minimalist overall look:1.1).';
 
@@ -685,11 +683,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional high-end luxury fashion NFT.\n` +
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
-          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model. ${futuristicGenderLock} ${characterIdentity} ${futuristicHairNote} Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
+          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model. ${futuristicGenderLock} ${characterIdentity} ${futuristicHairNote} Headwear (must match user headwear slider): ${headwearDesc}. Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
           `Style Keywords: ${selectedStylizedKeywords}\n` +
-          `Colors: ${colorControl}\n` +
+          `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
           `Details: ${detailDensity}\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
