@@ -297,9 +297,9 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ];
       case 'Style':
         return [
-          { label: '色彩浓度', key: 'chromaticity', value: params.chromaticity },
-          { label: '年代（复古 → 未来）', key: 'era', value: params.era },
-          { label: '厚重（轻薄 → 厚重）', key: 'thickness', value: params.thickness },
+          { label: '色彩浓度（Chromaticity）', key: 'chromaticity', value: params.chromaticity },
+          { label: '年代（复古 → 现代 / Era）', key: 'era', value: params.era },
+          { label: '厚重（性感 → 厚重 / Thickness）', key: 'thickness', value: params.thickness },
         ];
       default:
         return [];
@@ -439,22 +439,23 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       setNftMetadata({ theme: randomTheme, rarity: randomRarity });
 
+      // Chromaticity / era / thickness prompt keywords — aligned with `.upgrade12/views/Creator.tsx`
       const colorStyleBase =
         params.chromaticity > 70
-          ? `The clothing features a bold, clean, high-contrast color design, prominently featuring ${randomColor}. The design may include tasteful prints or patterns, but they must be clean, premium, and elegant. Absolutely avoid overly dense, messy, chaotic, or "dirty" patterns (no tie-dye, no cluttered prints). The background and skin tone must remain natural and unaffected by the clothing colors.`
+          ? `The clothing features a bold, high-contrast color palette, prominently featuring ${randomColor}. The design can include tasteful prints or patterns, but they must be clean, premium, and elegant. Absolutely avoid overly dense, messy, chaotic, or "dirty" looking patterns. The background and skin tone must remain natural.`
           : params.chromaticity < 30
-            ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural and unaffected by the clothing colors.'
-            : `The clothing has subtle, clean color accents of ${randomColor}. The design may include tasteful patterns, but avoid anything dense, chaotic, or dirty-looking. The background and skin tone must remain natural.`;
+            ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural.'
+            : `The clothing has subtle, elegant color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
       if (aestheticStyle !== 'Default') {
         finalStyleInstruction += ` The specific aesthetic style MUST be highly influenced by: ${aestheticStyle}.`;
       }
-      const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, wearing very few clothes, revealing, sexy, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
+      const thicknessStyle = params.thickness > 70 ? 'heavy, multi-layered, oversized, protective, wearing many layers of clothing' : params.thickness < 30 ? 'minimal clothing, revealing, bare skin, extremely lightweight' : 'standard balanced layering and amount of clothing';
 
-      // Sync headwear keyword logic with .upgrade11.
+      // Sync headwear keyword logic with `.upgrade12/views/Creator.tsx` (era + jawline branches).
       // - First branch: if params.era > 50 => "modern" headwear pool; otherwise => "retro" pool
-      // - Second branch: then use params.jawline thresholds to generate bare/subtle/moderate/detailed.
+      // - Second branch: params.jawline thresholds => bare / subtle / moderate / detailed / complex
       const complexHeadwearStyles = [
         'Dark Mecha: heavy mechanical full-face mask, intricate robotic parts, matte black and dark grey, exposed red wires, glowing sensor eyes, decal stickers, cybernetic mecha aesthetic',
         'Sleek Minimalist: sleek minimalist glossy black glass visor covering eyes, aerodynamic design, sci-fi minimalist',
@@ -546,29 +547,16 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           headwearDesc = `detailed head accessory: ${selectedRetroArchetype.core} made of ${selectedRetroArchetype.material}, featuring ${selectedRetroArchetype.detail}, ${selectedRetroArchetype.style}`;
         }
       }
-      const buildDesc = params.heavy < 40 ? 'very skinny and slender' : params.heavy > 80 ? 'heavy-set, plus-size, and broad' : 'normal, average build';
-      const isTanBio = selectedSkinColor === '#E0AC69';
+      // Fix for "heavy" causing bare chests — aligned with `.upgrade12`
+      const chestCoverage = params.thickness < 30 ? '' : 'fully clothed with chest completely covered';
+      const buildDesc =
+        params.heavy < 40
+          ? `very skinny and slender, ${chestCoverage}`
+          : params.heavy > 80
+            ? `heavy-set, plus-size, and broad, ${chestCoverage}`
+            : `normal, average build, ${chestCoverage}`;
 
-      const chestCoverage =
-        params.thickness < 30
-          ? ''
-          : gender === 'Male' && params.heavy > 80
-            ? 'Fully clothed with chest completely covered. No open chest, no deep V, no shirtless look.'
-            : '';
-
-      const creatureArchetypes = [
-        'majestic cyber-mammal (feline/canine/deer-like silhouette)',
-        'biomechanical guardian beast with smooth armor plates',
-        'crystalline alien lifeform with prismatic facets',
-        'levitating energy entity with a clean physical shell',
-        'soft bioluminescent mammalian alien with gentle features',
-        'carbon-fiber plated cyber-beast with elegant geometry',
-        'synthetic lifeform with sleek minimal design language',
-        'astral creature: glowing core + translucent membranes (not scary)',
-      ];
-      const creatureArchetype = creatureArchetypes[Math.floor(Math.random() * creatureArchetypes.length)];
-
-      // Match .upgrade8 hairless behavior: sub-style randomization + strong studio/color constraints.
+      // Avatar / creature keywords — aligned with `.upgrade12/views/Creator.tsx`
       let creatureTextureDesc = '';
       let creatureSpecialInstructions = '';
       if (creatureTexture === 'Hairless') {
@@ -583,14 +571,13 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           'CRITICAL CREATURE INSTRUCTION: Absolutely NO fur, NO fluffy textures. The overall color palette should be constrained to black, white, and grey, but allow the selected skin tone to act as a vibrant inner glow or accent. Lighting MUST be studio lighting with sharp rim light against a minimalist grey or white background.';
       } else {
         creatureTextureDesc =
-          'Non-human anatomy: avoid human face and human proportions. Covered in high-fashion, meticulously groomed fur or soft hair. Prefer mammalian-inspired silhouettes or clean biomech/crystal/energy-body forms that still feel warm and alive. Add imaginative but elegant features such as smooth armor plates, crystalline growths, soft bioluminescent nodes, unusual joints, fins, horns, a tail, or sleek antennae. Hands/feet do NOT have to look human. Keep the design sleek, premium, and aesthetically pleasing (fashion creature, not monster).';
+          'Covered in high-fashion, meticulously groomed fur or hair. A majestic, beast-like humanoid with a powerful, primal yet elegant runway presence.';
       }
-      const creatureNegatives =
-        'Do NOT generate a normal human model in costume. Do NOT use a realistic human face. Do NOT make it look like a person wearing a mask. Avoid insectoid look: no compound eyes, no full exoskeleton, no bug mouthparts. Antennae and small fangs are allowed, but they must look sleek, cute/majestic, and non-threatening (no horror). Avoid grotesque/ugly/horror: no gore, no rot, no deformities, no creepy vibe, no demonic/evil styling, no scary teeth, no horror lighting.';
-      
-      const characterDesc = gender === 'Creature'
-        ? `A highly imaginative, non-human creature (${creatureArchetype}) — alien/mutant/bio-engineered beast. Texture/Vibe: ${creatureTextureDesc} ${creatureNegatives} ${creatureSpecialInstructions} Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build/Mass: ${buildDesc}. Headwear/Attachments: ${headwearDesc} (as integrated biological/cybernetic structures, not human accessories).`
-        : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}. ${chestCoverage}`.trim();
+
+      const characterDesc =
+        gender === 'Creature'
+          ? `A unique, otherworldly creature (alien, mutant, or bio-engineered humanoid). Texture/Vibe: ${creatureTextureDesc}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}. ${creatureSpecialInstructions}`
+          : `A stylish ${gender.toLowerCase()} fashion model. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
 
       const aimShoeDesc =
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
@@ -655,20 +642,69 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? ''
         : 'Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n';
 
-      // Keep prompt compact for speed and consistency (mobile friendly).
-      const prompt =
-        `High-end luxury fashion photography, ${randomStyle}. Theme: ${randomTheme}. Clean, premium, and modern.\n` +
-        `Single character, full-body head-to-toe, centered, do not crop.\n` +
-        `Pose: dynamic high-fashion editorial / magazine cover pose (confident, stylish, not stiff).\n` +
-        `Background: ${backgroundInstruction}\n` +
-        overlayInstruction +
-        `Character: ${characterDesc}\n` +
-        `${outfitDesc}\n` +
-        `Colors: ${colorStyle} ${finalStyleInstruction} Clothing amount: ${thicknessStyle}.\n` +
-        `Skin tone: ${selectedSkinColor}.\n` +
-        `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a real photograph. Holographic/reflective/laser-like materials are allowed ONLY if they look like real physical fabrics photographed in a studio (not like an illustration, 3D render, or hand-drawn art). Avoid cheap plastic-looking materials.\n` +
-        `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, 2K square (1:1, ~2048x2048), sharp, natural skin texture.\n` +
-        `Safety: no explicit nudity.`;
+      // `.upgrade12`: 年代滑块 > 95 时使用「未来特化」高定 prompt（人形模特；Creature 仍走通用形象描述）。
+      const isEraFuturisticHuman = params.era > 95 && gender !== 'Creature';
+
+      let prompt: string;
+      if (isEraFuturisticHuman) {
+        const clothingBranches = [
+          'Sleek Bodysuits: Cybernetic bodysuit, sleek tactical skin, paneling details, high-tech compression suit.',
+          'Heavy Techwear: Oversized techwear jacket, hakama-style pants, tactical gear, asymmetrical silhouettes, cyber-samurai armor.',
+          'Experimental Fabrics: Translucent PVC raincoat, glowing optic fibers, plissé fabric, ethereal flowing drapes.',
+        ];
+        const selectedClothingBranch = clothingBranches[Math.floor(Math.random() * clothingBranches.length)];
+        const characterIdentity =
+          'Artificial Beauty: porcelain-like clean skin, cold and detached expression, sharp or lifeless eyes (inorganic feel). Cyborg/Android: partial precision mechanical embedding, such as mechanical devices on the ears, neck interfaces, or mechanized lower legs. Hairstyle: minimalist silver-white short hair, sleek bob, or completely enclosed by a high-tech helmet.';
+        const materialDefinition =
+          'Materials: Polished enamel, matte carbon fiber, liquid-like PVC, high-density nylon, iridescent fabric.';
+        const composition =
+          'Composition: High-fashion editorial photography, minimalist studio background, sharp rim lighting, cinematic depth of field, graphic design layout vibes.';
+        const stylizedKeywordsOptions = [
+          'Ethereal Fashion: Translucent textures, pastel glowing neon, volumetric smoke, airy, delicate but futuristic.',
+          'Combat Mecha: Mecha-arms, sleek katana, heavy plating, industrial straps, dark techwear aesthetic.',
+          'Minimalist Android: Pure white aesthetic, porcelain skin, sleek exoskeleton, surgical precision, elegant silence.',
+        ];
+        const selectedStylizedKeywords =
+          stylizedKeywordsOptions[Math.floor(Math.random() * stylizedKeywordsOptions.length)];
+        const colorControl =
+          'Color Palette: [Main: White/Black/Grey] + [Accent: Electric Blue/Neon Green/Cherry Blossom Pink]. NO messy colors. (monochromatic base:1.3), (single neon accent color:1.2).';
+        const detailDensity =
+          '(intricate mechanical joints:1.2), (complex garment construction:1.1), (minimalist overall look:1.1).';
+
+        prompt =
+          `A professional high-end luxury fashion NFT.\n` +
+          `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
+          `${composition}\n` +
+          `Character: A highly advanced humanoid model. ${characterIdentity} Skin tone: ${selectedSkinColor}.\n` +
+          `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
+          `${materialDefinition}\n` +
+          `Style Keywords: ${selectedStylizedKeywords}\n` +
+          `Colors: ${colorControl}\n` +
+          `Details: ${detailDensity}\n` +
+          `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
+          `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
+          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.\n` +
+          `Single character, full-body head-to-toe, centered, do not crop.\n` +
+          `Pose: dynamic high-fashion editorial / magazine cover pose (confident, stylish, not stiff).\n` +
+          `Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.\n` +
+          `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, 2K square (1:1, ~2048x2048), sharp, natural skin texture.\n` +
+          `Safety: no explicit nudity.`;
+      } else {
+        // Keep prompt compact for speed and consistency (mobile friendly).
+        prompt =
+          `High-end luxury fashion photography, ${randomStyle}. Theme: ${randomTheme}. Clean, premium, and modern.\n` +
+          `Single character, full-body head-to-toe, centered, do not crop.\n` +
+          `Pose: dynamic high-fashion editorial / magazine cover pose (confident, stylish, not stiff).\n` +
+          `Background: ${backgroundInstruction}\n` +
+          overlayInstruction +
+          `Character: ${characterDesc}\n` +
+          `${outfitDesc}\n` +
+          `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
+          `Skin tone: ${selectedSkinColor}.\n` +
+          `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a real photograph. Holographic/reflective/laser-like materials are allowed ONLY if they look like real physical fabrics photographed in a studio (not like an illustration, 3D render, or hand-drawn art). Avoid cheap plastic-looking materials.\n` +
+          `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, 2K square (1:1, ~2048x2048), sharp, natural skin texture.\n` +
+          `Safety: no explicit nudity.`;
+      }
 
       const parts: GeminiPart[] = [];
 
