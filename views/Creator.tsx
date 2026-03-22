@@ -650,7 +650,6 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         const clothingBranches = [
           'Sleek Bodysuits: Cybernetic bodysuit, sleek tactical skin, paneling details, high-tech compression suit.',
           'Heavy Techwear: Oversized techwear jacket, hakama-style pants, tactical gear, asymmetrical silhouettes, cyber-samurai armor.',
-          'Experimental Fabrics: Translucent PVC raincoat, glowing optic fibers, plissé fabric, ethereal flowing drapes.',
         ];
         const selectedClothingBranch = clothingBranches[Math.floor(Math.random() * clothingBranches.length)];
         // 性别锁：避免未来分支泛生成单一性别体态。头饰仍沿用与主线相同的 headwearDesc（jawline + era 分支）。
