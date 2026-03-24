@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { listMyOwnedNfts } from '../lib/userProfile';
+import { uploadImageToCloudBase } from '../lib/apiClient';
+import { addNftToMyProfile, listMyOwnedNfts } from '../lib/userProfile';
 
 interface PriceHistory {
   date: string;
@@ -67,6 +68,33 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
     try {
       // Only use CloudBase profile owned NFTs (COS urls). Do not fall back to browser cache.
       try {
+        // Best-effort: if mint finished on mobile but sync failed, retry here when Wardrobe opens.
+        // This makes mobile behavior match desktop even under flaky networks/session delays.
+        try {
+          const pendingRaw = localStorage.getItem('axon:pending-mint-sync');
+          if (pendingRaw) {
+            const pending = JSON.parse(pendingRaw) as {
+              serialNumber?: string;
+              cosUrl?: string;
+              dataUrl?: string;
+            };
+            const serialNumber = typeof pending.serialNumber === 'string' ? pending.serialNumber : undefined;
+            let cosUrl = typeof pending.cosUrl === 'string' ? pending.cosUrl : undefined;
+            if (!cosUrl && typeof pending.dataUrl === 'string' && pending.dataUrl.startsWith('data:')) {
+              const uniqueSuffix = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+              const fileName = `${(serialNumber || 'No_00000000').replace(/\./g, '_')}_${uniqueSuffix}.webp`;
+              cosUrl = await uploadImageToCloudBase(pending.dataUrl, { prefix: 'MINT/', fileName });
+            }
+            if (cosUrl) {
+              await addNftToMyProfile({ cosUrl, serialNumber, source: 'mint' });
+              localStorage.removeItem('axon:pending-mint-sync');
+            }
+          }
+        } catch (e) {
+          // Keep silent here; user already sees the "后台校验" tip.
+          console.warn('pending mint sync retry skipped', e);
+        }
+
         const owned = await listMyOwnedNfts();
         const validOwned = Array.isArray(owned)
           ? owned.filter((x) => typeof x.cosUrl === 'string' && x.cosUrl.trim().length > 0)
@@ -326,6 +354,9 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
             <div>
               <h3 className="font-display text-2xl font-black italic uppercase leading-none">我的藏品</h3>
               <p className="text-white/40 text-[10px] font-bold mt-1 uppercase tracking-widest">你的生成资产</p>
+              <p className="text-white/30 text-[10px] font-bold mt-2 tracking-widest">
+                生成的图像需在后台校验后更新，请稍等
+              </p>
             </div>
           </div>
           

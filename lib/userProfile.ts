@@ -52,26 +52,34 @@ async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
 
 async function setProfileDoc(uid: string, doc: UserProfileDoc) {
   const db = getCloudbaseDb();
-  // 使用 set 以确保在文档不存在时可以直接创建（upsert 语义）
-  // 但在极端并发（多个标签页同时首次写入）时，CloudBase 可能返回 DuplicateWrite。
-  // 这种情况下忽略错误并回读最新文档即可。
+  const payload = {
+    uid: doc.uid,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    ...(doc.displayName ? { displayName: doc.displayName } : {}),
+    ...(doc.avatarUrl ? { avatarUrl: doc.avatarUrl } : {}),
+    ownedNfts: doc.ownedNfts,
+  };
+
+  // CloudBase DB 在某些情况下对 doc(uid).set 可能返回 E11000 duplicate key（尤其是并发首次写入/旧数据迁移）。
+  // 这里改为“先 update，失败再 set；如果 set 再次遇到 duplicate，则回退 update”。
+  // 这样避免依赖额外的 get() 回读（某些安全规则下回读可能失败，从而导致整个写入失败）。
   try {
-    await db.collection(COLLECTION).doc(uid).set({
-      uid: doc.uid,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      ...(doc.displayName ? { displayName: doc.displayName } : {}),
-      ...(doc.avatarUrl ? { avatarUrl: doc.avatarUrl } : {}),
-      ownedNfts: doc.ownedNfts,
-    });
+    await db.collection(COLLECTION).doc(uid).update(payload);
+    return;
+  } catch {
+    // ignore; fall through to set
+  }
+
+  try {
+    await db.collection(COLLECTION).doc(uid).set(payload);
+    return;
   } catch (err: any) {
     const msg: string = err?.message || '';
     if (msg.includes('DuplicateWrite') || msg.includes('duplicate key error') || err?.code === 'DATABASE_REQUEST_FAILED') {
-      // 可能是多个并发写导致的重复写入错误，回退为读取已有文档。
-      const existing = await getProfileDoc(uid);
-      if (existing) {
-        return existing;
-      }
+      // 若刚好在 set 时并发创建成功，则再用 update 覆盖即可
+      await db.collection(COLLECTION).doc(uid).update(payload);
+      return;
     }
     throw err;
   }

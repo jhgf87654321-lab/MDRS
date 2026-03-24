@@ -67,8 +67,8 @@ type CreatorProps = {
 
 const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState<Category>('Body');
-  const [gender, setGender] = useState<Gender>('Male');
-  const [creatureTexture, setCreatureTexture] = useState<CreatureTexture>('Hairy');
+  const [gender, setGender] = useState<Gender>('Creature');
+  const [creatureTexture, setCreatureTexture] = useState<CreatureTexture>('Hairless');
   const [designMode, setDesignMode] = useState<DesignMode>('Random');
   const [customDesign, setCustomDesign] = useState({
     top: 'Coat',
@@ -95,7 +95,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   // Parameter states for each category
   const [params, setParams] = useState<Record<string, number>>({
     muscularity: 82,
-    jawline: 45,
+    jawline: 100,
     proportions: 64,
     heavy: 60,
     chromaticity: 90,
@@ -143,14 +143,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     () => ({
       v: 1,
       activeCategory: 'Body',
-      gender: 'Male',
-      creatureTexture: 'Hairy',
+      gender: 'Creature',
+      creatureTexture: 'Hairless',
       designMode: 'Random',
       customDesign: { top: 'Coat', bottom: 'Pants', shoes: 'Sneakers' },
       aestheticStyle: 'Default',
       params: {
         muscularity: 82,
-        jawline: 45,
+        jawline: 100,
         proportions: 64,
         heavy: 60,
         chromaticity: 90,
@@ -861,6 +861,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       // - Do NOT use serialNumber as the COS object key (it collides across devices and causes "other users' images" to appear).
       //   Use a unique filename instead, while keeping serialNumber as metadata in the profile/db.
       void (async () => {
+        const pendingKey = 'axon:pending-mint-sync';
         let oneKUrl: string | undefined;
         try {
           const uniqueSuffix = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -868,14 +869,40 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           oneKUrl = await uploadImageToCloudBase(storedImg, { prefix: 'MINT/', fileName });
         } catch (e) {
           console.error('Upload 2K image failed', e);
+          try {
+            localStorage.setItem(pendingKey, JSON.stringify({ serialNumber, createdAt: Date.now(), dataUrl: storedImg }));
+          } catch {
+            // ignore storage quota errors
+          }
+          // On mobile, users won't see console; surface a minimal hint.
+          alert('上传失败：该 NFT 暂未同步到 Wardrobe。请稍后在 Wardrobe 中重试同步，或检查登录状态/网络。');
           return;
         }
 
         try {
           await addNftToMyProfile({ cosUrl: oneKUrl, serialNumber, source: 'mint' });
+          try {
+            localStorage.removeItem(pendingKey);
+          } catch {
+            // ignore
+          }
           window.dispatchEvent(new Event('axon:collection-updated'));
         } catch (e) {
           console.error('Failed to record minted NFT in profile', e);
+          try {
+            localStorage.setItem(pendingKey, JSON.stringify({ serialNumber, createdAt: Date.now(), cosUrl: oneKUrl }));
+          } catch {
+            // ignore
+          }
+          const msg = e instanceof Error ? e.message : String(e);
+          if (msg.includes('NOT_SIGNED_IN')) {
+            // Prompt login on mobile/guest sessions so sync can succeed.
+            setAuthMode('signIn');
+            setIsAuthOpen(true);
+            alert('请先登录以同步到 Wardrobe。');
+          } else {
+            alert('同步到 Wardrobe 失败，请稍后在 Wardrobe 中重试同步。');
+          }
         }
 
         try {
@@ -1449,11 +1476,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             <button 
               onClick={() => {
                 setParams({
-                  muscularity: 82, jawline: 45, proportions: 64, heavy: 60,
+                  muscularity: 82, jawline: 100, proportions: 64, heavy: 60,
                   chromaticity: 90, era: 50, thickness: 50
                 });
                 setSelectedSkinColor('#E0AC69');
-                setGender('Male');
+                setGender('Creature');
+                setCreatureTexture('Hairless');
                 setDesignMode('Random');
                 setAestheticStyle('Default');
                 setGeneratedNFT(null);
