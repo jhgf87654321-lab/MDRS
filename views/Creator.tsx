@@ -622,6 +622,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const backgroundInstruction = isSpecial
         ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
         : `Minimal studio backdrop (white/grey/soft neutral) with bold typography matching the ${randomTheme} vibe.`;
+      let complexRetroKeywords = '';
+      if (params.era < 60 && params.jawline > 80) {
+        complexRetroKeywords =
+          '\n' +
+          'CRITICAL STYLE OVERRIDE (High Complexity Retro):\n' +
+          '- Concept & Style: Deconstruction (breaking traditional clothing structures, asymmetrical, destructive re-stitching and combination), Modern Hanbok / Neo-Traditional (blending traditional Eastern classical clothing like cross collars and large skirts with modern streetwear), Wasteland / Cyberpunk (rugged doomsday survival feel with futuristic tech rebellion), Maximalism (rich layers, stacked elements, rejecting minimalism).\n' +
+          '- Silhouette & Cut: Oversized / Voluminous (exaggerated fluffiness, extreme spatial presence and aura), Multi-layered (multiple layers of fabric stacked inside and out, adding heaviness, 3D structure, and dynamic beauty when walking), Cinched High Waist (emphasized high waistline with a wide belt, straps, or metal chains to elongate the lower body proportions).';
+      }
 
       // Special Design options (from .upgrade6)
       const usesSpecialDesignPrompts =
@@ -691,7 +699,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Details: ${detailDensity}\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
-          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.`;
+          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.\n` +
+          `${complexRetroKeywords}`;
       } else if (gender === 'Female' && params.era >= 0 && params.era <= 20) {
         prompt =
           `A professional ${randomStyle} for a high-end luxury fashion NFT. Avant-garde fashion photography, high-fashion editorial full-body shot of a woman.\n` +
@@ -704,7 +713,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Color Palette: ${colorStyle}. Core color logic MUST feature highly saturated colors contrasted with black and white.\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
-          `The overall vibe is "Avant-garde Maximalism", highly detailed, 8k resolution.`;
+          `The overall vibe is "Avant-garde Maximalism", highly detailed, 8k resolution.\n` +
+          `${complexRetroKeywords}`;
       } else {
         prompt =
           `A professional ${randomStyle} for a high-end luxury fashion NFT.\n` +
@@ -719,7 +729,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Photography & Quality: High-end luxury fashion photography, haute couture, sophisticated tailoring. Studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture.\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
-          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.`;
+          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.\n` +
+          `${complexRetroKeywords}`;
       }
 
       const parts: GeminiPart[] = [];
