@@ -555,6 +555,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           : params.heavy > 80
             ? `heavy-set, plus-size, and broad, ${chestCoverage}`
             : `normal, average build, ${chestCoverage}`;
+      const isTanBio = selectedSkinColor === '#E0AC69';
 
       // Avatar / creature keywords — aligned with `.upgrade12/views/Creator.tsx`
       let creatureTextureDesc = '';
@@ -577,7 +578,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const characterDesc =
         gender === 'Creature'
           ? `A unique, otherworldly creature (alien, mutant, or bio-engineered humanoid). Texture/Vibe: ${creatureTextureDesc}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}. ${creatureSpecialInstructions}`
-          : `A stylish ${gender.toLowerCase()} fashion model. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
+          : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
 
       const aimShoeDesc =
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
@@ -637,6 +638,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const colorStyle = usesSpecialDesignPrompts
         ? 'Do NOT recolor or add colored trims/piping/stitching to the referenced garments. Keep the garment colors and graphics exactly as the reference (no extra neon accents).'
         : colorStyleBase;
+      const headwearScopeInstruction =
+        'Headwear scope rule: headwear keywords affect ONLY head accessories in the head region. Do NOT let headwear keywords alter outfit silhouette, garment structure, textile patterns, or full-body character style.';
+      const garmentPatternGuard =
+        'Garment pattern rule: avoid circuit-board traces, PCB lines, motherboard motifs, dense wiring graphics, and UI/cyber interface prints on clothing. Keep garment patterns clean, minimal, and premium.';
 
       const overlayInstruction = isSpecial
         ? ''
@@ -682,11 +687,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional high-end luxury fashion NFT.\n` +
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
-          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model. ${futuristicGenderLock} ${characterIdentity} ${futuristicHairNote} Headwear (must match user headwear slider): ${headwearDesc}. Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
+          `Character: A highly advanced humanoid ${gender === 'Male' ? 'male' : 'female'} model${isTanBio ? ' with East Asian facial features' : ''}. ${futuristicGenderLock} ${characterIdentity} ${futuristicHairNote} Headwear (must match user headwear slider): ${headwearDesc}. ${headwearScopeInstruction} Skin tone: ${selectedSkinColor}. Body: ${params.muscularity > 70 ? 'muscular' : 'lean'} build, consistent with the selected gender.\n` +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
           `Style Keywords: ${selectedStylizedKeywords}\n` +
           `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
+          `${garmentPatternGuard}\n` +
           `Details: ${detailDensity}\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
@@ -706,7 +712,9 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           overlayInstruction +
           `Character: ${characterDesc}\n` +
           `${outfitDesc}\n` +
+          `Headwear: ${headwearDesc}. ${headwearScopeInstruction}\n` +
           `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
+          `${garmentPatternGuard}\n` +
           `Skin tone: ${selectedSkinColor}.\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a real photograph. Holographic/reflective/laser-like materials are allowed ONLY if they look like real physical fabrics photographed in a studio (not like an illustration, 3D render, or hand-drawn art). Avoid cheap plastic-looking materials.\n` +
           `Photo: high-end luxury fashion photography, sophisticated tailoring, premium materials, studio lighting, photorealistic, 2K square (1:1, ~2048x2048), sharp, natural skin texture.\n` +
