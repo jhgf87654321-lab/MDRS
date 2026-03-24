@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { uploadImageToCloudBase } from '../lib/apiClient';
 import { addNftToMyProfile, listMyOwnedNfts } from '../lib/userProfile';
+import { getCloudbaseAuth } from '../lib/cloudbase';
 
 interface PriceHistory {
   date: string;
@@ -26,6 +27,7 @@ type CyberCollectionItem = {
   prompt: string;
   cosUrl?: string;
   syncPending?: boolean;
+  ownerUid?: string;
 };
 
 interface WardrobeProps {
@@ -71,22 +73,39 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
       try {
         const raw = localStorage.getItem('myCyberCollection');
         const parsed = raw ? (JSON.parse(raw) as Partial<CyberCollectionItem>[]) : [];
-        const localOnly: CyberCollectionItem[] = Array.isArray(parsed)
-          ? parsed
-              .filter((x) => typeof x?.image === 'string' && (x.image as string).trim().length > 0)
-              .slice(0, 8)
-              .map((x, idx) => ({
-                image: String(x.image),
-                serialNumber: typeof x.serialNumber === 'string' && x.serialNumber.trim() ? x.serialNumber : `LOCAL.${idx + 1}`,
-                isSpecial: Boolean(x.isSpecial),
-                theme: typeof x.theme === 'string' && x.theme.trim() ? x.theme : 'Local',
-                prompt: typeof x.prompt === 'string' ? x.prompt : '',
-                ...(typeof x.cosUrl === 'string' && x.cosUrl.trim() ? { cosUrl: x.cosUrl } : {}),
-                syncPending: true,
-              }))
-          : [];
-        setCollection(localOnly);
-        setGeneratedNFT(localOnly[0]?.image ?? null);
+        void (async () => {
+          let uid = '';
+          try {
+            const u = await getCloudbaseAuth().getCurrentUser();
+            uid = ((u as any)?.uid as string | undefined) || '';
+          } catch {
+            uid = '';
+          }
+
+          const localOnly: CyberCollectionItem[] = Array.isArray(parsed)
+            ? parsed
+                .filter((x) => typeof x?.image === 'string' && (x.image as string).trim().length > 0)
+                .filter((x) => {
+                  const ownerUid = typeof x?.ownerUid === 'string' ? x.ownerUid.trim() : '';
+                  // Only show local fallback entries that belong to current uid.
+                  // Legacy records without ownerUid are hidden to prevent cross-account leakage.
+                  return !!uid && ownerUid === uid;
+                })
+                .slice(0, 8)
+                .map((x, idx) => ({
+                  image: String(x.image),
+                  serialNumber: typeof x.serialNumber === 'string' && x.serialNumber.trim() ? x.serialNumber : `LOCAL.${idx + 1}`,
+                  isSpecial: Boolean(x.isSpecial),
+                  theme: typeof x.theme === 'string' && x.theme.trim() ? x.theme : 'Local',
+                  prompt: typeof x.prompt === 'string' ? x.prompt : '',
+                  ...(typeof x.cosUrl === 'string' && x.cosUrl.trim() ? { cosUrl: x.cosUrl } : {}),
+                  ownerUid: typeof x.ownerUid === 'string' ? x.ownerUid : undefined,
+                  syncPending: true,
+                }))
+            : [];
+          setCollection(localOnly);
+          setGeneratedNFT(localOnly[0]?.image ?? null);
+        })();
       } catch {
         setCollection([]);
         setGeneratedNFT(null);

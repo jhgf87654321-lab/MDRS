@@ -7,6 +7,7 @@ import { View } from '../types';
 import { getMe, getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 import { addNftToMyProfile, ensureUserProfile } from '../lib/userProfile';
+import { getCloudbaseAuth } from '../lib/cloudbase';
 import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
 import { upsertImageInfo } from '../lib/imageInfo';
 
@@ -47,6 +48,7 @@ type CyberCollectionItem = {
   theme: string;
   prompt: string;
   cosUrl?: string;
+  ownerUid?: string;
 };
 
 type CreatorStateV1 = {
@@ -963,6 +965,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const cosUrl: string | undefined = undefined;
 
       const nftDataObj: CyberCollectionItem = {
+        ownerUid: ((await getCloudbaseAuth().getCurrentUser()) as any)?.uid,
         image: storedImg,
         serialNumber,
         isSpecial,

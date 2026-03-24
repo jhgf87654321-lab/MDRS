@@ -43,7 +43,8 @@ async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
   const db = getCloudbaseDb();
   try {
     const res = await db.collection(COLLECTION).doc(uid).get();
-    const doc = res?.data?.[0] as UserProfileDoc | undefined;
+    const raw = (res as any)?.data;
+    const doc = (Array.isArray(raw) ? raw[0] : raw) as UserProfileDoc | undefined;
     return doc ?? null;
   } catch {
     return null;
@@ -144,19 +145,8 @@ export async function setMyDisplayName(displayName: string) {
     updatedAt: now,
   };
 
-  const db = getCloudbaseDb();
-  const res = await db
-    .collection(COLLECTION)
-    .doc(uid)
-    .update({
-      uid: doc.uid,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      displayName: doc.displayName,
-      avatarUrl: doc.avatarUrl,
-      ownedNfts: doc.ownedNfts,
-    });
-  console.log('[userProfile] setMyDisplayName result', res);
+  await setProfileDoc(uid, doc);
+  console.log('[userProfile] setMyDisplayName result', { ok: true, uid });
   return doc;
 }
 
@@ -177,19 +167,8 @@ export async function setMyAvatarUrl(avatarUrl: string) {
     updatedAt: now,
   };
 
-  const db = getCloudbaseDb();
-  const res = await db
-    .collection(COLLECTION)
-    .doc(uid)
-    .update({
-      uid: doc.uid,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      displayName: doc.displayName,
-      avatarUrl: doc.avatarUrl,
-      ownedNfts: doc.ownedNfts,
-    });
-  console.log('[userProfile] setMyAvatarUrl result', res);
+  await setProfileDoc(uid, doc);
+  console.log('[userProfile] setMyAvatarUrl result', { ok: true, uid });
   return doc;
 }
 
