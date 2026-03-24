@@ -99,11 +99,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     proportions: 64,
     heavy: 60,
     chromaticity: 90,
-    era: 50,
+    era: 100,
     thickness: 50
   });
 
-  const [selectedSkinColor, setSelectedSkinColor] = useState('#E0AC69'); // Default skin tone
+  const [selectedSkinColor, setSelectedSkinColor] = useState('#FFDBAC'); // Default skin tone (Light Bio)
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
@@ -154,10 +154,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         proportions: 64,
         heavy: 60,
         chromaticity: 90,
-        era: 50,
+        era: 100,
         thickness: 50,
       },
-      selectedSkinColor: '#E0AC69',
+      selectedSkinColor: '#FFDBAC',
     }),
     [],
   );
@@ -864,9 +864,37 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         const pendingKey = 'axon:pending-mint-sync';
         let oneKUrl: string | undefined;
         try {
+          // Mobile-friendly: upload a smaller image (1024 max) to avoid request-size limits.
+          const uploadImg = await (async () => {
+            try {
+              const resp = await fetch(storedImg);
+              const blob = await resp.blob();
+              const bmp = await createImageBitmap(blob);
+              const maxDim = 1024;
+              const scale = Math.min(1, maxDim / Math.max(bmp.width || 1, bmp.height || 1));
+              const w = Math.max(1, Math.round((bmp.width || 1) * scale));
+              const h = Math.max(1, Math.round((bmp.height || 1) * scale));
+              const canvas = document.createElement('canvas');
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return storedImg;
+              ctx.drawImage(bmp, 0, 0, w, h);
+              try {
+                const webp = canvas.toDataURL('image/webp', 0.82);
+                if (webp) return webp;
+              } catch {
+                // ignore
+              }
+              return canvas.toDataURL('image/jpeg', 0.82);
+            } catch {
+              return storedImg;
+            }
+          })();
+
           const uniqueSuffix = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
           const fileName = `${serialNumber.replace(/\./g, '_')}_${uniqueSuffix}.webp`;
-          oneKUrl = await uploadImageToCloudBase(storedImg, { prefix: 'MINT/', fileName });
+          oneKUrl = await uploadImageToCloudBase(uploadImg, { prefix: 'MINT/', fileName });
         } catch (e) {
           console.error('Upload 2K image failed', e);
           try {
@@ -1477,9 +1505,9 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
               onClick={() => {
                 setParams({
                   muscularity: 82, jawline: 100, proportions: 64, heavy: 60,
-                  chromaticity: 90, era: 50, thickness: 50
+                  chromaticity: 90, era: 100, thickness: 50
                 });
-                setSelectedSkinColor('#E0AC69');
+                setSelectedSkinColor('#FFDBAC');
                 setGender('Creature');
                 setCreatureTexture('Hairless');
                 setDesignMode('Random');

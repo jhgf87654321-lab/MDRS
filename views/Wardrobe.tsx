@@ -81,9 +81,36 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
             const serialNumber = typeof pending.serialNumber === 'string' ? pending.serialNumber : undefined;
             let cosUrl = typeof pending.cosUrl === 'string' ? pending.cosUrl : undefined;
             if (!cosUrl && typeof pending.dataUrl === 'string' && pending.dataUrl.startsWith('data:')) {
+              // Mobile-friendly: compress before upload to avoid request-size limits.
+              const prepared = await (async () => {
+                try {
+                  const resp = await fetch(pending.dataUrl);
+                  const blob = await resp.blob();
+                  const bmp = await createImageBitmap(blob);
+                  const maxDim = 1024;
+                  const scale = Math.min(1, maxDim / Math.max(bmp.width || 1, bmp.height || 1));
+                  const w = Math.max(1, Math.round((bmp.width || 1) * scale));
+                  const h = Math.max(1, Math.round((bmp.height || 1) * scale));
+                  const canvas = document.createElement('canvas');
+                  canvas.width = w;
+                  canvas.height = h;
+                  const ctx = canvas.getContext('2d');
+                  if (!ctx) return pending.dataUrl;
+                  ctx.drawImage(bmp, 0, 0, w, h);
+                  try {
+                    const webp = canvas.toDataURL('image/webp', 0.82);
+                    if (webp) return webp;
+                  } catch {
+                    // ignore
+                  }
+                  return canvas.toDataURL('image/jpeg', 0.82);
+                } catch {
+                  return pending.dataUrl;
+                }
+              })();
               const uniqueSuffix = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
               const fileName = `${(serialNumber || 'No_00000000').replace(/\./g, '_')}_${uniqueSuffix}.webp`;
-              cosUrl = await uploadImageToCloudBase(pending.dataUrl, { prefix: 'MINT/', fileName });
+              cosUrl = await uploadImageToCloudBase(prepared, { prefix: 'MINT/', fileName });
             }
             if (cosUrl) {
               await addNftToMyProfile({ cosUrl, serialNumber, source: 'mint' });
