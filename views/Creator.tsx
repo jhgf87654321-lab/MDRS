@@ -698,7 +698,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Theme: ${randomTheme}.\n` +
           `Style: Maximalist aesthetic, textile art, Japanese avant-garde style. ${finalStyleInstruction}\n` +
           `Character & Headpiece: ${characterDesc} Porcelain skin, bold red lips. Skin tone: ${selectedSkinColor}. The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).\n` +
-          `Clothing & Texture: patchwork, Bold geometric patterns mixed with floral motifs, exaggerated high collar. The clothing layering and amount is ${thicknessStyle}.\n` +
+          `Clothing & Texture: patchwork, Bold geometric patterns mixed with floral motifs. The clothing layering and amount is ${thicknessStyle}.\n` +
           `${outfitDesc}\n` +
           `Environment & Lighting: ${backgroundInstruction} Studio lighting, sharp focus, high contrast.\n` +
           `Color Palette: ${colorStyle}. Core color logic MUST feature highly saturated colors contrasted with black and white.\n` +
