@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 
 import { View } from '../types';
-import { getMe, getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
+import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 import { addNftToMyProfile, ensureUserProfile } from '../lib/userProfile';
 import { getCloudbaseAuth } from '../lib/cloudbase';
@@ -69,7 +69,7 @@ type CreatorProps = {
 
 const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState<Category>('Body');
-  const [gender, setGender] = useState<Gender>('Creature');
+  const [gender, setGender] = useState<Gender>('Female');
   const [creatureTexture, setCreatureTexture] = useState<CreatureTexture>('Hairless');
   const [designMode, setDesignMode] = useState<DesignMode>('Random');
   const [customDesign, setCustomDesign] = useState({
@@ -96,16 +96,16 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
   // Parameter states for each category
   const [params, setParams] = useState<Record<string, number>>({
-    muscularity: 82,
-    jawline: 100,
+    muscularity: 35,
+    jawline: 70,
     proportions: 64,
-    heavy: 60,
-    chromaticity: 90,
-    era: 100,
-    thickness: 50
+    heavy: 25,
+    chromaticity: 60,
+    era: 29,
+    thickness: 100
   });
 
-  const [selectedSkinColor, setSelectedSkinColor] = useState('#FFDBAC'); // Default skin tone (Light Bio)
+  const [selectedSkinColor, setSelectedSkinColor] = useState('#E0AC69'); // Default skin tone (Tan Bio)
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
@@ -145,21 +145,21 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     () => ({
       v: 1,
       activeCategory: 'Body',
-      gender: 'Creature',
+      gender: 'Female',
       creatureTexture: 'Hairless',
       designMode: 'Random',
       customDesign: { top: 'Coat', bottom: 'Pants', shoes: 'Sneakers' },
       aestheticStyle: 'Default',
       params: {
-        muscularity: 82,
-        jawline: 100,
+        muscularity: 35,
+        jawline: 70,
         proportions: 64,
-        heavy: 60,
-        chromaticity: 90,
-        era: 100,
-        thickness: 50,
+        heavy: 25,
+        chromaticity: 60,
+        era: 29,
+        thickness: 100,
       },
-      selectedSkinColor: '#FFDBAC',
+      selectedSkinColor: '#E0AC69',
     }),
     [],
   );
@@ -553,6 +553,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       // Fix for "heavy" causing bare chests: Explicitly state "fully clothed" unless thickness is very low
       const chestCoverage = params.thickness < 30 ? '' : 'fully clothed with chest completely covered';
       const buildDesc = params.heavy < 40 ? `very skinny and slender, ${chestCoverage}` : params.heavy > 80 ? `heavy-set, plus-size, and broad, ${chestCoverage}` : `normal, average build, ${chestCoverage}`;
+      const isTanBio = selectedSkinColor === '#E0AC69';
 
       // Avatar / creature keywords — aligned with `.upgrade12/views/Creator.tsx`
       let creatureTextureDesc = '';
@@ -575,7 +576,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const characterDesc =
         gender === 'Creature'
           ? `A unique, otherworldly creature (alien, mutant, or bio-engineered humanoid). Texture/Vibe: ${creatureTextureDesc}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}. ${creatureSpecialInstructions}`
-          : `A stylish ${gender.toLowerCase()} fashion model. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
+          : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
 
       const aimShoeDesc =
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
@@ -602,9 +603,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           ? `Outfit consists of: Top - ${topDesc}, Bottom - ${bottomDesc}, Footwear - ${shoesDesc}.`
           : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
 
-      const me = await getMe();
-      const isAdminTest = me?.role === 'admin';
-      const isSpecial = isAdminTest ? true : Math.random() < 0.1;
+      const isSpecial = true;
       let normalCount = parseInt(localStorage.getItem('normalMintCount') || '0', 10);
       let specialCount = parseInt(localStorage.getItem('specialMintCount') || '0', 10);
 
@@ -623,7 +622,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
         : `Minimal studio backdrop (white/grey/soft neutral) with bold typography matching the ${randomTheme} vibe.`;
       let complexRetroKeywords = '';
-      if (params.era < 60 && params.jawline > 80) {
+      if (params.thickness > 80 && params.era < 50) {
         complexRetroKeywords =
           '\n' +
           'CRITICAL STYLE OVERRIDE (High Complexity Retro):\n' +
@@ -1525,11 +1524,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             <button 
               onClick={() => {
                 setParams({
-                  muscularity: 82, jawline: 100, proportions: 64, heavy: 60,
-                  chromaticity: 90, era: 100, thickness: 50
+                  muscularity: 35, jawline: 70, proportions: 64, heavy: 25,
+                  chromaticity: 60, era: 29, thickness: 100
                 });
-                setSelectedSkinColor('#FFDBAC');
-                setGender('Creature');
+                setSelectedSkinColor('#E0AC69');
+                setGender('Female');
                 setCreatureTexture('Hairless');
                 setDesignMode('Random');
                 setAestheticStyle('Default');
