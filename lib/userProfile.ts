@@ -45,6 +45,15 @@ async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
     const res = await db.collection(COLLECTION).doc(uid).get();
     const raw = (res as any)?.data;
     const doc = (Array.isArray(raw) ? raw[0] : raw) as UserProfileDoc | undefined;
+    if (doc) return doc;
+  } catch {
+    // ignore and fallback to uid-field query
+  }
+  try {
+    // Fallback for historical/abnormal records where _id is not equal to uid
+    const res = await db.collection(COLLECTION).where({ uid }).limit(1).get();
+    const raw = (res as any)?.data;
+    const doc = (Array.isArray(raw) ? raw[0] : raw) as UserProfileDoc | undefined;
     return doc ?? null;
   } catch {
     return null;
@@ -82,7 +91,23 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
       await db.collection(COLLECTION).doc(uid).update(payload);
       return;
     }
-    throw err;
+    // Final fallback:
+    // 1) try update existing doc matched by uid field
+    // 2) if not exists, add a new doc with uid field
+    try {
+      const q = await db.collection(COLLECTION).where({ uid }).limit(1).get();
+      const rows = ((q as any)?.data || []) as Array<{ _id?: string } & UserProfileDoc>;
+      const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      const rowId = row?._id;
+      if (rowId) {
+        await db.collection(COLLECTION).doc(rowId).update(payload);
+        return;
+      }
+      await db.collection(COLLECTION).add(payload);
+      return;
+    } catch {
+      throw err;
+    }
   }
 }
 
