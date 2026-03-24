@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from '../../types';
 import { getCloudbaseAuth } from '../../lib/cloudbase';
 import { uploadImageToCloudBase } from '../../lib/apiClient';
-import { ensureUserProfile, setMyAvatarUrl, setMyDisplayName } from '../../lib/userProfile';
+import { ensureUserProfile, ensureUserProfileStrict, setMyAvatarUrl, setMyDisplayName } from '../../lib/userProfile';
 
 type Mode = 'signIn' | 'signUp';
 type Channel = 'email' | 'phone';
@@ -263,8 +263,8 @@ export default function AuthModule({ onNavigate }: Props) {
       const uid = await resolveUidWithRetry(auth, user);
       setMe(user ? { uid, email: (user as any).email } : { uid });
       try {
-        // 注册后强制建档（带重试），避免会话刚落地时漏建 user_profiles 文档
-        await retry(4, () => ensureUserProfile(uid));
+        // 注册后强制建档 + 回读校验（带重试），避免会话刚落地时漏建 user_profiles 文档
+        await retry(4, () => ensureUserProfileStrict(uid));
         // 注册时，把用户填写的昵称写入档案，仅影响 displayName，不参与登录
         if (mode === 'signUp' && isNonEmpty(displayName)) {
           await retry(4, () => setMyDisplayName(displayName.trim()));

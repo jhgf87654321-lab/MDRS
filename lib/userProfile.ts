@@ -120,6 +120,16 @@ export async function ensureUserProfile(uidHint?: string) {
   return doc;
 }
 
+export async function ensureUserProfileStrict(uidHint?: string) {
+  const uid = uidHint && uidHint.trim() ? uidHint.trim() : await getUid();
+  await ensureUserProfile(uid);
+  const verified = await getProfileDoc(uid);
+  if (!verified) {
+    throw new Error('PROFILE_CREATE_VERIFY_FAILED');
+  }
+  return verified;
+}
+
 export async function listMyOwnedNfts(): Promise<OwnedNftRef[]> {
   const uid = await getUid();
   const doc = await ensureUserProfile();
