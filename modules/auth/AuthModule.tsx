@@ -55,6 +55,36 @@ function formatSignInError(err: unknown) {
   return desc ? `登录失败：${desc}` : '登录失败，请检查账号和密码';
 }
 
+async function resolveUidWithRetry(auth: ReturnType<typeof getCloudbaseAuth>, initialUser?: any) {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  let user = initialUser;
+  for (let i = 0; i < 12; i += 1) {
+    const uid = (user as any)?.uid as string | undefined;
+    if (uid && uid.trim()) return uid.trim();
+    await sleep(i === 0 ? 0 : 120 * i);
+    try {
+      user = await auth.getCurrentUser();
+    } catch {
+      // ignore and continue retry
+    }
+  }
+  throw new Error('登录会话未就绪，请稍后重试');
+}
+
+async function retry<T>(times: number, fn: () => Promise<T>) {
+  let lastErr: unknown;
+  for (let i = 0; i < times; i += 1) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      // short backoff
+      await new Promise((r) => setTimeout(r, 100 * (i + 1)));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('unknown retry error');
+}
+
 export default function AuthModule({ onNavigate }: Props) {
   const auth = useMemo(() => getCloudbaseAuth(), []);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -230,18 +260,18 @@ export default function AuthModule({ onNavigate }: Props) {
       }
 
       const user = await auth.getCurrentUser();
-      const uid = (user as any)?.uid as string | undefined;
-      setMe(user ? { uid, email: (user as any).email } : null);
+      const uid = await resolveUidWithRetry(auth, user);
+      setMe(user ? { uid, email: (user as any).email } : { uid });
       try {
-        // 创建 / 确保用户档案存在；直接传入 uid 避免 getCurrentUser 会话未落地时 NOT_SIGNED_IN
-        await ensureUserProfile(uid);
+        // 注册后强制建档（带重试），避免会话刚落地时漏建 user_profiles 文档
+        await retry(4, () => ensureUserProfile(uid));
         // 注册时，把用户填写的昵称写入档案，仅影响 displayName，不参与登录
         if (mode === 'signUp' && isNonEmpty(displayName)) {
-          await setMyDisplayName(displayName.trim());
+          await retry(4, () => setMyDisplayName(displayName.trim()));
         }
       } catch (e) {
-        // Surface profile init issues to browser console for debugging
-        console.error('ensureUserProfile error', e);
+        console.error('ensureUserProfile/setMyDisplayName error', e);
+        throw new Error('注册成功，但用户档案初始化失败，请返回后重试');
       }
       onNavigate(View.CREATOR);
     } catch (err) {

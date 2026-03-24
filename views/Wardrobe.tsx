@@ -24,6 +24,8 @@ type CyberCollectionItem = {
   isSpecial: boolean;
   theme: string;
   prompt: string;
+  cosUrl?: string;
+  syncPending?: boolean;
 };
 
 interface WardrobeProps {
@@ -65,6 +67,32 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
   ];
 
   const reloadLocalAssets = async () => {
+    const loadLocalFallback = () => {
+      try {
+        const raw = localStorage.getItem('myCyberCollection');
+        const parsed = raw ? (JSON.parse(raw) as Partial<CyberCollectionItem>[]) : [];
+        const localOnly: CyberCollectionItem[] = Array.isArray(parsed)
+          ? parsed
+              .filter((x) => typeof x?.image === 'string' && (x.image as string).trim().length > 0)
+              .slice(0, 8)
+              .map((x, idx) => ({
+                image: String(x.image),
+                serialNumber: typeof x.serialNumber === 'string' && x.serialNumber.trim() ? x.serialNumber : `LOCAL.${idx + 1}`,
+                isSpecial: Boolean(x.isSpecial),
+                theme: typeof x.theme === 'string' && x.theme.trim() ? x.theme : 'Local',
+                prompt: typeof x.prompt === 'string' ? x.prompt : '',
+                ...(typeof x.cosUrl === 'string' && x.cosUrl.trim() ? { cosUrl: x.cosUrl } : {}),
+                syncPending: true,
+              }))
+          : [];
+        setCollection(localOnly);
+        setGeneratedNFT(localOnly[0]?.image ?? null);
+      } catch {
+        setCollection([]);
+        setGeneratedNFT(null);
+      }
+    };
+
     try {
       // Only use CloudBase profile owned NFTs (COS urls). Do not fall back to browser cache.
       try {
@@ -134,12 +162,17 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
           theme: 'Owned',
           prompt: '',
         }));
-        setCollection(next);
-        setGeneratedNFT(next[0]?.image ?? null);
+        if (next.length > 0) {
+          setCollection(next);
+          setGeneratedNFT(next[0]?.image ?? null);
+        } else {
+          // If cloud profile has no records yet, still show local generated items.
+          loadLocalFallback();
+        }
         return;
       } catch {
-        setCollection([]);
-        setGeneratedNFT(null);
+        // Cloud read failed (e.g. mobile session/network), fall back to local generated collection.
+        loadLocalFallback();
         return;
       }
     } catch (e) {
