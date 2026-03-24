@@ -516,8 +516,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           style: 'editorial photography, deconstructed silhouette, minimalist yet dramatic',
         },
         {
-          core: 'vintage fashion hat paired with ornate retro earrings',
-          material: 'classic felt, velvet, and antique gold or pearl accents',
+          core: 'Vintage fashion hat with earrings',
           detail: 'soft vintage glamour lighting',
           style: 'classic haute couture, elegant retro fashion portrait',
         },
