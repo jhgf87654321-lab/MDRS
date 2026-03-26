@@ -648,8 +648,13 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         : 'Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n';
 
       const customFramingInstruction =
-        designMode === 'Custom'
-          ? 'Framing: full-body head-to-toe portrait, centered, inside the canvas with visible padding at the top and bottom (no cropping).'
+        designMode === 'Custom' &&
+        (customDesign.top === 'HBA' ||
+          customDesign.top === 'Custom' ||
+          customDesign.bottom === 'Custom' ||
+          customDesign.shoes === 'aim' ||
+          customDesign.shoes === 'Custom')
+          ? 'Framing: full-body head-to-toe portrait, centered, inside the canvas with visible padding at the top and bottom; ensure the entire head is fully visible with no head cut-off (no cropping).'
           : '';
 
       const isEraFuturisticHuman = params.era > 95 && gender !== 'Creature';
@@ -850,23 +855,28 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             img.onload = () => resolve();
             img.onerror = () => reject(new Error('load failed'));
           });
-          // Directly output 2K square (1:1) so the "形象" result is already 2K.
           const size = 2048;
           const srcW = img.width || 1;
           const srcH = img.height || 1;
-          const sideSrc = Math.min(srcW, srcH);
-          const sx = Math.max(0, Math.round((srcW - sideSrc) / 2));
-          const sy = Math.max(0, Math.round((srcH - sideSrc) / 2));
-          const sw = Math.max(1, Math.round(sideSrc));
-          const sh = Math.max(1, Math.round(sideSrc));
 
           const canvas = document.createElement('canvas');
           canvas.width = size;
           canvas.height = size;
           const ctx = canvas.getContext('2d');
           if (!ctx) return dataUrl;
-          // Center-crop to square, then resize to 2048x2048.
-          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
+
+          // Preserve full content using letterbox (no center-crop),
+          // so the head/top never gets cut off by post-processing.
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, size, size);
+
+          const scale = Math.min(size / srcW, size / srcH);
+          const dw = Math.max(1, Math.round(srcW * scale));
+          const dh = Math.max(1, Math.round(srcH * scale));
+          const dx = Math.round((size - dw) / 2);
+          const dy = Math.round((size - dh) / 2);
+          ctx.drawImage(img, dx, dy, dw, dh);
+
           try {
             const webp = canvas.toDataURL('image/webp', 0.82);
             if (webp) return webp;
