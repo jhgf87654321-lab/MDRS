@@ -647,6 +647,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? ''
         : 'Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n';
 
+      const customFramingInstruction =
+        designMode === 'Custom'
+          ? 'Framing: full-body head-to-toe portrait, centered, inside the canvas with visible padding at the top and bottom (no cropping).'
+          : '';
+
       const isEraFuturisticHuman = params.era > 95 && gender !== 'Creature';
 
       let prompt: string;
@@ -691,6 +696,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
           `Character: A highly advanced humanoid model. ${characterIdentity} Skin tone: ${selectedSkinColor}.\n` +
+          (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
           `Style Keywords: ${selectedStylizedKeywords}\n` +
@@ -706,6 +712,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Theme: ${randomTheme}.\n` +
           `Style: Maximalist aesthetic, textile art, Japanese avant-garde style. ${finalStyleInstruction}\n` +
           `Character & Headpiece: ${characterDesc} Porcelain skin, bold red lips. Skin tone: ${selectedSkinColor}. The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).\n` +
+          (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `Clothing & Texture: patchwork, Bold geometric patterns mixed with floral motifs. The clothing layering and amount is ${thicknessStyle}.\n` +
           `${outfitDesc}\n` +
           `Environment & Lighting: ${backgroundInstruction} Studio lighting, sharp focus, high contrast.\n` +
@@ -722,6 +729,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Background: ${backgroundInstruction}\n` +
           `Graphic Elements: Overlay the image with minimalist, clean graphic design elements. Do NOT draw UI elements ON the clothing itself.\n` +
           `Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).\n` +
+          (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `${outfitDesc}\n` +
           `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
           `Skin tone: ${selectedSkinColor}.\n` +
