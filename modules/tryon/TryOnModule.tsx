@@ -353,10 +353,12 @@ export default function TryOnModule() {
               alert('请先在“形象”中生成 NFT。');
             }}
           >
-            {myCyberCollection.length > 0 ? (
-              <img src={myCyberCollection[0].image} alt="NFT" className="w-full h-full object-cover" />
-            ) : generatedNFT ? (
-              <img src={generatedNFT} alt="NFT" className="w-full h-full object-cover" />
+            {uploadedImage || generatedNFT || myCyberCollection[0]?.image ? (
+              <img
+                src={uploadedImage || generatedNFT || myCyberCollection[0].image}
+                alt="Selected"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <span className="material-icons-round text-sm">person</span>
             )}
