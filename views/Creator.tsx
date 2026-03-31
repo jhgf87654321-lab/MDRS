@@ -1003,6 +1003,13 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       setNftData(nftDataObj);
       localStorage.setItem('generatedNFTData', JSON.stringify(nftDataObj));
 
+      // Notify pages (e.g. Admin "management test") that rely on generatedNFTData / generatedNFT.
+      try {
+        window.dispatchEvent(new Event('axon:generated-nft-updated'));
+      } catch {
+        // ignore
+      }
+
       try {
         const collectionStr = localStorage.getItem('myCyberCollection');
         const collection = collectionStr ? (JSON.parse(collectionStr) as CyberCollectionItem[]) : [];

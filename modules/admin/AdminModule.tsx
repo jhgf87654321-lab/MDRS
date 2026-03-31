@@ -79,36 +79,42 @@ export default function AdminModule() {
 
   // Load latest Creator prompt and image so test images use identical parameters
   useEffect(() => {
-    let hasAvatarPrompt = false;
-
-    try {
-      const stored = localStorage.getItem('generatedNFTData');
-      if (stored) {
-        const parsed = JSON.parse(stored) as { prompt?: string } | null;
-        if (parsed && typeof parsed.prompt === 'string' && parsed.prompt.trim()) {
-          hasAvatarPrompt = true;
-          setPrompt(parsed.prompt);
+    const loadFromCreator = (useFallback: boolean) => {
+      let hasAvatarPrompt = false;
+      try {
+        const stored = localStorage.getItem('generatedNFTData');
+        if (stored) {
+          const parsed = JSON.parse(stored) as { prompt?: string } | null;
+          if (parsed && typeof parsed.prompt === 'string' && parsed.prompt.trim()) {
+            hasAvatarPrompt = true;
+            setPrompt(parsed.prompt);
+          }
         }
+      } catch (e) {
+        console.error('Failed to read generatedNFTData for admin prompt', e);
       }
-    } catch (e) {
-      console.error('Failed to read generatedNFTData for admin prompt', e);
-    }
 
-    try {
-      const storedImage = localStorage.getItem('generatedNFT');
-      if (storedImage) {
-        setGeneratedImage(storedImage);
+      try {
+        const storedImage = localStorage.getItem('generatedNFT');
+        if (storedImage) {
+          setGeneratedImage(storedImage);
+        }
+      } catch (e) {
+        console.error('Failed to read generatedNFT for admin cover', e);
       }
-    } catch (e) {
-      console.error('Failed to read generatedNFT for admin cover', e);
-    }
 
-    // Fallback prompt only when no avatar has been generated yet
-    if (!hasAvatarPrompt) {
-      setPrompt(
-        'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
-      );
-    }
+      // Fallback prompt only when no avatar has been generated yet
+      if (useFallback && !hasAvatarPrompt) {
+        setPrompt(
+          'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
+        );
+      }
+    };
+
+    loadFromCreator(true);
+    const onUpdated = () => loadFromCreator(false);
+    window.addEventListener('axon:generated-nft-updated', onUpdated);
+    return () => window.removeEventListener('axon:generated-nft-updated', onUpdated);
   }, []);
 
   const handleAuth = async () => {
