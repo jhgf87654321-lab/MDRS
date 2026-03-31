@@ -82,6 +82,16 @@ export default function TryOnModule() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadedImageRef = useRef<string | null>(null);
+  const generatedNFTRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    uploadedImageRef.current = uploadedImage;
+  }, [uploadedImage]);
+
+  useEffect(() => {
+    generatedNFTRef.current = generatedNFT;
+  }, [generatedNFT]);
 
   useEffect(() => {
     const storedNFT = localStorage.getItem('generatedNFT');
@@ -175,14 +185,16 @@ export default function TryOnModule() {
       return;
     }
 
-    let baseImage = uploadedImage;
+    // Use ref to avoid stale state when user switches images quickly.
+    let baseImage = uploadedImageRef.current;
     if (cameraMode !== 'off') baseImage = captureFrame();
 
     if (!baseImage) {
       alert('请上传图片或打开相机。');
       return;
     }
-    if (!generatedNFT) {
+    const currentGeneratedNFT = generatedNFTRef.current;
+    if (!currentGeneratedNFT) {
       alert('请先在“形象”中生成 NFT。');
       return;
     }
@@ -193,7 +205,7 @@ export default function TryOnModule() {
       // Keep TryOn as "fast preview"; higher-res can be added later as an explicit action.
       const [basePrepared, nftPrepared] = await Promise.all([
         compressDataUrl(baseImage, 1024, 0.82).catch(() => baseImage),
-        compressDataUrl(generatedNFT, 1024, 0.82).catch(() => generatedNFT),
+        compressDataUrl(currentGeneratedNFT, 1024, 0.82).catch(() => currentGeneratedNFT),
       ]);
 
       const stylePrompt = getStylePromptFromLocalStorage();
@@ -278,7 +290,7 @@ export default function TryOnModule() {
         <button
           type="button"
           onClick={() => {
-            if (!uploadedImage || !generatedNFT) return;
+            if (!uploadedImageRef.current || !generatedNFTRef.current) return;
             setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
           }}
           className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10 text-left"
@@ -435,6 +447,15 @@ export default function TryOnModule() {
                   key={idx}
                   onClick={() => {
                     setUploadedImage(item.image);
+                  // Selecting a new base image should immediately affect the preview
+                  // and allow "Apply" without waiting for a previous cooldown.
+                  setViewMode('tryon');
+                  setCooldownUntil(null);
+                  try {
+                    localStorage.setItem('tryOnLastImage', item.image);
+                  } catch {
+                    // ignore storage quota errors
+                  }
                     setCameraMode('off');
                     setIsCollectionModalOpen(false);
                   }}
