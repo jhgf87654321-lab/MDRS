@@ -239,7 +239,7 @@ export function HistoryPanel({
             }}
             disabled={isGuest || searchBusy}
             placeholder={isGuest ? '登录后搜索' : '关键词 · 中文自动译英'}
-            className="min-w-0 flex-1 border-none bg-transparent text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-black/20 placeholder:normal-case disabled:opacity-50"
+            className="min-w-0 flex-1 border-none bg-transparent text-[10px] font-bold normal-case tracking-wide text-black outline-none placeholder:text-black/20 disabled:opacity-50"
           />
         </div>
       </div>

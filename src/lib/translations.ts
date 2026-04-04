@@ -5,6 +5,7 @@ export const t = (key: string): string => {
     'Blue': '蓝色', 'Brown': '棕色', 'Green': '绿色', 'Hazel': '浅褐色', 'Grey': '灰色',
     'Neutral': '平静', 'Happy': '开心', 'Serious': '严肃', 'Angry': '生气', 'Surprised': '惊讶', 'Smirk': '假笑',
     'Long wavy': '长大波浪', 'Short crop': '短平头', 'Buzz cut': '寸头', 'Ponytail': '马尾', 'Bald': '光头', 'Mohawk': '莫西干',
+    'Long straight': '长直发', 'Custom': '自定义',
     'Blonde': '金发', 'Black': '黑发', 'Red': '红发', 'White': '白发',
     'Athletic': '运动型', 'Slim': '苗条', 'Muscular': '肌肉型', 'Average': '匀称', 'Curvy': '丰满',
     'Minimalist techwear': '极简科技装', 'Casual hoodie': '休闲卫衣', 'Formal suit': '正装西服', 'Cyberpunk armor': '赛博朋克装甲', 'T-shirt': 'T恤',

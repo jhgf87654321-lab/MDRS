@@ -94,31 +94,61 @@ export async function listModelFilesByUid(uid: string, limit = 80): Promise<Mode
     .slice(0, limit);
 }
 
+/** 查询串含 CJK 时按不区分大小写子串匹配（中文无障碍）；纯拉丁查询区分大小写 */
+const CJK_IN_QUERY = /[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f\uff00-\uffef\uf900-\ufaff]/;
+
 function keywordsMatch(keywords: string, needle: string): boolean {
-  const q = needle.trim().toLowerCase();
+  const q = needle.trim();
   if (!q) return true;
-  return (keywords || '').toLowerCase().includes(q);
+  const kw = keywords || '';
+  if (CJK_IN_QUERY.test(q)) {
+    return kw.toLowerCase().includes(q.toLowerCase());
+  }
+  return kw.includes(q);
+}
+
+function docMatchesAnyNeedle(keywords: string, needles: string[]): boolean {
+  return needles.some((n) => keywordsMatch(keywords, n));
+}
+
+function uniqueNeedles(primary: string, alt?: string): string[] {
+  const a = primary.trim();
+  const b = alt?.trim() ?? '';
+  const out: string[] = [];
+  if (a) out.push(a);
+  if (b && b !== a) out.push(b);
+  return out;
 }
 
 /**
- * 在当前用户的 MODELFILE 中按 keywords 字段子串匹配（不区分大小写）。
- * 在已拉取的最近记录上过滤，受单次查询条数上限约束。
+ * 在当前用户的 MODELFILE 中按 keywords 子串匹配。
+ * 纯英文 needle 区分大小写；含中文的 needle 不区分大小写。
+ * altNeedle：可与译文并用（例如中文原文 + 译英），合并去重后任一命中即保留。
  */
-export async function searchModelFileDocsForUser(uid: string, needle: string, limit = 80): Promise<ModelFileDoc[]> {
+export async function searchModelFileDocsForUser(
+  uid: string,
+  needle: string,
+  limit = 80,
+  altNeedle?: string,
+): Promise<ModelFileDoc[]> {
   const cap = Math.min(200, Math.max(limit, 40));
   const all = await listModelFilesByUid(uid, cap);
-  const q = needle.trim();
-  if (!q) return all.slice(0, limit);
-  return all.filter((f) => keywordsMatch(f.keywords, q)).slice(0, limit);
+  const needles = uniqueNeedles(needle, altNeedle);
+  if (needles.length === 0) return all.slice(0, limit);
+  return all.filter((f) => docMatchesAnyNeedle(f.keywords, needles)).slice(0, limit);
 }
 
-/** 在公区 MODELFILE 中按 keywords 子串匹配 */
-export async function searchPublicModelFileDocs(needle: string, limit = 80): Promise<ModelFileDoc[]> {
+/** 在公区 MODELFILE 中按 keywords 子串匹配（规则同 searchModelFileDocsForUser） */
+export async function searchPublicModelFileDocs(
+  needle: string,
+  limit = 80,
+  altNeedle?: string,
+): Promise<ModelFileDoc[]> {
   const cap = Math.min(200, Math.max(limit, 40));
   const all = await listPublicModelFiles(cap);
-  const q = needle.trim();
-  if (!q) return all.slice(0, limit);
-  return all.filter((f) => keywordsMatch(f.keywords, q)).slice(0, limit);
+  const needles = uniqueNeedles(needle, altNeedle);
+  if (needles.length === 0) return all.slice(0, limit);
+  return all.filter((f) => docMatchesAnyNeedle(f.keywords, needles)).slice(0, limit);
 }
 
 export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> {

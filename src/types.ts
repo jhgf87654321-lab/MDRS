@@ -5,6 +5,8 @@ export interface CharacterAttributes {
   height: number;
   ethnicity: string;
   hairStyle: string;
+  /** 发型选「Custom」时写入生成 prompt 的自定义描述 */
+  hairStyleCustom: string;
   hairColor: string;
   eyebrows: string;
   beard: string;
@@ -47,6 +49,7 @@ export const DEFAULT_ATTRIBUTES: CharacterAttributes = {
   height: 175,
   ethnicity: 'Asian',
   hairStyle: 'Ponytail',
+  hairStyleCustom: '',
   hairColor: 'Black',
   eyebrows: 'Thin',
   beard: 'Clean-shaven',
