@@ -379,9 +379,32 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                 <VisualAttributeSelect 
                   label="发型 (Hair Style)" 
                   value={attributes.hairStyle} 
-                  options={['Long wavy', 'Short crop', 'Buzz cut', 'Ponytail', 'Bald', 'Mohawk', 'Long straight']} 
+                  options={[
+                    'Long wavy',
+                    'Short crop',
+                    'Buzz cut',
+                    'Ponytail',
+                    'Bald',
+                    'Mohawk',
+                    'Long straight',
+                    'Custom',
+                  ]} 
                   onChange={(v: string) => updateAttr('hairStyle', v)} 
                 />
+                {attributes.hairStyle === 'Custom' && (
+                  <div className="space-y-2">
+                    <span className="text-black/40 text-[10px] font-bold tracking-widest uppercase">
+                      自定义发型描述
+                    </span>
+                    <textarea
+                      value={attributes.hairStyleCustom}
+                      onChange={(e) => updateAttr('hairStyleCustom', e.target.value)}
+                      placeholder="例如：及肩层次剪、空气刘海、双麻花辫、银灰挑染短发…"
+                      rows={3}
+                      className="w-full resize-y rounded-sm border border-black/10 bg-white px-3 py-2 text-[11px] font-medium leading-relaxed text-black outline-none placeholder:text-black/25 focus:border-black/30"
+                    />
+                  </div>
+                )}
                 <AttributeSelect 
                   label="发色 (Hair Color)" 
                   value={attributes.hairColor} 

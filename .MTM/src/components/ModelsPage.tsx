@@ -31,6 +31,8 @@ export type ModelsPageProps = {
   listRefreshKey?: number;
   /** variant=search 时在 MODELFILE 中按 keywords 子串匹配 */
   searchKeyword?: string;
+  /** 与 searchKeyword 并行匹配（如中文原文），规则见 modelFileDb */
+  searchKeywordAlt?: string;
 };
 
 type GalleryRow = {
@@ -117,6 +119,7 @@ export function ModelsPage({
   email,
   listRefreshKey = 0,
   searchKeyword = '',
+  searchKeywordAlt,
 }: ModelsPageProps) {
   const [rows, setRows] = React.useState<GalleryRow[]>([]);
   const [loading, setLoading] = React.useState(variant !== 'demo');
@@ -173,9 +176,10 @@ export function ModelsPage({
           if (!cancelled) setRows(next);
         } else if (variant === 'search') {
           const q = searchKeyword.trim();
+          const alt = searchKeywordAlt?.trim();
           const [mineDocs, pubDocs] = await Promise.all([
-            searchModelFileDocsForUser(uid, q, 100),
-            searchPublicModelFileDocs(q, 100),
+            searchModelFileDocsForUser(uid, q, 100, alt),
+            searchPublicModelFileDocs(q, 100, alt),
           ]);
           const mineRows = modelDocsToSearchRows(mineDocs, 'mine', uid);
           const pubRows = modelDocsToSearchRows(pubDocs, 'global', uid);
@@ -214,7 +218,7 @@ export function ModelsPage({
     return () => {
       cancelled = true;
     };
-  }, [variant, uid, listRefreshKey, searchKeyword]);
+  }, [variant, uid, listRefreshKey, searchKeyword, searchKeywordAlt]);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -268,8 +272,14 @@ export function ModelsPage({
         <div className="flex flex-col items-center text-center">
           <div className="font-display text-2xl font-bold uppercase tracking-tighter">{headerTitle}</div>
           {variant === 'search' && searchKeyword.trim() ? (
-            <p className="mt-1 max-w-[min(90vw,28rem)] truncate text-[10px] font-bold uppercase tracking-widest text-black/45">
-              「{searchKeyword.trim()}」
+            <p className="mt-1 max-w-[min(90vw,28rem)] truncate text-[10px] font-bold tracking-widest text-black/45 normal-case">
+              {searchKeywordAlt?.trim() && searchKeywordAlt.trim() !== searchKeyword.trim() ? (
+                <>
+                  「{searchKeywordAlt.trim()}」 → 「{searchKeyword.trim()}」
+                </>
+              ) : (
+                <>「{searchKeyword.trim()}」</>
+              )}
             </p>
           ) : null}
         </div>

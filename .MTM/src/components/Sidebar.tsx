@@ -18,7 +18,13 @@ interface SidebarProps {
   onOpenAuth?: () => void;
 }
 
-export function Sidebar({ onSettingsClick, onSignOut, userEmail, isLoggedIn, onOpenAuth }: SidebarProps) {
+export function Sidebar({
+  onSettingsClick,
+  onSignOut,
+  userEmail,
+  isLoggedIn,
+  onOpenAuth,
+}: SidebarProps) {
   const [active, setActive] = React.useState('home');
   const [accountOpen, setAccountOpen] = React.useState(false);
   const popoverRef = React.useRef<HTMLDivElement>(null);

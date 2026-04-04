@@ -18,8 +18,37 @@ const initialPresetImages = [
   "https://images.unsplash.com/photo-1488161628813-04466f872507?auto=format&fit=crop&w=400&q=80",
 ];
 
+const CYLINDER_STORAGE_KEY = 'mtm_landing_cylinder_v1';
+const SLOT_COUNT = initialPresetImages.length;
+
+function loadCylinderImages(): string[] {
+  if (typeof window === 'undefined') return [...initialPresetImages];
+  try {
+    const raw = window.localStorage.getItem(CYLINDER_STORAGE_KEY);
+    if (!raw) return [...initialPresetImages];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [...initialPresetImages];
+    const next = [...initialPresetImages];
+    for (let i = 0; i < SLOT_COUNT; i++) {
+      const v = parsed[i];
+      if (typeof v === 'string' && v.trim().length > 0) next[i] = v;
+    }
+    return next;
+  } catch {
+    return [...initialPresetImages];
+  }
+}
+
+function persistCylinderImages(urls: string[]) {
+  try {
+    window.localStorage.setItem(CYLINDER_STORAGE_KEY, JSON.stringify(urls.slice(0, SLOT_COUNT)));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
-  const [images, setImages] = useState(initialPresetImages);
+  const [images, setImages] = useState(loadCylinderImages);
   const [isPlaying, setIsPlaying] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const wantPlayRef = useRef(isPlaying);
@@ -59,15 +88,21 @@ export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
     setIsPlaying((v) => !v);
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSlotFile = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    }
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const url = reader.result as string;
+      setImages((prev) => {
+        const next = [...prev];
+        if (index >= 0 && index < next.length) next[index] = url;
+        persistCylinderImages(next);
+        return next;
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -148,7 +183,7 @@ export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
                 const radius = 220; // Distance from center
                 return (
                   <div 
-                    key={i}
+                    key={`cyl-${i}-${img.slice(0, 48)}`}
                     className="absolute inset-0 preserve-3d"
                     style={{
                       transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
@@ -175,13 +210,34 @@ export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
           </div>
         </div>
 
-        {/* Upload Button */}
-        <div className="absolute bottom-12 right-12 z-50">
-          <input type="file" id="upload-cylinder" className="hidden" accept="image/*" onChange={handleUpload} />
-          <label htmlFor="upload-cylinder" className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase cursor-pointer text-black/40 hover:text-black transition-colors">
-            <Upload size={16} />
-            Add to Carousel
-          </label>
+        {/* 与转筒每一面一一对应：点击下方缩略图单独替换该槽位（localStorage 持久化） */}
+        <div className="pointer-events-auto absolute bottom-24 left-1/2 z-50 flex max-w-[min(96vw,44rem)] -translate-x-1/2 flex-wrap justify-center gap-2 px-4">
+          {images.map((img, i) => (
+            <label
+              key={`slot-${i}`}
+              className="group relative h-16 w-11 shrink-0 cursor-pointer overflow-hidden border border-black/15 bg-white shadow-sm transition-opacity hover:border-black/30"
+              title={`转筒槽位 ${i + 1}，点击上传替换`}
+            >
+              <img
+                src={img}
+                alt=""
+                className="h-full w-full object-cover opacity-85 group-hover:opacity-100"
+                referrerPolicy="no-referrer"
+              />
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={(ev) => handleSlotFile(i, ev)}
+              />
+              <span className="pointer-events-none absolute left-0 right-0 top-0 bg-black/55 py-0.5 text-center text-[7px] font-bold tracking-wider text-white">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span className="pointer-events-none absolute bottom-0.5 right-0.5 rounded bg-white/90 p-0.5 text-black/50 group-hover:text-black">
+                <Upload size={10} strokeWidth={2.5} />
+              </span>
+            </label>
+          ))}
         </div>
 
         {/* Bottom Player Mock */}

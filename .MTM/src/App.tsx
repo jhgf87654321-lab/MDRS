@@ -33,6 +33,8 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = React.useState(false);
   const [appGallery, setAppGallery] = React.useState<null | 'personal' | 'global' | 'search'>(null);
   const [gallerySearchKeyword, setGallerySearchKeyword] = React.useState('');
+  /** 中文检索时保留原文，与译英并行匹配 MODELFILE.keywords */
+  const [gallerySearchAlt, setGallerySearchAlt] = React.useState('');
 
   React.useEffect(() => {
     if (!cloudUser?.uid) setAppGallery(null);
@@ -41,9 +43,12 @@ export default function App() {
   const PUBLISH_GLOBAL_KEY = 'mtm_publish_to_global';
   const [publishToGlobal, setPublishToGlobal] = React.useState(() => {
     try {
-      return typeof window !== 'undefined' && window.localStorage.getItem(PUBLISH_GLOBAL_KEY) === '1';
+      if (typeof window === 'undefined') return true;
+      const v = window.localStorage.getItem(PUBLISH_GLOBAL_KEY);
+      if (v === null || v === '') return true;
+      return v === '1';
     } catch {
-      return false;
+      return true;
     }
   });
   const publishToGlobalRef = React.useRef(publishToGlobal);
@@ -284,8 +289,11 @@ export default function App() {
           onSubmitKeywordSearch={
             cloudUser?.uid
               ? async (kw) => {
-                  const q = await translateSearchKeywordIfChinese(kw);
-                  setGallerySearchKeyword(q);
+                  const raw = kw.trim();
+                  const q = (await translateSearchKeywordIfChinese(kw)).trim();
+                  const effective = q || raw;
+                  setGallerySearchKeyword(effective);
+                  setGallerySearchAlt(raw && raw !== effective ? raw : '');
                   setAppGallery('search');
                 }
               : undefined
@@ -298,15 +306,17 @@ export default function App() {
           appGallery &&
           cloudUser?.uid &&
           React.createElement(ModelsPage, {
-            key: `${appGallery}-${gallerySearchKeyword}`,
+            key: `${appGallery}-${gallerySearchKeyword}-${gallerySearchAlt}`,
             variant: appGallery,
             uid: cloudUser.uid,
             email: cloudUser.email,
             listRefreshKey: historyRefreshKey,
             searchKeyword: appGallery === 'search' ? gallerySearchKeyword : undefined,
+            searchKeywordAlt: appGallery === 'search' ? gallerySearchAlt || undefined : undefined,
             onBack: () => {
               setAppGallery(null);
               setGallerySearchKeyword('');
+              setGallerySearchAlt('');
             },
           })}
       </AnimatePresence>
