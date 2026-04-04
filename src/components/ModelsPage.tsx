@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { ArrowLeft, Search, Filter } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, Search, Filter, X, Download } from 'lucide-react';
 import { getHmrsProfile } from '@nftt/lib/hmrsDb';
 import { listModelFilesByUid, listPublicModelFiles, type ModelFileDoc } from '@nftt/lib/modelFileDb';
 
@@ -19,43 +19,70 @@ export type ModelsPageVariant = 'demo' | 'personal' | 'global';
 
 export type ModelsPageProps = {
   onBack: () => void;
-  /** 开屏演示网格 */
   variant?: ModelsPageVariant;
   uid?: string;
   email?: string;
-  /** 生成新图后递增，用于个人/公区列表刷新 */
   listRefreshKey?: number;
 };
 
-function buildPersonalGalleryRows(urls: string[], files: ModelFileDoc[]): { id: string; img: string; name: string; author: string }[] {
+type GalleryRow = {
+  id: string;
+  img: string;
+  /** 仅入库与下载文件名，不在网格展示 */
+  keywords: string;
+  author: string;
+};
+
+function buildPersonalGalleryRows(urls: string[], files: ModelFileDoc[]): GalleryRow[] {
   const kw = new Map<string, string>();
   for (const f of files) {
     if (f.cosUrl) kw.set(f.cosUrl, f.keywords || '');
   }
-  return urls.map((imageUrl, i) => {
-    const t = (kw.get(imageUrl) || '').trim();
-    const title = t ? `${t.slice(0, 48)}${t.length > 48 ? '…' : ''}` : `Model ${i + 1}`;
-    return {
-      id: `p-${i}-${imageUrl.slice(-24)}`,
-      img: imageUrl,
-      name: title,
-      author: '',
-    };
-  });
+  return urls.map((imageUrl, i) => ({
+    id: `p-${i}-${imageUrl.slice(-32)}`,
+    img: imageUrl,
+    keywords: (kw.get(imageUrl) || '').trim(),
+    author: '',
+  }));
 }
 
-function buildGlobalGalleryRows(rows: ModelFileDoc[]): { id: string; img: string; name: string; author: string }[] {
+function buildGlobalGalleryRows(rows: ModelFileDoc[]): GalleryRow[] {
   return rows.map((f, i) => {
-    const k = (f.keywords || '').trim();
-    const title = k ? `${k.slice(0, 48)}${k.length > 48 ? '…' : ''}` : `Public ${i + 1}`;
     const shortUid = f.uid ? `${f.uid.slice(0, 6)}…` : '—';
     return {
       id: f._id || `g-${f.seq}-${i}`,
       img: f.cosUrl,
-      name: title,
+      keywords: (f.keywords || '').trim(),
       author: `@${shortUid}`,
     };
   });
+}
+
+async function downloadImageUrl(url: string, filenameBase: string) {
+  const safe = filenameBase.replace(/[^\w\-]+/g, '_').slice(0, 80) || 'model';
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error(String(res.status));
+    const blob = await res.blob();
+    const ext = blob.type.includes('jpeg') ? 'jpg' : blob.type.includes('webp') ? 'webp' : 'png';
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = `${safe}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  } catch {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safe}.png`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }
 
 export function ModelsPage({
@@ -65,9 +92,10 @@ export function ModelsPage({
   email,
   listRefreshKey = 0,
 }: ModelsPageProps) {
-  const [rows, setRows] = React.useState<{ id: string; img: string; name: string; author: string }[]>([]);
+  const [rows, setRows] = React.useState<GalleryRow[]>([]);
   const [loading, setLoading] = React.useState(variant !== 'demo');
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [lightbox, setLightbox] = React.useState<GalleryRow | null>(null);
 
   const headerTitle =
     variant === 'personal' ? 'Personal Archive' : variant === 'global' ? 'Global Gallery' : 'Public Models';
@@ -121,14 +149,39 @@ export function ModelsPage({
     };
   }, [variant, uid, listRefreshKey]);
 
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightbox(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const displayName = email?.trim()?.split('@')[0] || 'Creator';
-  const gridItems =
+
+  const gridItems: GalleryRow[] =
     variant === 'demo'
-      ? mockModels.map((m) => ({ id: String(m.id), img: m.img, name: m.name, author: m.author }))
+      ? mockModels.map((m) => ({
+          id: String(m.id),
+          img: m.img,
+          keywords: '',
+          author: m.author,
+        }))
       : rows.map((r) => ({
           ...r,
           author: variant === 'personal' ? `@${displayName}` : r.author,
         }));
+
+  const handleOpenLightbox = (e: React.MouseEvent, m: GalleryRow) => {
+    e.stopPropagation();
+    setLightbox(m);
+  };
+
+  const handleLightboxDownload = () => {
+    if (!lightbox) return;
+    const base = lightbox.keywords ? lightbox.keywords.slice(0, 40) : lightbox.id;
+    void downloadImageUrl(lightbox.img, base);
+  };
 
   return (
     <motion.div
@@ -170,34 +223,94 @@ export function ModelsPage({
           </div>
         ) : (
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {gridItems.map((m, i) => (
+            {gridItems.map((m, idx) => (
               <motion.div
                 key={m.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="group flex cursor-default flex-col gap-4"
+                transition={{ delay: idx * 0.05 }}
+                className="group flex flex-col gap-2"
               >
-                <div className="relative aspect-[3/4] overflow-hidden border border-black/5 bg-black/5 shadow-sm">
+                <button
+                  type="button"
+                  onClick={(e) => handleOpenLightbox(e, m)}
+                  className="relative aspect-[3/4] w-full cursor-zoom-in overflow-hidden border border-black/5 bg-black/5 p-0 text-left shadow-sm"
+                >
                   <img
                     src={m.img}
                     alt=""
                     className="h-full w-full scale-100 object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/10" />
-                </div>
-                <div className="flex items-center justify-between px-1">
-                  <span className="line-clamp-2 text-sm font-bold tracking-wide">{m.name}</span>
-                  <span className="shrink-0 pl-2 text-[9px] font-bold uppercase tracking-widest text-black/40">
+                  <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/10" />
+                </button>
+                {variant === 'demo' ? (
+                  <div className="flex items-center justify-between px-1">
+                    <span className="line-clamp-2 text-sm font-bold tracking-wide">
+                      {mockModels.find((x) => String(x.id) === m.id)?.name ?? '—'}
+                    </span>
+                    <span className="shrink-0 pl-2 text-[9px] font-bold uppercase tracking-widest text-black/40">
+                      {m.author}
+                    </span>
+                  </div>
+                ) : variant === 'global' ? (
+                  <p className="px-1 text-center text-[9px] font-bold uppercase tracking-widest text-black/40">
                     {m.author}
-                  </span>
-                </div>
+                  </p>
+                ) : null}
               </motion.div>
             ))}
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            role="presentation"
+            onClick={() => setLightbox(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="relative flex max-h-[92vh] max-w-[min(96vw,1200px)] flex-col gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative flex max-h-[min(78vh,900px)] items-center justify-center overflow-hidden rounded-sm border border-white/10 bg-black/40">
+                <img
+                  src={lightbox.img}
+                  alt=""
+                  className="max-h-[min(78vh,900px)] max-w-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleLightboxDownload()}
+                  className="flex items-center gap-2 border border-white/30 bg-white px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-white/90"
+                >
+                  <Download size={16} />
+                  下载图片
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightbox(null)}
+                  className="flex items-center gap-2 border border-white/20 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:bg-white/10"
+                >
+                  <X size={16} />
+                  关闭
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

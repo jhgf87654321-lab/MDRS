@@ -245,11 +245,7 @@ export function HistoryPanel({
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
-                <div className="pointer-events-none absolute inset-0 flex items-end bg-black/80 p-3 opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="line-clamp-4 text-[8px] font-bold uppercase leading-tight tracking-widest text-white">
-                    {img.keywords || '—'}
-                  </span>
-                </div>
+                <div className="pointer-events-none absolute inset-0 bg-black/0 opacity-0 transition-opacity group-hover:bg-black/15 group-hover:opacity-100" />
               </button>
             ))
           ) : (
