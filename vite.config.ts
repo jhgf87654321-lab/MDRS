@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        '@nftt': path.resolve(__dirname, '..'),
+        '@nftt/lib': path.resolve(__dirname, 'lib'),
       },
     },
     server: {
