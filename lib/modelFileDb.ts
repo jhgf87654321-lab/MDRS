@@ -36,16 +36,8 @@ function normalizeIsPublicField(v: unknown): boolean {
   return v === true || v === 'true' || v === 1;
 }
 
-/** 云开发部分环境对 where({ isPublic: true }) 匹配不稳定，优先用 command.eq */
-function whereIsPublicTrue(db: ReturnType<typeof getCloudbaseDb>) {
-  const _ = (db as { command?: { eq: (v: boolean) => unknown } }).command;
-  if (_?.eq) {
-    try {
-      return { isPublic: _.eq(true) };
-    } catch {
-      /* fallthrough */
-    }
-  }
+/** 公区查询：字面量布尔在多数环境最稳；command.eq 若序列化异常会导致 0 条 */
+function whereIsPublicTrue() {
   return { isPublic: true };
 }
 
@@ -106,7 +98,7 @@ export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> 
   const db = getCloudbaseDb();
   const res = await db
     .collection(MODELFILE_COLLECTION)
-    .where(whereIsPublicTrue(db))
+    .where(whereIsPublicTrue())
     .limit(Math.min(limit * 2, 100))
     .get();
   assertDb(res, 'MODELFILE 公开查询');
@@ -151,7 +143,7 @@ export function watchPublicModelFiles(
   const db = getCloudbaseDb();
   const w = db
     .collection(MODELFILE_COLLECTION)
-    .where(whereIsPublicTrue(db))
+    .where(whereIsPublicTrue())
     .watch({
       onChange(snapshot) {
         const rows = snapshotDocsToArray(snapshot)

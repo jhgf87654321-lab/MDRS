@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { Plus, ArrowDown, Download, Share2, ImageDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2canvas from 'html2canvas';
@@ -39,7 +39,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
     onAttributesChange({ ...attributes, customPrompt: val });
   };
 
-  const captureFullCardInternal = async (): Promise<string | null> => {
+  const captureFullCardInternal = useCallback(async (): Promise<string | null> => {
     const el = fullCardRef.current;
     if (!el) return null;
     const buttonsDiv = el.querySelector('.download-buttons') as HTMLElement | null;
@@ -61,14 +61,29 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       } catch {
         /* ignore */
       }
+      const dpr = window.devicePixelRatio || 2;
       const canvas = await html2canvas(el, {
         useCORS: true,
         allowTaint: false,
-        scale: Math.min(2, window.devicePixelRatio || 2),
-        backgroundColor: '#ffffff',
+        scale: Math.min(2.5, Math.max(2, dpr)),
+        backgroundColor: '#f8f8f8',
         logging: false,
         foreignObjectRendering: false,
-        imageTimeout: 15000,
+        imageTimeout: 20000,
+        onclone: (_doc, cloned) => {
+          const root = cloned as HTMLElement;
+          root.style.overflow = 'visible';
+          const card = root.querySelector('[data-mtm-card-root]') as HTMLElement | null;
+          if (card) {
+            card.style.overflow = 'visible';
+            card.style.maxHeight = 'none';
+          }
+          const slot = root.querySelector('[data-mtm-image-slot]') as HTMLElement | null;
+          if (slot) {
+            slot.style.overflow = 'visible';
+            slot.style.minHeight = `${slot.scrollHeight}px`;
+          }
+        },
       });
       return canvas.toDataURL('image/png');
     } catch (err) {
@@ -77,14 +92,14 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
     } finally {
       if (buttonsDiv) buttonsDiv.style.visibility = prevVis || '';
     }
-  };
+  }, [imageUrl]);
 
   useImperativeHandle(
     ref,
     () => ({
       captureFullModelCardPng: () => captureFullCardInternal(),
     }),
-    [],
+    [captureFullCardInternal],
   );
 
   /** 下载整张模卡（含外圈摩卡） */
@@ -148,9 +163,14 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 
   return (
     <div className="relative flex h-full flex-1 flex-col items-center overflow-y-auto p-12 no-scrollbar">
+      {/* 外层留白 + 背景，避免大阴影被 overflow 裁掉；html2canvas 截此根节点 */}
       <div
         ref={fullCardRef}
-        className="relative flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
+        className="relative box-border w-full max-w-[min(100%,44rem)] flex-shrink-0 bg-[#f8f8f8] p-10 sm:p-14"
+      >
+      <div
+        data-mtm-card-root
+        className="relative mx-auto flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
       >
         <AnimatePresence mode="wait">
           {isGenerating ? (
@@ -210,7 +230,10 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                 </div>
               </div>
 
-              <div className="group relative flex-1 cursor-crosshair overflow-hidden transition-all duration-700">
+              <div
+                data-mtm-image-slot
+                className="group relative min-h-0 flex-1 cursor-crosshair overflow-hidden transition-all duration-700"
+              >
                 <img
                   src={imageUrl}
                   alt="Generated model (右键另存为可保存无模卡边框的纯图)"
@@ -280,6 +303,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
             </div>
           )}
         </AnimatePresence>
+      </div>
       </div>
 
       <div className="mt-8 flex w-full max-w-2xl flex-col items-center pb-12">
