@@ -35,13 +35,17 @@ export async function persistMtmGeneration(
   if (!url) throw new Error('未返回 COS 地址');
 
   await ensureHmrsProfile(uid);
-  await addModelFileRecord({
-    seq,
-    cosUrl: url,
-    keywords,
-    uid,
-    isPublic: options?.publishToPublic === true,
-  });
   await prependHmrsModelImageUrl(uid, url);
+  try {
+    await addModelFileRecord({
+      seq,
+      cosUrl: url,
+      keywords,
+      uid,
+      isPublic: options?.publishToPublic === true,
+    });
+  } catch (e) {
+    console.warn('[MODELFILE] 元数据写入失败（HMRS 已更新，个人预览仍可显示图片）', e);
+  }
   return { url, seq };
 }

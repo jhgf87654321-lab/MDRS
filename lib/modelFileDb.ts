@@ -45,14 +45,14 @@ export async function addModelFileRecord(input: {
 }) {
   const db = getCloudbaseDb();
   const isPub = input.isPublic === true;
-  const payload = {
+  const payload: Record<string, unknown> = {
     seq: input.seq,
     cosUrl: input.cosUrl.trim(),
     keywords: input.keywords.trim(),
     uid: input.uid,
     createdAt: Date.now(),
-    isPublic: isPub,
   };
+  if (isPub) payload.isPublic = true;
   const res = await db.collection(MODELFILE_COLLECTION).add(payload);
   assertDb(res, 'MODELFILE 写入');
   const newId = (res as { id?: string; _id?: string })?.id ?? (res as { id?: string; _id?: string })?._id;

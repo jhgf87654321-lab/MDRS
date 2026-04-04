@@ -59,14 +59,15 @@ export async function addModelFileRecord(input: {
 }) {
   const db = getCloudbaseDb();
   const isPub = input.isPublic === true;
-  const payload = {
+  /** 非公区不写 isPublic:false：部分环境安全规则/校验对 false 不兼容，缺省字段即视为非公开 */
+  const payload: Record<string, unknown> = {
     seq: input.seq,
     cosUrl: input.cosUrl.trim(),
     keywords: input.keywords.trim(),
     uid: input.uid,
     createdAt: Date.now(),
-    isPublic: isPub,
   };
+  if (isPub) payload.isPublic = true;
   const res = await db.collection(MODELFILE_COLLECTION).add(payload);
   assertDb(res, 'MODELFILE 写入');
   const newId = extractNewDocId(res);
