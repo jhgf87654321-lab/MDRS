@@ -1,5 +1,7 @@
 // List regular recycle images from COS CYCLER/ folder
 
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -14,17 +16,13 @@ async function getCosClient() {
 }
 
 export default async function handler(
-  req: { method?: string },
+  req: { method?: string; headers?: Record<string, string | string[] | undefined> },
   res: {
     setHeader: (name: string, value: string) => void;
     status: (code: number) => { json: (data: object) => void; end: () => void };
   },
 ) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handleCorsPreflightIfNeeded(req, res)) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const Bucket = process.env.COS_BUCKET;

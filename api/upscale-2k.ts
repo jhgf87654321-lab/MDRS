@@ -1,8 +1,10 @@
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
+
 export const config = {
   maxDuration: 120,
 };
 
-type Req = { method?: string; body?: unknown };
+type Req = { method?: string; body?: unknown; headers?: Record<string, string | string[] | undefined> };
 type Res = {
   setHeader: (name: string, value: string) => void;
   status: (code: number) => { json: (data: object) => void; end: () => void };
@@ -38,11 +40,7 @@ async function getCosClient() {
 }
 
 export default async function handler(req: Req, res: Res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handleCorsPreflightIfNeeded(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   if (!isRecord(req.body)) return res.status(400).json({ error: 'Invalid JSON body' });

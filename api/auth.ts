@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import type { Firestore } from 'firebase-admin/firestore';
 
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
 import { buildSetCookie } from '../lib/api-cookies.js';
 import { getAdminDb } from '../lib/firebaseAdmin.js';
 import { createSessionToken, getSessionFromRequest } from '../lib/api-session.js';
@@ -49,11 +50,7 @@ function getPath(req: Req): string {
 }
 
 export default async function handler(req: Req, res: Res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handleCorsPreflightIfNeeded(req, res)) return;
 
   const path = getPath(req);
   const secure = process.env.NODE_ENV === 'production';

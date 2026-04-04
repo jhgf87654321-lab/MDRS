@@ -1,3 +1,5 @@
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
+
 // 模特卡 COS：MODELCARD/ 下 00000.png 起递增序号（列举前缀取最大序号 + 1）
 process.noDeprecation = true;
 
@@ -72,17 +74,13 @@ async function getNextSeq(cos: any, Bucket: string, Region: string): Promise<num
 }
 
 export default async function handler(
-  req: { method?: string; body?: unknown },
+  req: { method?: string; body?: unknown; headers?: Record<string, string | string[] | undefined> },
   res: {
     setHeader: (name: string, value: string) => void;
     status: (code: number) => { json: (data: object) => void; end: () => void };
   },
 ) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handleCorsPreflightIfNeeded(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const body = req.body;

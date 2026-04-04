@@ -9,6 +9,8 @@ export type GeminiPart =
       inlineData: GeminiInlineData;
     };
 
+import { apiUrl, throwIfApiRouteMissing } from './apiBase';
+
 export type GeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview';
 
 type PromptRequest = {
@@ -23,13 +25,14 @@ type PartsRequest = {
 };
 
 export async function generateGeminiImage(input: PromptRequest | PartsRequest) {
-  const res = await fetch('/api/gemini', {
+  const res = await fetch(apiUrl('/api/gemini'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
 
   const text = await res.text();
+  throwIfApiRouteMissing(res, text, '/api/gemini');
   let data: { image?: string; error?: string } = {};
   try {
     data = (text ? (JSON.parse(text) as { image?: string; error?: string }) : {}) ?? {};

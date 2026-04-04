@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
 
 export const config = {
   maxDuration: 60,
@@ -69,17 +70,13 @@ function extractTextFromResponse(response: unknown): string {
 }
 
 export default async function handler(
-  req: { method?: string; body?: unknown },
+  req: { method?: string; body?: unknown; headers?: Record<string, string | string[] | undefined> },
   res: {
     setHeader: (name: string, value: string) => void;
     status: (code: number) => { json: (data: object) => void; end: () => void };
   },
 ) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handleCorsPreflightIfNeeded(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;

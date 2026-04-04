@@ -1,5 +1,6 @@
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
+
 // Suppress Node.js deprecation warnings originating from legacy deps (e.g. url.parse()).
-// This must run before the SDK is loaded, so we use a dynamic import.
 process.noDeprecation = true;
 
 function isNonEmptyString(value: unknown): value is string {
@@ -64,17 +65,13 @@ async function getCosClient() {
 }
 
 export default async function handler(
-  req: { method?: string; body?: unknown },
+  req: { method?: string; body?: unknown; headers?: Record<string, string | string[] | undefined> },
   res: {
     setHeader: (name: string, value: string) => void;
     status: (code: number) => { json: (data: object) => void; end: () => void };
   },
 ) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handleCorsPreflightIfNeeded(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const body = req.body;
