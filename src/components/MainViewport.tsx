@@ -3,6 +3,7 @@ import { Plus, ArrowDown, Download, Share2, ImageDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2canvas from 'html2canvas';
 import { t } from '../lib/translations';
+import { renderModelCardToPngDataUrl } from '../lib/modelCardCanvas';
 import { CharacterAttributes } from '../types';
 
 export type MainViewportHandle = {
@@ -40,6 +41,20 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
   };
 
   const captureFullCardInternal = useCallback(async (): Promise<string | null> => {
+    if (!imageUrl) return null;
+    const layoutText = {
+      name: attributes.name,
+      age: String(attributes.age),
+      height: `${attributes.height} cm`,
+      hair: t(attributes.hairColor),
+      eyes: t(attributes.eyeColor),
+      skin: t(attributes.skinTone),
+    };
+    const fromCanvas = await renderModelCardToPngDataUrl(imageUrl, attributes, layoutText);
+    if (fromCanvas && fromCanvas.startsWith('data:image') && fromCanvas.length > 2500) {
+      return fromCanvas;
+    }
+
     const el = fullCardRef.current;
     if (!el) return null;
     const buttonsDiv = el.querySelector('.download-buttons') as HTMLElement | null;
@@ -87,12 +102,12 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       });
       return canvas.toDataURL('image/png');
     } catch (err) {
-      console.error('captureFullCardInternal failed:', err);
+      console.error('captureFullCardInternal html2canvas failed:', err);
       return null;
     } finally {
       if (buttonsDiv) buttonsDiv.style.visibility = prevVis || '';
     }
-  }, [imageUrl]);
+  }, [imageUrl, attributes]);
 
   useImperativeHandle(
     ref,
