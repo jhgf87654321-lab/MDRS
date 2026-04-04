@@ -31,7 +31,7 @@ const TUTORIAL_STEPS = [
   {
     id: 'tutorial-step-4',
     title: '步骤 4: 生成模型',
-    description: '点击这里，让您的数字人栩栩如生！',
+    description: '（加入您的个性化关键词）点击这里，让您的数字人栩栩如生！',
     align: 'top' as const,
   },
 ];

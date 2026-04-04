@@ -84,10 +84,10 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
     <div className="w-[400px] bg-white border-r border-black/5 flex flex-col p-8 z-40 h-full">
       <div className="flex items-start justify-between mb-12">
         <div className="flex flex-col gap-1 w-full mr-4">
-          <h2 className="text-black text-2xl font-display font-bold tracking-tight uppercase">
-            DIGITAL HUMAN
+          <h2 className="text-black text-2xl font-display font-bold tracking-tight">
+            模特定制与库
           </h2>
-          <p className="text-black/40 text-[10px] font-bold tracking-[0.2em] uppercase">Digital Human Core</p>
+          <p className="text-black/40 text-[10px] font-bold tracking-[0.2em]">生成 · 归档 · 公区</p>
         </div>
         
         <div className="flex gap-2">
