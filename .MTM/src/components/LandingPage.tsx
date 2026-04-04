@@ -22,16 +22,38 @@ export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
   const [images, setImages] = useState(initialPresetImages);
   const [isPlaying, setIsPlaying] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const wantPlayRef = useRef(isPlaying);
+  wantPlayRef.current = isPlaying;
 
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
     if (isPlaying) {
-      void a.play().catch(() => setIsPlaying(false));
+      void a.play().catch(() => {
+        /* 浏览器可能拦截自动播放，保持按钮为「可点停」状态，不强行切到停止 */
+      });
     } else {
       a.pause();
     }
   }, [isPlaying]);
+
+  /** 首次点击/触摸或短延迟后尝试播放（绕过浏览器自动播放限制） */
+  useEffect(() => {
+    const unlock = () => {
+      const el = audioRef.current;
+      if (!el || !wantPlayRef.current) return;
+      void el.play().catch(() => {});
+    };
+    const opts: AddEventListenerOptions = { once: true, capture: true };
+    window.addEventListener('pointerdown', unlock, opts);
+    window.addEventListener('touchend', unlock, { ...opts, passive: true });
+    const t = window.setTimeout(unlock, 400);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('pointerdown', unlock, { capture: true });
+      window.removeEventListener('touchend', unlock, { capture: true });
+    };
+  }, []);
 
   const togglePlay = () => {
     setIsPlaying((v) => !v);
