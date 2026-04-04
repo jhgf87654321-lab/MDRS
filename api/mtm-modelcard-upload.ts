@@ -34,15 +34,16 @@ async function getCosClient() {
 }
 
 const PREFIX = 'MODELCARD/';
+const PREFIX_PUBLIC = 'MODELCARD/public/';
 
-function parseSeqFromKey(key: string): number | null {
-  const base = key.startsWith(PREFIX) ? key.slice(PREFIX.length) : key;
+function parseSeqFromKey(key: string, prefix: string): number | null {
+  const base = key.startsWith(prefix) ? key.slice(prefix.length) : key;
   const m = /^(\d{5})\.(png|jpg|jpeg|webp|bin)$/i.exec(base);
   if (!m) return null;
   return parseInt(m[1]!, 10);
 }
 
-async function getNextSeq(cos: any, Bucket: string, Region: string): Promise<number> {
+async function getNextSeq(cos: any, Bucket: string, Region: string, listPrefix: string): Promise<number> {
   let max = -1;
   let Marker: string | undefined;
   const maxPages = 50;
@@ -52,7 +53,7 @@ async function getNextSeq(cos: any, Bucket: string, Region: string): Promise<num
         {
           Bucket,
           Region,
-          Prefix: PREFIX,
+          Prefix: listPrefix,
           MaxKeys: 1000,
           Marker,
         },
@@ -64,7 +65,7 @@ async function getNextSeq(cos: any, Bucket: string, Region: string): Promise<num
     });
     for (const c of data?.Contents || []) {
       const key = typeof c?.Key === 'string' ? c.Key : '';
-      const n = parseSeqFromKey(key);
+      const n = parseSeqFromKey(key, listPrefix);
       if (n !== null) max = Math.max(max, n);
     }
     if (!data?.IsTruncated || !data?.NextMarker) break;
@@ -87,6 +88,7 @@ export default async function handler(
   if (!isRecord(body)) return res.status(400).json({ error: 'Invalid JSON body' });
   const dataUrlRaw = body.dataUrl;
   if (!isNonEmptyString(dataUrlRaw)) return res.status(400).json({ error: 'Missing or invalid dataUrl' });
+  const publishToPublic = body.publishToPublic === true;
 
   const parsed = parseDataUrl(dataUrlRaw);
   if (!parsed) return res.status(400).json({ error: 'Invalid data URL format' });
@@ -97,10 +99,11 @@ export default async function handler(
     if (!Bucket || !Region) throw new Error('COS_BUCKET or COS_REGION is not configured');
 
     const cos = await getCosClient();
-    const seq = await getNextSeq(cos, Bucket, Region);
+    const uploadPrefix = publishToPublic ? PREFIX_PUBLIC : PREFIX;
+    const seq = await getNextSeq(cos, Bucket, Region, uploadPrefix);
     const ext = getExtension(parsed.mimeType);
     const fileName = `${String(seq).padStart(5, '0')}.${ext}`;
-    const Key = `${PREFIX}${fileName}`;
+    const Key = `${uploadPrefix}${fileName}`;
     const buffer = Buffer.from(parsed.base64, 'base64');
 
     await new Promise<void>((resolve, reject) => {

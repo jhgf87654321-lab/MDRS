@@ -345,9 +345,10 @@ export default function App() {
               <div className="space-y-4 text-[11px] leading-relaxed text-black/70">
                 <p>
                   图像生成走 <code className="text-black">/api/gemini</code>，反推走 <code className="text-black">/api/gemini-text</code>
-                  ；模特卡上传至 COS 目录 <code className="text-black">MODELCARD/</code>（序号文件名）走{' '}
-                  <code className="text-black">/api/mtm-modelcard-upload</code>。请配置 <code className="text-black">GEMINI_API_KEY</code> 与{' '}
-                  <code className="text-black">COS_*</code>。云数据库需集合 <code className="text-black">HMRS</code>、<code className="text-black">MODELFILE</code>。
+                  ；模特卡上传至 COS：<code className="text-black">MODELCARD/</code>（默认）或勾选公区时{' '}
+                  <code className="text-black">MODELCARD/public/</code>，走 <code className="text-black">/api/mtm-modelcard-upload</code>。请配置{' '}
+                  <code className="text-black">GEMINI_API_KEY</code> 与 <code className="text-black">COS_*</code>。云数据库需集合{' '}
+                  <code className="text-black">HMRS</code>、<code className="text-black">MODELFILE</code>。
                 </p>
                 <p>
                   本地开发：在本应用目录放 <code className="text-black">.env.local</code>（含 <code className="text-black">GEMINI_API_KEY</code>

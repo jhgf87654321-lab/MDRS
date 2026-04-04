@@ -14,10 +14,11 @@ export async function persistMtmGeneration(
   uid: string,
   options?: PersistMtmOptions,
 ) {
+  const publishToPublic = options?.publishToPublic === true;
   const res = await fetch(apiUrl('/api/mtm-modelcard-upload'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dataUrl }),
+    body: JSON.stringify({ dataUrl, publishToPublic }),
   });
   const text = await res.text();
   throwIfApiRouteMissing(res, text, '/api/mtm-modelcard-upload');
