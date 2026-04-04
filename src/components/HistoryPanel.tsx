@@ -4,9 +4,15 @@ import {
   watchHmrsModelImageUrls,
   type HmrsProfileDoc,
 } from '@nftt/lib/hmrsDb';
-import { listModelFilesByUid, listPublicModelFiles, type ModelFileDoc } from '@nftt/lib/modelFileDb';
+import {
+  listModelFilesByUid,
+  listPublicModelFiles,
+  watchPublicModelFiles,
+  type ModelFileDoc,
+} from '@nftt/lib/modelFileDb';
 import { Search, MoreHorizontal } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from '../lib/utils';
 
 export type PersonalCard = { imageUrl: string; keywords: string };
 
@@ -22,18 +28,36 @@ type Props = {
   uid: string;
   email?: string;
   refreshKey: number;
+  publishToGlobal: boolean;
+  onPublishToGlobalChange: (v: boolean) => void;
+  /** 点击 Personal 缩略图：进入与开屏 Models 相同布局的个人全图库 */
+  onOpenPersonalGallery?: () => void;
+  /** 点击 Global 缩略图：进入公区全图库 */
+  onOpenGlobalGallery?: () => void;
 };
 
-export function HistoryPanel({ uid, email, refreshKey }: Props) {
+const GLOBAL_PREVIEW_LIMIT = 4;
+
+export function HistoryPanel({
+  uid,
+  email,
+  refreshKey,
+  publishToGlobal,
+  onPublishToGlobalChange,
+  onOpenPersonalGallery,
+  onOpenGlobalGallery,
+}: Props) {
   const [personalCards, setPersonalCards] = React.useState<PersonalCard[]>([]);
   const [publicFiles, setPublicFiles] = React.useState<ModelFileDoc[]>([]);
   const [currentTopIndices, setCurrentTopIndices] = React.useState([0, 1]);
   const [mineError, setMineError] = React.useState<string | null>(null);
   const [publicError, setPublicError] = React.useState<string | null>(null);
   const [watchFallback, setWatchFallback] = React.useState(false);
+  const [publicWatchFallback, setPublicWatchFallback] = React.useState(false);
 
   React.useEffect(() => {
     setWatchFallback(false);
+    setPublicWatchFallback(false);
   }, [uid]);
 
   const loadPersonal = React.useCallback(async () => {
@@ -60,8 +84,13 @@ export function HistoryPanel({ uid, email, refreshKey }: Props) {
     }
     setPublicError(null);
     try {
-      const rows = await listPublicModelFiles(48);
-      setPublicFiles(rows.filter((r) => r.uid !== uid));
+      const rows = await listPublicModelFiles(24);
+      setPublicFiles(
+        rows
+          .filter((r) => r.uid !== uid)
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+          .slice(0, GLOBAL_PREVIEW_LIMIT),
+      );
     } catch (e) {
       console.error(e);
       setPublicFiles([]);
@@ -112,6 +141,30 @@ export function HistoryPanel({ uid, email, refreshKey }: Props) {
     const id = setInterval(() => void loadOnce(), 15_000);
     return () => clearInterval(id);
   }, [watchFallback, loadOnce]);
+
+  React.useEffect(() => {
+    if (!uid || publicWatchFallback) return;
+
+    const w = watchPublicModelFiles(
+      uid,
+      (rows) => {
+        setPublicFiles(rows);
+        setPublicError(null);
+      },
+      (err) => {
+        console.error('watch MODELFILE public', err);
+        setPublicWatchFallback(true);
+      },
+    );
+
+    return () => w.close();
+  }, [uid, publicWatchFallback]);
+
+  React.useEffect(() => {
+    if (!publicWatchFallback) return;
+    const id = setInterval(() => void loadPublic(), 6_000);
+    return () => clearInterval(id);
+  }, [publicWatchFallback, loadPublic]);
 
   React.useEffect(() => {
     if (personalCards.length <= 2) return;
@@ -175,22 +228,30 @@ export function HistoryPanel({ uid, email, refreshKey }: Props) {
         <div className="grid grid-cols-2 gap-2">
           {topImages.length > 0 ? (
             topImages.map((img, i) => (
-              <div
+              <button
                 key={`${img.imageUrl}-${i}`}
-                className="group relative aspect-[3/4] overflow-hidden border border-black/5 bg-black/5 grayscale transition-all duration-500 hover:grayscale-0"
+                type="button"
+                disabled={!onOpenPersonalGallery}
+                onClick={() => onOpenPersonalGallery?.()}
+                className={cn(
+                  'group relative aspect-[3/4] w-full overflow-hidden border border-black/5 bg-black/5 p-0 text-left grayscale transition-all duration-500',
+                  onOpenPersonalGallery
+                    ? 'cursor-pointer hover:grayscale-0'
+                    : 'cursor-default opacity-80',
+                )}
               >
                 <img
                   src={img.imageUrl}
-                  alt="User generated"
+                  alt=""
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 flex items-end bg-black/80 p-3 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="pointer-events-none absolute inset-0 flex items-end bg-black/80 p-3 opacity-0 transition-opacity group-hover:opacity-100">
                   <span className="line-clamp-4 text-[8px] font-bold uppercase leading-tight tracking-widest text-white">
                     {img.keywords || '—'}
                   </span>
                 </div>
-              </div>
+              </button>
             ))
           ) : (
             <div className="col-span-2 flex aspect-[16/9] items-center justify-center border border-dashed border-black/10 p-4 text-center text-[9px] font-bold uppercase tracking-widest text-black/20">
@@ -200,33 +261,46 @@ export function HistoryPanel({ uid, email, refreshKey }: Props) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden">
+      <div className="flex flex-shrink-0 flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">Global</h3>
+          <div>
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">Global</h3>
+            <p className="mt-0.5 text-[7px] font-bold uppercase tracking-widest text-black/35">
+              公区最新 {GLOBAL_PREVIEW_LIMIT} 张
+            </p>
+          </div>
           <MoreHorizontal size={14} className="text-black/20" />
         </div>
-        <div className="no-scrollbar grid flex-1 grid-cols-2 gap-2 overflow-y-auto">
+        <div className="grid grid-cols-2 gap-2">
           {publicFiles.length > 0 ? (
             publicFiles.map((f) => (
-              <div
+              <button
                 key={f._id || f.cosUrl}
-                className="group relative aspect-square overflow-hidden border border-black/5 bg-black/5 grayscale transition-all duration-500 hover:grayscale-0"
+                type="button"
+                disabled={!onOpenGlobalGallery}
+                onClick={() => onOpenGlobalGallery?.()}
+                className={cn(
+                  'group relative aspect-square w-full overflow-hidden border border-black/5 bg-black/5 p-0 text-left grayscale transition-all duration-500',
+                  onOpenGlobalGallery
+                    ? 'cursor-pointer hover:grayscale-0'
+                    : 'cursor-default opacity-80',
+                )}
               >
                 <img
                   src={f.cosUrl}
-                  alt="Public"
+                  alt=""
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
                   <div className="flex h-4 w-4 items-center justify-center bg-white">
                     <div className="h-1 w-1 animate-ping bg-black" />
                   </div>
                 </div>
-              </div>
+              </button>
             ))
           ) : (
-            <div className="col-span-2 flex flex-col items-center justify-center space-y-4 py-12 text-black/20">
+            <div className="col-span-2 flex flex-col items-center justify-center space-y-3 py-8 text-black/20">
               <div className="relative h-[1px] w-8 overflow-hidden bg-black/10">
                 <motion.div
                   initial={{ x: '-100%' }}
@@ -241,23 +315,49 @@ export function HistoryPanel({ uid, email, refreshKey }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 border-t border-black/5 pt-8">
-        <div
-          className={
-            isGuest
-              ? 'flex h-10 w-10 items-center justify-center border border-dashed border-black/20 text-[9px] font-bold uppercase text-black/35'
-              : 'flex h-10 w-10 items-center justify-center bg-black text-[10px] font-bold uppercase text-white'
-          }
-        >
-          {isGuest ? '—' : displayEmail.charAt(0).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[10px] font-bold uppercase tracking-widest text-black">
-            {isGuest ? '未登录' : displayEmail.split('@')[0]}
-          </p>
-          <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-black/30">
-            {isGuest ? '左下角头像或右下角登录' : 'HMRS / MODELFILE'}
-          </p>
+      {publicWatchFallback && (
+        <p className="text-[7px] font-bold uppercase tracking-widest text-black/30">
+          Global 实时监听不可用，已改为定时刷新
+        </p>
+      )}
+
+      <div className="mt-auto flex flex-col gap-3 border-t border-black/5 pt-6">
+        <label className="flex cursor-pointer items-start gap-2 border border-black/10 bg-black/[0.02] px-2 py-2 transition-colors hover:border-black/20">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-3 w-3 shrink-0 accent-black"
+            checked={publishToGlobal}
+            disabled={isGuest}
+            onChange={(e) => onPublishToGlobalChange(e.target.checked)}
+          />
+          <span className="min-w-0">
+            <span className="block text-[8px] font-bold uppercase tracking-widest text-black">
+              导入公区
+            </span>
+            <span className="mt-0.5 block text-[7px] font-bold uppercase leading-snug tracking-wide text-black/40">
+              开启后，生成图会写入公开 MODELFILE，并在上方 Global 展示（仅最新 {GLOBAL_PREVIEW_LIMIT} 张预览）
+            </span>
+          </span>
+        </label>
+
+        <div className="flex items-center gap-4">
+          <div
+            className={
+              isGuest
+                ? 'flex h-10 w-10 shrink-0 items-center justify-center border border-dashed border-black/20 text-[9px] font-bold uppercase text-black/35'
+                : 'flex h-10 w-10 shrink-0 items-center justify-center bg-black text-[10px] font-bold uppercase text-white'
+            }
+          >
+            {isGuest ? '—' : displayEmail.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-black">
+              {isGuest ? '未登录' : displayEmail.split('@')[0]}
+            </p>
+            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-black/30">
+              {isGuest ? '左下角头像或右下角登录' : 'HMRS / MODELFILE'}
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ export const t = (key: string): string => {
     'Close-up': '特写', 'Wide shot': '广角', 'Low angle': '仰视', 'High angle': '俯视', 'Profile': '侧脸',
     'MYTHOLOGICAL': '神话', 'ANIME': '动漫', 'FANTASY': '奇幻', 'PHOTOGRAPHY': '摄影', 'SKETCH': '素描', 'DIGITAL': '数字艺术', 'PIXEL ART': '像素艺术', 'ILLUSTRATION': '插画', '3D STYLES': '3D风格',
     'Oval': '椭圆脸', 'Round': '圆脸', 'Square': '方脸', 'Heart': '心形脸', 'Diamond': '菱形脸', 'Long': '长脸',
+    'Strong jawline': '硬朗下颌',
     'High': '挺拔', 'Medium': '中等', 'Low': '扁平',
     'Wide': '宽大', 'Narrow': '窄小',
     'Full': '丰满', 'Thin': '纤细', 'Bow-shaped': 'M型唇',
