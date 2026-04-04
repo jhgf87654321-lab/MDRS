@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isValidUserImage(data) {
+      return data.userId is string &&
+             data.url is string &&
+             data.createdAt is string &&
+             data.isPublic is bool;
+    }
+
+    match /user_images/{imageId} {
+      // Allow read if user is owner or image is public
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || resource.data.isPublic == true);
+      // Allow create if user is authenticated and data is valid
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId) && isValidUserImage(request.resource.data);
+      // Allow update/delete only if user is owner
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+  }
+}
