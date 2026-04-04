@@ -15,6 +15,7 @@ import { getCloudbaseAuth, pickWebAuthUserIdEmail } from '@nftt/lib/cloudbase';
 import { generateGeminiImage } from '@nftt/lib/geminiClient';
 import { generateGeminiText } from '@nftt/lib/geminiTextClient';
 import { persistMtmGeneration } from '@nftt/lib/mtmModelPersist';
+import { translateSearchKeywordIfChinese } from './lib/searchKeywordTranslate';
 import { MtmAuth } from './MtmAuth';
 
 export default function App() {
@@ -282,8 +283,9 @@ export default function App() {
           onOpenGlobalGallery={cloudUser?.uid ? () => setAppGallery('global') : undefined}
           onSubmitKeywordSearch={
             cloudUser?.uid
-              ? (kw) => {
-                  setGallerySearchKeyword(kw);
+              ? async (kw) => {
+                  const q = await translateSearchKeywordIfChinese(kw);
+                  setGallerySearchKeyword(q);
                   setAppGallery('search');
                 }
               : undefined
