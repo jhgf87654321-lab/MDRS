@@ -126,5 +126,19 @@ export default async function handler(req: Req, res: Res) {
     }
   }
 
+  if (path === 'me') {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+    const session = getSessionFromRequest(req);
+    if (!session) return res.status(200).json({ ok: true, user: null });
+    return res.status(200).json({
+      ok: true,
+      user: {
+        uid: session.uid,
+        email: session.email,
+        role: session.role,
+      },
+    });
+  }
+
   return res.status(404).json({ error: 'Not found' });
 }
