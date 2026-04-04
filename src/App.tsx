@@ -187,8 +187,14 @@ export default function App() {
       });
 
       if (cloudUser?.uid) {
+        // 必须先结束 Generating 遮罩，否则 html2canvas 截到的是加载层而非模卡
+        flushSync(() => {
+          setIsGenerating(false);
+        });
         try {
           await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+          await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+          await new Promise((r) => setTimeout(r, 120));
           const cardPng = await mainViewportRef.current?.captureFullModelCardPng();
           const uploadDataUrl =
             cardPng && cardPng.startsWith('data:image') && cardPng.length > 500 ? cardPng : imageDataUrl;
