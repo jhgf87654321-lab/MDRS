@@ -34,6 +34,8 @@ type Props = {
   onOpenPersonalGallery?: () => void;
   /** 点击 Global 缩略图：进入公区全图库 */
   onOpenGlobalGallery?: () => void;
+  /** Archive 搜索框：回车或点击图标，按 MODELFILE.keywords 搜个人+公区并以 Gallery 展示 */
+  onSubmitKeywordSearch?: (keyword: string) => void;
 };
 
 const GLOBAL_PREVIEW_LIMIT = 4;
@@ -46,7 +48,9 @@ export function HistoryPanel({
   onPublishToGlobalChange,
   onOpenPersonalGallery,
   onOpenGlobalGallery,
+  onSubmitKeywordSearch,
 }: Props) {
+  const [searchDraft, setSearchDraft] = React.useState('');
   const [personalCards, setPersonalCards] = React.useState<PersonalCard[]>([]);
   const [publicFiles, setPublicFiles] = React.useState<ModelFileDoc[]>([]);
   const [currentTopIndices, setCurrentTopIndices] = React.useState([0, 1]);
@@ -196,16 +200,36 @@ export function HistoryPanel({
   const displayEmail = isGuest ? '访客' : email?.trim() || '已登录';
   const loadError = mineError || publicError;
 
+  const submitSearch = () => {
+    const q = searchDraft.trim();
+    if (!q || !onSubmitKeywordSearch || isGuest) return;
+    onSubmitKeywordSearch(q);
+  };
+
   return (
-    <div className="z-40 flex h-full w-[300px] flex-col gap-8 border-l border-black/5 bg-white p-8">
-      <div className="flex flex-col gap-2">
+    <div className="z-40 flex h-full w-[300px] min-w-0 max-w-[300px] flex-shrink-0 flex-col gap-8 overflow-hidden border-l border-black/5 bg-white p-8">
+      <div className="min-w-0 flex flex-col gap-2">
         <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-black/40">Archive</p>
-        <div className="group flex items-center gap-3 border-b border-black/10 py-2 transition-colors hover:border-black">
-          <Search size={14} className="text-black/20 transition-colors group-hover:text-black" />
+        <div className="group flex min-w-0 items-center gap-2 border-b border-black/10 py-2 transition-colors hover:border-black">
+          <button
+            type="button"
+            title="搜索关键词"
+            disabled={isGuest || !onSubmitKeywordSearch}
+            onClick={() => submitSearch()}
+            className="shrink-0 text-black/20 transition-colors hover:text-black disabled:opacity-30"
+          >
+            <Search size={14} />
+          </button>
           <input
             type="text"
-            placeholder="SEARCH"
-            className="w-full border-none bg-transparent text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-black/20"
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitSearch();
+            }}
+            disabled={isGuest}
+            placeholder={isGuest ? '登录后搜索' : '关键词 · 回车搜个人+公区'}
+            className="min-w-0 flex-1 border-none bg-transparent text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-black/20 placeholder:normal-case disabled:opacity-50"
           />
         </div>
       </div>
@@ -316,8 +340,8 @@ export function HistoryPanel({
         </p>
       )}
 
-      <div className="mt-auto flex flex-col gap-3 border-t border-black/5 pt-6">
-        <label className="flex cursor-pointer items-start gap-2 border border-black/10 bg-black/[0.02] px-2 py-2 transition-colors hover:border-black/20">
+      <div className="mt-auto flex min-w-0 w-full max-w-full flex-col gap-3 border-t border-black/5 pt-6">
+        <label className="flex min-w-0 cursor-pointer items-start gap-2 border border-black/10 bg-black/[0.02] px-2 py-2 transition-colors hover:border-black/20">
           <input
             type="checkbox"
             className="mt-0.5 h-3 w-3 shrink-0 accent-black"
@@ -325,17 +349,17 @@ export function HistoryPanel({
             disabled={isGuest}
             onChange={(e) => onPublishToGlobalChange(e.target.checked)}
           />
-          <span className="min-w-0">
+          <span className="min-w-0 flex-1 overflow-hidden">
             <span className="block text-[8px] font-bold uppercase tracking-widest text-black">
               导入公区
             </span>
-            <span className="mt-0.5 block text-[7px] font-bold uppercase leading-snug tracking-wide text-black/40">
+            <span className="mt-0.5 block break-words text-[7px] font-bold uppercase leading-snug tracking-wide text-black/40">
               开启后，生成图会写入公开 MODELFILE，并在上方 Global 展示（含本人，最新 {GLOBAL_PREVIEW_LIMIT} 张预览）
             </span>
           </span>
         </label>
 
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 w-full max-w-full items-center gap-3 overflow-hidden">
           <div
             className={
               isGuest
@@ -345,12 +369,12 @@ export function HistoryPanel({
           >
             {isGuest ? '—' : displayEmail.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-black">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-black" title={isGuest ? '' : displayEmail}>
               {isGuest ? '未登录' : displayEmail.split('@')[0]}
             </p>
-            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-black/30">
-              {isGuest ? '左下角头像或右下角登录' : 'HMRS / MODELFILE'}
+            <p className="truncate text-[8px] font-bold uppercase tracking-[0.2em] text-black/30">
+              {isGuest ? '左侧头像或右下角登录' : 'HMRS / MODELFILE'}
             </p>
           </div>
         </div>

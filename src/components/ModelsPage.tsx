@@ -2,7 +2,13 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Search, Filter, X, Download } from 'lucide-react';
 import { getHmrsProfile } from '@nftt/lib/hmrsDb';
-import { listModelFilesByUid, listPublicModelFiles, type ModelFileDoc } from '@nftt/lib/modelFileDb';
+import {
+  listModelFilesByUid,
+  listPublicModelFiles,
+  searchModelFileDocsForUser,
+  searchPublicModelFileDocs,
+  type ModelFileDoc,
+} from '@nftt/lib/modelFileDb';
 
 const mockModels = [
   { id: 1, name: 'Aria', author: '@studio_x', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
@@ -15,7 +21,7 @@ const mockModels = [
   { id: 8, name: 'Lyra', author: '@ai_atelier', img: 'https://images.unsplash.com/photo-1488161628813-04466f872507?auto=format&fit=crop&w=800&q=80' },
 ];
 
-export type ModelsPageVariant = 'demo' | 'personal' | 'global';
+export type ModelsPageVariant = 'demo' | 'personal' | 'global' | 'search';
 
 export type ModelsPageProps = {
   onBack: () => void;
@@ -23,6 +29,8 @@ export type ModelsPageProps = {
   uid?: string;
   email?: string;
   listRefreshKey?: number;
+  /** variant=search 时在 MODELFILE 中按 keywords 子串匹配 */
+  searchKeyword?: string;
 };
 
 type GalleryRow = {
@@ -31,6 +39,9 @@ type GalleryRow = {
   /** 仅入库与下载文件名，不在网格展示 */
   keywords: string;
   author: string;
+  createdAt?: number;
+  /** 搜索合并结果：个人库 / 公区 */
+  scope?: 'mine' | 'global';
 };
 
 function buildPersonalGalleryRows(urls: string[], files: ModelFileDoc[]): GalleryRow[] {
@@ -85,12 +96,27 @@ async function downloadImageUrl(url: string, filenameBase: string) {
   }
 }
 
+function modelDocsToSearchRows(docs: ModelFileDoc[], scope: 'mine' | 'global', uidSelf: string): GalleryRow[] {
+  return docs.map((f, i) => {
+    const shortUid = f.uid ? `${f.uid.slice(0, 6)}…` : '—';
+    return {
+      id: `${scope}-${f._id || `${f.seq}-${i}`}-${f.cosUrl.slice(-16)}`,
+      img: f.cosUrl,
+      keywords: (f.keywords || '').trim(),
+      author: scope === 'mine' ? '个人' : f.uid === uidSelf ? '公区 · 本人' : `@${shortUid}`,
+      createdAt: f.createdAt,
+      scope,
+    };
+  });
+}
+
 export function ModelsPage({
   onBack,
   variant = 'demo',
   uid,
   email,
   listRefreshKey = 0,
+  searchKeyword = '',
 }: ModelsPageProps) {
   const [rows, setRows] = React.useState<GalleryRow[]>([]);
   const [loading, setLoading] = React.useState(variant !== 'demo');
@@ -98,7 +124,13 @@ export function ModelsPage({
   const [lightbox, setLightbox] = React.useState<GalleryRow | null>(null);
 
   const headerTitle =
-    variant === 'personal' ? 'Personal Archive' : variant === 'global' ? 'Global Gallery' : 'Public Models';
+    variant === 'personal'
+      ? 'Personal Archive'
+      : variant === 'global'
+        ? 'Global Gallery'
+        : variant === 'search'
+          ? 'Keyword Search'
+          : 'Public Models';
 
   React.useEffect(() => {
     if (variant === 'demo') {
@@ -115,6 +147,13 @@ export function ModelsPage({
       return;
     }
 
+    if (variant === 'search' && !searchKeyword.trim()) {
+      setRows([]);
+      setLoading(false);
+      setLoadError(null);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -126,18 +165,46 @@ export function ModelsPage({
           const files = await listModelFilesByUid(uid, 120);
           const next = buildPersonalGalleryRows(urls, files);
           if (!cancelled) setRows(next);
-        } else {
+        } else if (variant === 'global') {
           const raw = await listPublicModelFiles(100);
           const next = buildGlobalGalleryRows(
             raw.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
           );
           if (!cancelled) setRows(next);
+        } else if (variant === 'search') {
+          const q = searchKeyword.trim();
+          const [mineDocs, pubDocs] = await Promise.all([
+            searchModelFileDocsForUser(uid, q, 100),
+            searchPublicModelFileDocs(q, 100),
+          ]);
+          const mineRows = modelDocsToSearchRows(mineDocs, 'mine', uid);
+          const pubRows = modelDocsToSearchRows(pubDocs, 'global', uid);
+          const seen = new Set<string>();
+          const merged: GalleryRow[] = [];
+          for (const r of mineRows) {
+            if (seen.has(r.img)) continue;
+            seen.add(r.img);
+            merged.push(r);
+          }
+          for (const r of pubRows) {
+            if (seen.has(r.img)) continue;
+            seen.add(r.img);
+            merged.push(r);
+          }
+          merged.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          if (!cancelled) setRows(merged);
         }
       } catch (e) {
         console.error(e);
         if (!cancelled) {
           setRows([]);
-          setLoadError(variant === 'personal' ? '个人作品加载失败' : '公区作品加载失败');
+          setLoadError(
+            variant === 'personal'
+              ? '个人作品加载失败'
+              : variant === 'search'
+                ? '关键词搜索失败'
+                : '公区作品加载失败',
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -147,7 +214,7 @@ export function ModelsPage({
     return () => {
       cancelled = true;
     };
-  }, [variant, uid, listRefreshKey]);
+  }, [variant, uid, listRefreshKey, searchKeyword]);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -198,7 +265,14 @@ export function ModelsPage({
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <div className="font-display text-2xl font-bold uppercase tracking-tighter">{headerTitle}</div>
+        <div className="flex flex-col items-center text-center">
+          <div className="font-display text-2xl font-bold uppercase tracking-tighter">{headerTitle}</div>
+          {variant === 'search' && searchKeyword.trim() ? (
+            <p className="mt-1 max-w-[min(90vw,28rem)] truncate text-[10px] font-bold uppercase tracking-widest text-black/45">
+              「{searchKeyword.trim()}」
+            </p>
+          ) : null}
+        </div>
         <div className="flex gap-6 text-black/40">
           <button type="button" className="transition-colors hover:text-black">
             <Search size={20} />
@@ -219,7 +293,15 @@ export function ModelsPage({
           </div>
         ) : variant !== 'demo' && gridItems.length === 0 ? (
           <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center text-[10px] font-bold uppercase tracking-widest text-black/25">
-            <span>{variant === 'personal' ? '暂无个人生成记录' : '暂无公区作品'}</span>
+            <span>
+              {variant === 'personal'
+                ? '暂无个人生成记录'
+                : variant === 'search'
+                  ? searchKeyword.trim()
+                    ? '未找到含该关键词的图片（MODELFILE.keywords）'
+                    : '请先在侧栏 Archive 搜索框输入关键词并回车'
+                  : '暂无公区作品'}
+            </span>
           </div>
         ) : (
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -256,6 +338,10 @@ export function ModelsPage({
                 ) : variant === 'global' ? (
                   <p className="px-1 text-center text-[9px] font-bold uppercase tracking-widest text-black/40">
                     {m.author}
+                  </p>
+                ) : variant === 'search' ? (
+                  <p className="px-1 text-center text-[9px] font-bold uppercase tracking-widest text-black/40">
+                    {m.scope === 'mine' ? '个人' : m.author}
                   </p>
                 ) : null}
               </motion.div>

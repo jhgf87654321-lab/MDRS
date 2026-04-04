@@ -94,6 +94,33 @@ export async function listModelFilesByUid(uid: string, limit = 80): Promise<Mode
     .slice(0, limit);
 }
 
+function keywordsMatch(keywords: string, needle: string): boolean {
+  const q = needle.trim().toLowerCase();
+  if (!q) return true;
+  return (keywords || '').toLowerCase().includes(q);
+}
+
+/**
+ * 在当前用户的 MODELFILE 中按 keywords 字段子串匹配（不区分大小写）。
+ * 在已拉取的最近记录上过滤，受单次查询条数上限约束。
+ */
+export async function searchModelFileDocsForUser(uid: string, needle: string, limit = 80): Promise<ModelFileDoc[]> {
+  const cap = Math.min(200, Math.max(limit, 40));
+  const all = await listModelFilesByUid(uid, cap);
+  const q = needle.trim();
+  if (!q) return all.slice(0, limit);
+  return all.filter((f) => keywordsMatch(f.keywords, q)).slice(0, limit);
+}
+
+/** 在公区 MODELFILE 中按 keywords 子串匹配 */
+export async function searchPublicModelFileDocs(needle: string, limit = 80): Promise<ModelFileDoc[]> {
+  const cap = Math.min(200, Math.max(limit, 40));
+  const all = await listPublicModelFiles(cap);
+  const q = needle.trim();
+  if (!q) return all.slice(0, limit);
+  return all.filter((f) => keywordsMatch(f.keywords, q)).slice(0, limit);
+}
+
 export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> {
   await getUidWithRetry();
   const db = getCloudbaseDb();
