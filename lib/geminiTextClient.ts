@@ -1,13 +1,15 @@
 import type { GeminiPart } from './geminiClient';
+import { apiUrl, throwIfApiRouteMissing } from './apiBase';
 
 export async function generateGeminiText(input: { parts: GeminiPart[]; model?: string }) {
-  const res = await fetch('/api/gemini-text', {
+  const res = await fetch(apiUrl('/api/gemini-text'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
 
   const text = await res.text();
+  throwIfApiRouteMissing(res, text, '/api/gemini-text');
   let data: { text?: string; error?: string } = {};
   try {
     data = (text ? (JSON.parse(text) as { text?: string; error?: string }) : {}) ?? {};

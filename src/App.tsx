@@ -270,7 +270,7 @@ export default function App() {
 
               <div className="mb-8 flex flex-col gap-2">
                 <h2 className="font-display text-2xl font-bold uppercase tracking-tight text-black">设置</h2>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">与主站一致的后端</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">本应用内置 API</p>
               </div>
 
               <div className="space-y-4 text-[11px] leading-relaxed text-black/70">
@@ -281,12 +281,10 @@ export default function App() {
                   <code className="text-black">COS_*</code>。云数据库需集合 <code className="text-black">HMRS</code>、<code className="text-black">MODELFILE</code>。
                 </p>
                 <p>
-                  本地开发：<code className="text-black">GEMINI_API_KEY</code> 放在仓库根目录{' '}
-                  <code className="text-black">.env.local</code>；终端 1 根目录运行{' '}
-                  <code className="text-black">npm run dev:api</code>（监听 3000）；终端 2 在{' '}
-                  <code className="text-black">.MTM</code> 运行 <code className="text-black">npm run dev</code>，将{' '}
-                  <code className="text-black">/api</code> 代理到 3000。主站 Vite 端口为 5173 并同样代理{' '}
-                  <code className="text-black">/api</code>。
+                  本地开发：在本应用目录放 <code className="text-black">.env.local</code>（含 <code className="text-black">GEMINI_API_KEY</code>
+                  、<code className="text-black">COS_*</code>）；终端 1 在此目录运行 <code className="text-black">npm run dev:api</code>（
+                  <code className="text-black">vercel dev</code>，默认 3000）；终端 2 <code className="text-black">npm run dev</code>，Vite 将{' '}
+                  <code className="text-black">/api</code> 代理到 3000。
                 </p>
               </div>
 

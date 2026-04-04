@@ -1,6 +1,8 @@
 # 模特工作室（.MTM）
 
-与主站共享 **CloudBase 登录**、**Gemini**（`/api/gemini`、`/api/gemini-text`）。生成图保存走 **`/api/mtm-modelcard-upload`** → COS 目录 **`MODELCARD/`**（文件名 `00000.png` 起递增）。不在浏览器内放置 Gemini API Key。
+独立应用：内置 **Vercel Serverless**（本目录 **`api/`**：`/api/gemini`、`/api/gemini-text`、`/api/mtm-modelcard-upload`）。**Gemini 密钥只放在服务端**（Vercel 环境变量或本地 `vercel dev` 读取的 `.env.local`），不要写进前端构建。
+
+生成图保存走 **`/api/mtm-modelcard-upload`** → 腾讯云 COS **`MODELCARD/`**（`00000.png` 起递增序号）。
 
 ## 云数据库（HMRS + MODELFILE）
 
@@ -44,25 +46,42 @@
 
 ## 本地运行
 
-1. **终端 A（仓库根目录）**：启动带 Serverless API 的开发服务（需加载根目录 `.env` / `.env.local` 中的 `GEMINI_API_KEY`、`COS_*` 等）。例如已关联 Vercel 时：
+1. **终端 A（本目录 `.MTM`）**：启动 Serverless 本地服务（读取本目录 `.env.local` 中的 `GEMINI_API_KEY`、`COS_*` 等；需已 `npm install`、可选 `vercel link`）：
 
    ```bash
-   npx vercel dev --listen 3000
+   npm run dev:api
    ```
+
+   等价于 `vercel dev --listen 127.0.0.1:3000`。
 
 2. **终端 B（本目录）**：
 
    ```bash
    cp .env.example .env.local
-   # 填写 VITE_CLOUDBASE_ENV_ID、VITE_CLOUDBASE_ACCESS_KEY（与根目录一致）
+   # 填写 GEMINI_API_KEY、COS_*、VITE_CLOUDBASE_* 等
    npm install
    npm run dev
    ```
 
-Vite 将 **`/api` 代理到 `http://127.0.0.1:3000`**。若主站 API 使用其它端口，请修改 `vite.config.ts` 中的 `server.proxy['/api'].target`。
+Vite 将 **`/api` 代理到 `http://127.0.0.1:3000`**。改端口时请同步修改 `vite.config.ts` 里 `server.proxy['/api'].target`。
 
-浏览器访问控制台打印的地址（默认 **5174**）。
+浏览器默认 **5174**。
 
-## 根目录快捷命令
+## 部署（Vercel，仅本应用仓库 / Root Directory = `.MTM`）
 
-在仓库根目录执行：`npm run dev:mtm` 仅启动本应用（仍需另开终端启动 API）。
+本目录已包含 **`api/`**，与静态构建 **同源** 提供 `/api/*`，无需依赖其它项目。
+
+| 设置 | 建议值 |
+|------|--------|
+| Root Directory | `.MTM`（或 MDRS 仓库若整仓即本应用则 `.`） |
+| Framework | Vite（或 Other + `npm run build`） |
+| Output | `dist`（Vite 默认） |
+| 环境变量（Production） | `GEMINI_API_KEY`（或 `GOOGLE_API_KEY`）、`COS_SECRET_ID`、`COS_SECRET_KEY`、`COS_BUCKET`、`COS_REGION`；以及构建期 `VITE_CLOUDBASE_*` 等 |
+
+部署后可用浏览器访问：`https://你的域名/api/gemini` — GET 应返回 **405 + JSON**（非 Vercel HTML 404），表示路由已挂上。
+
+**可选**：若故意把前端与 API 拆到两个域名，再在构建环境变量中设 `VITE_API_BASE_URL`（无尾斜杠）。
+
+## 与 NFTT 主仓库同仓开发时
+
+若本目录仍位于 NFTT 大仓库的 `.MTM` 子路径：部署 **MDRS 等独立仓**时，请把 **`.MTM` 下** 的 `api/`、`lib/api-cors.ts` 一并纳入版本库并推送到该仓；Vercel **Root Directory** 指向包含 `package.json` 与 `api/` 的应用根即可。

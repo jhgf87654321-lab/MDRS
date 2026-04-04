@@ -1,15 +1,17 @@
+import { apiUrl, throwIfApiRouteMissing } from './apiBase';
 import { ensureHmrsProfile, prependHmrsModelImageUrl } from './hmrsDb';
 import { addModelFileRecord } from './modelFileDb';
 
 type UploadJson = { ok?: boolean; url?: string; seq?: number; error?: string };
 
 export async function persistMtmGeneration(dataUrl: string, keywords: string, uid: string) {
-  const res = await fetch('/api/mtm-modelcard-upload', {
+  const res = await fetch(apiUrl('/api/mtm-modelcard-upload'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ dataUrl }),
   });
   const text = await res.text();
+  throwIfApiRouteMissing(res, text, '/api/mtm-modelcard-upload');
   let data: UploadJson = {};
   try {
     data = text ? (JSON.parse(text) as UploadJson) : {};
