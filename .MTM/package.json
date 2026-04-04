@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=5174 --host=0.0.0.0",
+    "dev:api": "vercel dev --listen 127.0.0.1:3000",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^1.43.0",
+    "cos-nodejs-sdk-v5": "^2.15.4",
     "@cloudbase/js-sdk": "^2.25.11",
     "@tailwindcss/vite": "^4.1.14",
     "clsx": "^2.1.1",
@@ -22,6 +25,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@vercel/node": "^5.6.11",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
