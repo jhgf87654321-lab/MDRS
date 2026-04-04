@@ -4,8 +4,12 @@ function trimBase(raw: string): string {
   return raw.trim().replace(/\/$/, '');
 }
 
+function hostKey(hostname: string): string {
+  return hostname.replace(/^www\./i, '');
+}
+
 /**
- * 若 VITE_API_BASE_URL 与当前页面同源（常见于误把 modcard.asia 填进环境变量），则视为未设置，走相对路径 /api/*。
+ * 若 VITE_API_BASE_URL 与当前页同源，或仅为 www / 非 www 差异，则视为未设置，走相对路径 /api/*。
  */
 function resolveApiBasePrefix(): { crossOrigin: boolean; prefix: string } {
   const raw = trimBase((import.meta.env?.VITE_API_BASE_URL as string | undefined) ?? '');
@@ -14,7 +18,12 @@ function resolveApiBasePrefix(): { crossOrigin: boolean; prefix: string } {
   if (typeof window !== 'undefined') {
     try {
       const baseUrl = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-      if (new URL(baseUrl).origin === window.location.origin) {
+      const base = new URL(baseUrl);
+      const page = new URL(window.location.href);
+      const sameOrigin = base.origin === page.origin;
+      const sameSite =
+        base.protocol === page.protocol && hostKey(base.hostname) === hostKey(page.hostname);
+      if (sameOrigin || sameSite) {
         return { crossOrigin: false, prefix: '' };
       }
     } catch {
