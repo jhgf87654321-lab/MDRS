@@ -39,21 +39,33 @@ async function getUid() {
   throw new Error('NOT_SIGNED_IN');
 }
 
+function firstRowFromGetRes(res: unknown): UserProfileDoc | undefined {
+  const raw = (res as any)?.data;
+  if (Array.isArray(raw)) return raw[0] as UserProfileDoc | undefined;
+  if (raw && typeof raw === 'object') return raw as UserProfileDoc;
+  return undefined;
+}
+
 async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
   const db = getCloudbaseDb();
+  // Web 端安全规则常要求查询条件含当前用户子集；优先用 `{uid}` 模板（见 CloudBase 文档库安全规则说明）
+  try {
+    const res = await db.collection(COLLECTION).where({ uid: '{uid}' }).limit(1).get();
+    const doc = firstRowFromGetRes(res);
+    if (doc && doc.uid === uid) return doc;
+  } catch {
+    // ignore
+  }
   try {
     const res = await db.collection(COLLECTION).doc(uid).get();
-    const raw = (res as any)?.data;
-    const doc = (Array.isArray(raw) ? raw[0] : raw) as UserProfileDoc | undefined;
+    const doc = firstRowFromGetRes(res);
     if (doc) return doc;
   } catch {
     // ignore and fallback to uid-field query
   }
   try {
-    // Fallback for historical/abnormal records where _id is not equal to uid
     const res = await db.collection(COLLECTION).where({ uid }).limit(1).get();
-    const raw = (res as any)?.data;
-    const doc = (Array.isArray(raw) ? raw[0] : raw) as UserProfileDoc | undefined;
+    const doc = firstRowFromGetRes(res);
     return doc ?? null;
   } catch {
     return null;
@@ -95,8 +107,12 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
     // 1) try update existing doc matched by uid field
     // 2) if not exists, add a new doc with uid field
     try {
-      const q = await db.collection(COLLECTION).where({ uid }).limit(1).get();
-      const rows = ((q as any)?.data || []) as Array<{ _id?: string } & UserProfileDoc>;
+      let q = await db.collection(COLLECTION).where({ uid: '{uid}' }).limit(1).get();
+      let rows = ((q as any)?.data || []) as Array<{ _id?: string } & UserProfileDoc>;
+      if (!Array.isArray(rows) || rows.length === 0) {
+        q = await db.collection(COLLECTION).where({ uid }).limit(1).get();
+        rows = ((q as any)?.data || []) as Array<{ _id?: string } & UserProfileDoc>;
+      }
       const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
       const rowId = row?._id;
       if (rowId) {
@@ -109,6 +125,37 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
       throw err;
     }
   }
+}
+
+/** 首次创建：优先 doc(uid).set（与 auth.uid 同 id，避免重复文档），失败再 add，最后走 setProfileDoc 全链路 */
+async function createUserProfileDocument(uid: string, doc: UserProfileDoc) {
+  const db = getCloudbaseDb();
+  const payload = {
+    uid: doc.uid,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    ...(doc.displayName ? { displayName: doc.displayName } : {}),
+    ...(doc.avatarUrl ? { avatarUrl: doc.avatarUrl } : {}),
+    ownedNfts: doc.ownedNfts,
+  };
+
+  try {
+    await db.collection(COLLECTION).doc(uid).set(payload);
+    return;
+  } catch (e) {
+    console.warn('[userProfile] doc(uid).set create failed', (e as any)?.code ?? (e as any)?.message ?? e);
+  }
+
+  try {
+    const res = await db.collection(COLLECTION).add(payload);
+    const code = (res as any)?.code;
+    if (typeof code === 'string' && code.length > 0) throw new Error(code);
+    return;
+  } catch (e) {
+    console.warn('[userProfile] collection.add create failed', (e as any)?.code ?? (e as any)?.message ?? e);
+  }
+
+  await setProfileDoc(uid, doc);
 }
 
 async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
@@ -132,7 +179,7 @@ async function updateOwnedNfts(uid: string, next: OwnedNftRef[]) {
 
 export async function ensureUserProfile(uidHint?: string) {
   const uid = uidHint && uidHint.trim() ? uidHint.trim() : await getUid();
-  const existing = await getProfileDoc(uid);
+  let existing = await getProfileDoc(uid);
   if (existing) return existing;
   const now = Date.now();
   const doc: UserProfileDoc = {
@@ -141,18 +188,18 @@ export async function ensureUserProfile(uidHint?: string) {
     updatedAt: now,
     ownedNfts: [],
   };
-  await setProfileDoc(uid, doc);
-  return doc;
+  await createUserProfileDocument(uid, doc);
+  // 写入后读可能受规则子集校验或短暂延迟影响，多轮重试
+  for (let i = 0; i < 20; i += 1) {
+    existing = await getProfileDoc(uid);
+    if (existing) return existing;
+    await new Promise((r) => setTimeout(r, 80 + i * 40));
+  }
+  throw new Error('PROFILE_CREATE_VERIFY_FAILED');
 }
 
 export async function ensureUserProfileStrict(uidHint?: string) {
-  const uid = uidHint && uidHint.trim() ? uidHint.trim() : await getUid();
-  await ensureUserProfile(uid);
-  const verified = await getProfileDoc(uid);
-  if (!verified) {
-    throw new Error('PROFILE_CREATE_VERIFY_FAILED');
-  }
-  return verified;
+  return ensureUserProfile(uidHint);
 }
 
 export async function listMyOwnedNfts(): Promise<OwnedNftRef[]> {

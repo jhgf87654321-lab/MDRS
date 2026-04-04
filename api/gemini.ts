@@ -82,9 +82,12 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
+    return res.status(500).json({
+      error:
+        'GEMINI_API_KEY is not configured. Add it to the repo root .env.local and run `npm run dev:api` (port 3000) alongside Vite; .MTM/.env is not read by the API process.',
+    });
   }
 
   const body = req.body;

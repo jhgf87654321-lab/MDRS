@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-black font-sans overflow-hidden;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+  @keyframes flash-bw-btn {
+    0%, 100% { background-color: transparent; color: black; border-color: rgba(0,0,0,0.05); }
+    50% { background-color: black; color: white; border-color: black; }
+  }
+  .animate-flash-bw-btn {
+    animation: flash-bw-btn 3s ease-in-out infinite;
+  }
+
+  @keyframes flash-bw-box {
+    0%, 100% { background-color: rgba(0,0,0,0.05); color: rgba(0,0,0,0.4); }
+    50% { background-color: black; color: white; }
+  }
+  .animate-flash-bw-box {
+    animation: flash-bw-box 3s ease-in-out infinite;
+  }
+}
