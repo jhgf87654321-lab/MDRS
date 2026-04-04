@@ -32,6 +32,10 @@ function assertDb(res: unknown, op: string) {
   }
 }
 
+function normalizeIsPublicField(v: unknown): boolean {
+  return v === true || v === 'true' || v === 1;
+}
+
 export async function addModelFileRecord(input: {
   seq: number;
   cosUrl: string;
@@ -40,15 +44,26 @@ export async function addModelFileRecord(input: {
   isPublic?: boolean;
 }) {
   const db = getCloudbaseDb();
-  const res = await db.collection(MODELFILE_COLLECTION).add({
+  const isPub = input.isPublic === true;
+  const payload = {
     seq: input.seq,
     cosUrl: input.cosUrl.trim(),
     keywords: input.keywords.trim(),
     uid: input.uid,
     createdAt: Date.now(),
-    isPublic: input.isPublic === true,
-  });
+    isPublic: isPub,
+  };
+  const res = await db.collection(MODELFILE_COLLECTION).add(payload);
   assertDb(res, 'MODELFILE 写入');
+  const newId = (res as { id?: string; _id?: string })?.id ?? (res as { id?: string; _id?: string })?._id;
+  if (isPub && newId) {
+    try {
+      const up = await db.collection(MODELFILE_COLLECTION).doc(newId).update({ isPublic: true });
+      assertDb(up, 'MODELFILE isPublic 确认');
+    } catch (e) {
+      console.warn('[MODELFILE] isPublic 二次写入失败', e);
+    }
+  }
 }
 
 export async function listModelFilesByUid(uid: string, limit = 80): Promise<ModelFileDoc[]> {
@@ -75,5 +90,9 @@ export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> 
   assertDb(res, 'MODELFILE 公开查询');
   const raw = (res as any)?.data;
   const rows = (Array.isArray(raw) ? raw : []) as ModelFileDoc[];
-  return rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, limit);
+  return rows
+    .map((r) => ({ ...r, isPublic: normalizeIsPublicField((r as ModelFileDoc).isPublic) }))
+    .filter((r) => r.isPublic === true)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, limit);
 }

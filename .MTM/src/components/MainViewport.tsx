@@ -1,10 +1,14 @@
-import React, { useRef } from 'react';
-import { Plus, ArrowDown, Download, Share2 } from 'lucide-react';
+import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import { Plus, ArrowDown, Download, Share2, ImageDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2canvas from 'html2canvas';
-import { cn } from '../lib/utils';
 import { t } from '../lib/translations';
 import { CharacterAttributes } from '../types';
+
+export type MainViewportHandle = {
+  /** 截取含外圈摩卡阴影的整张模卡为 PNG data URL（供 COS 上传） */
+  captureFullModelCardPng: () => Promise<string | null>;
+};
 
 interface MainViewportProps {
   imageUrl: string | null;
@@ -15,141 +19,201 @@ interface MainViewportProps {
   onAttributesChange: (attrs: CharacterAttributes) => void;
 }
 
-export function MainViewport({ imageUrl, isGenerating, onGenerate, error, attributes, onAttributesChange }: MainViewportProps) {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [isFocused, setIsFocused] = React.useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+async function dataUrlToDownload(dataUrl: string, filename: string) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 
-  const showPrompt = isHovered || isFocused || (attributes.customPrompt && attributes.customPrompt.length > 0);
+export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(function MainViewport(
+  { imageUrl, isGenerating, onGenerate, error, attributes, onAttributesChange },
+  ref,
+) {
+  /** 含外圈白底、阴影、边框的完整模卡区域 */
+  const fullCardRef = useRef<HTMLDivElement>(null);
 
   const handlePromptChange = (val: string) => {
     onAttributesChange({ ...attributes, customPrompt: val });
   };
 
-  const handleDownload = async () => {
-    if (!imageUrl || !cardRef.current) return;
+  const captureFullCardInternal = async (): Promise<string | null> => {
+    const el = fullCardRef.current;
+    if (!el) return null;
+    const buttonsDiv = el.querySelector('.download-buttons') as HTMLElement | null;
+    const prevVis = buttonsDiv?.style.visibility;
+    if (buttonsDiv) buttonsDiv.style.visibility = 'hidden';
     try {
-      // Temporarily hide the download button during capture
-      const buttonsDiv = cardRef.current.querySelector('.download-buttons') as HTMLElement;
-      if (buttonsDiv) buttonsDiv.style.display = 'none';
-
-      const canvas = await html2canvas(cardRef.current, {
+      const img = el.querySelector('img');
+      if (img && !img.complete) {
+        await new Promise<void>((resolve) => {
+          const done = () => resolve();
+          img.onload = done;
+          img.onerror = done;
+        });
+      }
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const canvas = await html2canvas(el, {
         useCORS: true,
         scale: 2,
         backgroundColor: '#ffffff',
+        logging: false,
       });
+      return canvas.toDataURL('image/png');
+    } catch (err) {
+      console.error('captureFullCardInternal failed:', err);
+      return null;
+    } finally {
+      if (buttonsDiv) buttonsDiv.style.visibility = prevVis || '';
+    }
+  };
 
-      if (buttonsDiv) buttonsDiv.style.display = 'flex';
+  useImperativeHandle(
+    ref,
+    () => ({
+      captureFullModelCardPng: () => captureFullCardInternal(),
+    }),
+    [],
+  );
 
-      const url = canvas.toDataURL('image/png');
+  /** 下载整张模卡（含外圈摩卡） */
+  const handleDownloadModelCard = async () => {
+    if (!imageUrl) return;
+    const png = await captureFullCardInternal();
+    if (png) {
+      await dataUrlToDownload(
+        png,
+        `${attributes.name.replace(/\s+/g, '_').toLowerCase()}_model_card.png`,
+      );
+      return;
+    }
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${attributes.name.replace(/\s+/g, '_').toLowerCase()}_model_card.png`;
+      a.download = `${attributes.name.replace(/\s+/g, '_').toLowerCase()}_model.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch (err) {
-      console.error('Failed to download card:', err);
-      // Fallback to just downloading the image
-      try {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${attributes.name.replace(/\s+/g, '_').toLowerCase()}_model.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } catch (fallbackErr) {
-        console.error('Fallback download failed:', fallbackErr);
-        const a = document.createElement('a');
-        a.href = imageUrl;
-        a.download = `${attributes.name.replace(/\s+/g, '_').toLowerCase()}_model.png`;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (fallbackErr) {
+      console.error('Fallback download failed:', fallbackErr);
+    }
+  };
+
+  /** 仅下载 AI 生成图（不含模卡边框与页眉页脚） */
+  const handleDownloadRawImage = async () => {
+    if (!imageUrl) return;
+    const base = `${attributes.name.replace(/\s+/g, '_').toLowerCase()}_generated`;
+    try {
+      if (imageUrl.startsWith('data:')) {
+        await dataUrlToDownload(imageUrl, `${base}.png`);
+        return;
       }
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const ext = blob.type.includes('jpeg') ? 'jpg' : blob.type.includes('webp') ? 'webp' : 'png';
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${base}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      const a = document.createElement('a');
+      a.href = imageUrl;
+      a.download = `${base}.png`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
   return (
-    <div className="flex-1 relative h-full flex flex-col items-center p-12 overflow-y-auto no-scrollbar">
-      {/* Main Image Container (Model Card Style) */}
-      <div className="relative w-full max-w-2xl flex-shrink-0 aspect-[3/4] bg-white overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.1)] flex flex-col border border-black/5">
+    <div className="relative flex h-full flex-1 flex-col items-center overflow-y-auto p-12 no-scrollbar">
+      <div
+        ref={fullCardRef}
+        className="relative flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
+      >
         <AnimatePresence mode="wait">
           {isGenerating ? (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-white z-50"
+              className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-white"
             >
-              <div className="w-16 h-[1px] bg-black/10 relative overflow-hidden">
-                <motion.div 
+              <div className="relative h-[1px] w-16 overflow-hidden bg-black/10">
+                <motion.div
                   initial={{ x: '-100%' }}
                   animate={{ x: '100%' }}
-                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
                   className="absolute inset-0 bg-black"
                 />
               </div>
-              <p className="text-black text-[10px] font-bold tracking-[0.4em] uppercase">Generating Card</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-black">Generating Card</p>
             </motion.div>
           ) : error ? (
-            <motion.div 
+            <motion.div
               key="error"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center gap-8 bg-white z-50"
+              className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-white p-12 text-center"
             >
-              <div className="w-12 h-12 border border-black/10 flex items-center justify-center">
-                <div className="w-2 h-2 bg-black rounded-full animate-ping" />
+              <div className="flex h-12 w-12 items-center justify-center border border-black/10">
+                <div className="h-2 w-2 animate-ping rounded-full bg-black" />
               </div>
-              <p className="text-black text-[10px] font-bold tracking-widest uppercase leading-relaxed">{error}</p>
-              <button 
+              <p className="text-[10px] font-bold uppercase leading-relaxed tracking-widest text-black">{error}</p>
+              <button
+                type="button"
                 onClick={() => onGenerate()}
-                className="px-8 py-3 border border-black text-[10px] font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all"
+                className="border border-black px-8 py-3 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-black hover:text-white"
               >
                 Retry
               </button>
             </motion.div>
           ) : imageUrl ? (
-            <motion.div 
+            <motion.div
               key="model-card"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 flex flex-col bg-white p-12"
-              ref={cardRef}
+              className="flex flex-1 flex-col bg-white p-12"
             >
-              {/* Card Header */}
-              <div className="flex justify-between items-end mb-12">
+              <div className="mb-12 flex items-end justify-between">
                 <div className="flex flex-col gap-1">
-                  <p className="text-black/40 text-[9px] font-bold tracking-[0.3em] uppercase">Model Profile</p>
-                  <h1 className="text-4xl font-display tracking-tighter text-black font-bold uppercase leading-none">{attributes.name}</h1>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-black/40">Model Profile</p>
+                  <h1 className="font-display text-4xl font-bold uppercase leading-none tracking-tighter text-black">
+                    {attributes.name}
+                  </h1>
                 </div>
                 <div className="text-right">
-                  <p className="text-black text-[10px] font-bold tracking-widest uppercase">SS / 26</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-black">SS / 26</p>
                 </div>
               </div>
 
-              {/* Image Grid */}
-              <div className="flex-1 relative overflow-hidden transition-all duration-700 cursor-crosshair group">
-                <img 
+              <div className="group relative flex-1 cursor-crosshair overflow-hidden transition-all duration-700">
+                <img
                   src={imageUrl}
-                  alt="Model Comp Card"
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  alt="Generated model (右键另存为可保存无模卡边框的纯图)"
+                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                   crossOrigin="anonymous"
                 />
-                <div className="absolute inset-0 border border-black/5" />
+                <div className="pointer-events-none absolute inset-0 border border-black/5" />
               </div>
 
-              {/* Card Footer */}
-              <div className="mt-12 flex justify-between items-center">
-                <div className="flex gap-8 text-[9px] font-bold tracking-[0.2em] text-black uppercase">
+              <div className="mt-12 flex items-center justify-between">
+                <div className="flex gap-8 text-[9px] font-bold uppercase tracking-[0.2em] text-black">
                   <div className="flex flex-col gap-1">
                     <span className="text-black/30">Age</span>
                     <span>{attributes.age}</span>
@@ -171,15 +235,28 @@ export function MainViewport({ imageUrl, isGenerating, onGenerate, error, attrib
                     <span>{t(attributes.skinTone)}</span>
                   </div>
                 </div>
-                <div className="flex gap-4 download-buttons">
-                  <button 
-                    onClick={handleDownload}
-                    className="w-8 h-8 border border-black/10 flex items-center justify-center text-black hover:bg-black hover:text-white transition-all"
-                    title="Download Image"
+                <div className="download-buttons flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleDownloadModelCard()}
+                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
+                    title="下载整张模卡（含外圈摩卡）"
                   >
                     <Download size={14} />
                   </button>
-                  <button className="w-8 h-8 border border-black/10 flex items-center justify-center text-black hover:bg-black hover:text-white transition-all">
+                  <button
+                    type="button"
+                    onClick={() => void handleDownloadRawImage()}
+                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
+                    title="仅下载 AI 生成图（无模卡）"
+                  >
+                    <ImageDown size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
+                    title="分享"
+                  >
                     <Share2 size={14} />
                   </button>
                 </div>
@@ -187,42 +264,43 @@ export function MainViewport({ imageUrl, isGenerating, onGenerate, error, attrib
             </motion.div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-white">
-              <div className="w-12 h-12 border border-black/5 flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center border border-black/5">
                 <Plus size={16} className="text-black/20" />
               </div>
-              <p className="text-black/20 text-[10px] font-bold tracking-[0.4em] uppercase">No Card Generated</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-black/20">No Card Generated</p>
             </div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Prompt Input (Moved below the card to avoid overlap) */}
-      <div 
-        className="w-full max-w-2xl mt-8 flex flex-col items-center pb-12"
-      >
-        <div className="w-full relative min-h-[40px]">
-          <motion.div 
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full flex flex-col gap-2"
-          >
-            <div className="flex flex-col gap-2 border border-black/10 p-4 bg-white shadow-sm group hover:border-black transition-colors">
+      <div className="mt-8 flex w-full max-w-2xl flex-col items-center pb-12">
+        {imageUrl && !isGenerating && !error && (
+          <p className="mb-3 text-center text-[8px] font-bold uppercase tracking-widest text-black/35">
+            右键上方大图「图片另存为」可保存不含模卡装饰的纯生成图；左侧按钮下载整张模卡
+          </p>
+        )}
+        <div className="relative min-h-[40px] w-full">
+          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex w-full flex-col gap-2">
+            <div className="group flex flex-col gap-2 border border-black/10 bg-white p-4 shadow-sm transition-colors hover:border-black">
               <div className="flex items-center justify-between">
-                <span className="text-black/40 text-[8px] font-bold tracking-[0.2em] uppercase">自定义指令 (Custom Directives)</span>
-                <button 
+                <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-black/40">
+                  自定义指令 (Custom Directives)
+                </span>
+                <button
                   id="tutorial-step-4"
+                  type="button"
                   onClick={() => onGenerate()}
-                  className="text-black hover:translate-x-1 transition-transform flex items-center gap-2"
+                  className="flex items-center gap-2 text-black transition-transform hover:translate-x-1"
                 >
-                  <span className="text-[8px] font-bold tracking-widest uppercase">Generate</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest">Generate</span>
                   <ArrowDown size={12} className="-rotate-90" />
                 </button>
               </div>
-              <textarea 
+              <textarea
                 value={attributes.customPrompt}
                 onChange={(e) => handlePromptChange(e.target.value)}
-                placeholder="ADD CUSTOM PROMPT DIRECTIVES OR EXTRA CONDITIONS HERE..." 
-                className="bg-transparent border-none outline-none text-black w-full placeholder:text-black/20 text-xs font-medium resize-none min-h-[60px] py-2"
+                placeholder="ADD CUSTOM PROMPT DIRECTIVES OR EXTRA CONDITIONS HERE..."
+                className="min-h-[60px] w-full resize-none border-none bg-transparent py-2 text-xs font-medium text-black outline-none placeholder:text-black/20"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -231,7 +309,7 @@ export function MainViewport({ imageUrl, isGenerating, onGenerate, error, attrib
                 }}
               />
             </div>
-            <p className="text-black/20 text-[8px] font-bold tracking-widest uppercase text-center">
+            <p className="text-center text-[8px] font-bold uppercase tracking-widest text-black/20">
               Press Enter to generate, Shift+Enter for new line
             </p>
           </motion.div>
@@ -239,4 +317,4 @@ export function MainViewport({ imageUrl, isGenerating, onGenerate, error, attrib
       </div>
     </div>
   );
-}
+});

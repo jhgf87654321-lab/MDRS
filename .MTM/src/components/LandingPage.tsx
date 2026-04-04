@@ -20,21 +20,21 @@ const initialPresetImages = [
 
 export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
   const [images, setImages] = useState(initialPresetImages);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(() => setIsPlaying(false));
-      } else {
-        audioRef.current.pause();
-      }
+    const a = audioRef.current;
+    if (!a) return;
+    if (isPlaying) {
+      void a.play().catch(() => setIsPlaying(false));
+    } else {
+      a.pause();
     }
   }, [isPlaying]);
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying);
+    setIsPlaying((v) => !v);
   };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

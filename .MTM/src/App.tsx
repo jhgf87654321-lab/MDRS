@@ -1,7 +1,8 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { Sidebar } from './components/Sidebar';
 import { HistoryPanel } from './components/HistoryPanel';
-import { MainViewport } from './components/MainViewport';
+import { MainViewport, type MainViewportHandle } from './components/MainViewport';
 import { CustomizationPanel } from './components/CustomizationPanel';
 import { LandingPage } from './components/LandingPage';
 import { ModelsPage } from './components/ModelsPage';
@@ -43,6 +44,9 @@ export default function App() {
       return false;
     }
   });
+  const publishToGlobalRef = React.useRef(publishToGlobal);
+  publishToGlobalRef.current = publishToGlobal;
+  const mainViewportRef = React.useRef<MainViewportHandle>(null);
 
   React.useEffect(() => {
     try {
@@ -178,14 +182,19 @@ export default function App() {
         imageDataUrl = await generateGeminiImage({ model, prompt });
       }
 
-      setImageUrl(imageDataUrl);
+      flushSync(() => {
+        setImageUrl(imageDataUrl);
+      });
 
       if (cloudUser?.uid) {
         try {
-          const { url } = await persistMtmGeneration(imageDataUrl, prompt, cloudUser.uid, {
-            publishToPublic: publishToGlobal,
+          await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+          const cardPng = await mainViewportRef.current?.captureFullModelCardPng();
+          const uploadDataUrl =
+            cardPng && cardPng.startsWith('data:image') && cardPng.length > 500 ? cardPng : imageDataUrl;
+          await persistMtmGeneration(uploadDataUrl, prompt, cloudUser.uid, {
+            publishToPublic: publishToGlobalRef.current === true,
           });
-          setImageUrl(url);
           setHistoryRefreshKey((k) => k + 1);
         } catch (persistErr) {
           console.error('Persist image failed:', persistErr);
@@ -241,6 +250,7 @@ export default function App() {
         />
         <div className="min-w-0 flex-1 bg-[#f8f8f8]">
           <MainViewport
+            ref={mainViewportRef}
             imageUrl={imageUrl}
             isGenerating={isGenerating}
             onGenerate={() => void handleGenerate()}
