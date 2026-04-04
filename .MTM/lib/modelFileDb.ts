@@ -46,7 +46,7 @@ export async function addModelFileRecord(input: {
     keywords: input.keywords.trim(),
     uid: input.uid,
     createdAt: Date.now(),
-    isPublic: input.isPublic !== false,
+    isPublic: input.isPublic === true,
   });
   assertDb(res, 'MODELFILE 写入');
 }
@@ -76,4 +76,52 @@ export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> 
   const raw = (res as any)?.data;
   const rows = (Array.isArray(raw) ? raw : []) as ModelFileDoc[];
   return rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, limit);
+}
+
+function snapshotDocsToArray(snapshot: unknown): Record<string, unknown>[] {
+  const docs = (snapshot as { docs?: unknown })?.docs;
+  if (docs && typeof docs === 'object' && !Array.isArray(docs)) {
+    return Object.values(docs as Record<string, Record<string, unknown>>);
+  }
+  if (Array.isArray(docs)) return docs as Record<string, unknown>[];
+  return [];
+}
+
+function rowToModelFileDoc(row: Record<string, unknown>): ModelFileDoc | null {
+  const cosUrl = row.cosUrl;
+  if (typeof cosUrl !== 'string' || !cosUrl.trim()) return null;
+  return {
+    _id: typeof row._id === 'string' ? row._id : undefined,
+    seq: typeof row.seq === 'number' ? row.seq : 0,
+    cosUrl: cosUrl.trim(),
+    keywords: typeof row.keywords === 'string' ? row.keywords : '',
+    uid: typeof row.uid === 'string' ? row.uid : '',
+    createdAt: typeof row.createdAt === 'number' ? row.createdAt : 0,
+    isPublic: row.isPublic === true,
+  };
+}
+
+/** 监听公区 MODELFILE（最新 4 条，排除本人），失败时由调用方回退轮询 */
+export function watchPublicModelFiles(
+  uidSelf: string,
+  onRows: (rows: ModelFileDoc[]) => void,
+  onError?: (e: unknown) => void,
+): { close: () => void } {
+  const db = getCloudbaseDb();
+  const w = db
+    .collection(MODELFILE_COLLECTION)
+    .where({ isPublic: true })
+    .watch({
+      onChange(snapshot) {
+        const rows = snapshotDocsToArray(snapshot)
+          .map((r) => rowToModelFileDoc(r))
+          .filter((x): x is ModelFileDoc => x !== null && x.isPublic === true)
+          .filter((r) => r.uid !== uidSelf)
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+          .slice(0, 4);
+        onRows(rows);
+      },
+      onError: (err) => onError?.(err),
+    });
+  return { close: () => w.close() };
 }

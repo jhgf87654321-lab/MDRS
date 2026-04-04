@@ -4,7 +4,16 @@ import { addModelFileRecord } from './modelFileDb';
 
 type UploadJson = { ok?: boolean; url?: string; seq?: number; error?: string };
 
-export async function persistMtmGeneration(dataUrl: string, keywords: string, uid: string) {
+export type PersistMtmOptions = {
+  publishToPublic?: boolean;
+};
+
+export async function persistMtmGeneration(
+  dataUrl: string,
+  keywords: string,
+  uid: string,
+  options?: PersistMtmOptions,
+) {
   const res = await fetch(apiUrl('/api/mtm-modelcard-upload'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -29,7 +38,7 @@ export async function persistMtmGeneration(dataUrl: string, keywords: string, ui
     cosUrl: url,
     keywords,
     uid,
-    isPublic: true,
+    isPublic: options?.publishToPublic === true,
   });
   await prependHmrsModelImageUrl(uid, url);
   return { url, seq };

@@ -4,7 +4,17 @@ import { addModelFileRecord } from './modelFileDb';
 
 type UploadJson = { ok?: boolean; url?: string; seq?: number; error?: string };
 
-export async function persistMtmGeneration(dataUrl: string, keywords: string, uid: string) {
+export type PersistMtmOptions = {
+  /** 为 true 时写入 MODELFILE.isPublic，出现在 Global 公区 */
+  publishToPublic?: boolean;
+};
+
+export async function persistMtmGeneration(
+  dataUrl: string,
+  keywords: string,
+  uid: string,
+  options?: PersistMtmOptions,
+) {
   const res = await fetch(apiUrl('/api/mtm-modelcard-upload'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -29,7 +39,7 @@ export async function persistMtmGeneration(dataUrl: string, keywords: string, ui
     cosUrl: url,
     keywords,
     uid,
-    isPublic: true,
+    isPublic: options?.publishToPublic === true,
   });
   await prependHmrsModelImageUrl(uid, url);
   return { url, seq };

@@ -29,6 +29,28 @@ export default function App() {
   const [cloudUser, setCloudUser] = React.useState<{ uid: string; email?: string } | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = React.useState(0);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [appGallery, setAppGallery] = React.useState<null | 'personal' | 'global'>(null);
+
+  React.useEffect(() => {
+    if (!cloudUser?.uid) setAppGallery(null);
+  }, [cloudUser?.uid]);
+
+  const PUBLISH_GLOBAL_KEY = 'mtm_publish_to_global';
+  const [publishToGlobal, setPublishToGlobal] = React.useState(() => {
+    try {
+      return typeof window !== 'undefined' && window.localStorage.getItem(PUBLISH_GLOBAL_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(PUBLISH_GLOBAL_KEY, publishToGlobal ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [publishToGlobal]);
 
   const mountedRef = React.useRef(true);
   React.useEffect(() => {
@@ -160,7 +182,9 @@ export default function App() {
 
       if (cloudUser?.uid) {
         try {
-          const { url } = await persistMtmGeneration(imageDataUrl, prompt, cloudUser.uid);
+          const { url } = await persistMtmGeneration(imageDataUrl, prompt, cloudUser.uid, {
+            publishToPublic: publishToGlobal,
+          });
           setImageUrl(url);
           setHistoryRefreshKey((k) => k + 1);
         } catch (persistErr) {
@@ -191,7 +215,9 @@ export default function App() {
         {currentView === 'landing' && (
           <LandingPage onEnter={handleEnterApp} onNavigateToModels={() => setCurrentView('models')} />
         )}
-        {currentView === 'models' && <ModelsPage onBack={() => setCurrentView('landing')} />}
+        {currentView === 'models' && (
+          <ModelsPage variant="demo" onBack={() => setCurrentView('landing')} />
+        )}
       </AnimatePresence>
 
       <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.03]">
@@ -227,8 +253,28 @@ export default function App() {
           uid={cloudUser?.uid ?? ''}
           email={cloudUser?.email}
           refreshKey={historyRefreshKey}
+          publishToGlobal={publishToGlobal}
+          onPublishToGlobalChange={setPublishToGlobal}
+          onOpenPersonalGallery={
+            cloudUser?.uid ? () => setAppGallery('personal') : undefined
+          }
+          onOpenGlobalGallery={cloudUser?.uid ? () => setAppGallery('global') : undefined}
         />
       </div>
+
+      <AnimatePresence>
+        {currentView === 'app' &&
+          appGallery &&
+          cloudUser?.uid &&
+          React.createElement(ModelsPage, {
+            key: appGallery,
+            variant: appGallery,
+            uid: cloudUser.uid,
+            email: cloudUser.email,
+            listRefreshKey: historyRefreshKey,
+            onBack: () => setAppGallery(null),
+          })}
+      </AnimatePresence>
 
       {tutorialStep > 0 && (
         <TutorialOverlay

@@ -179,44 +179,62 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
         </div>
       )}
 
-      {/* Always show Reference Image section */}
-      <div className="mb-4 p-3 bg-black/5 border border-black/5 space-y-3" id="tutorial-step-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div 
-              className={cn(
-                "w-8 h-8 rounded-sm overflow-hidden flex items-center justify-center transition-all",
-                attributes.referenceImage ? "bg-black/10" : "bg-black/5 hover:bg-black/10 cursor-pointer animate-flash-bw-box hover:animate-none"
-              )}
-              onClick={() => !attributes.referenceImage && referenceInputRef.current?.click()}
-            >
-              {attributes.referenceImage ? (
-                <img src={attributes.referenceImage} alt="Reference" className="w-full h-full object-cover" />
-              ) : (
-                <ImagePlus size={14} className={attributes.referenceImage ? "text-black/40" : "currentColor"} />
-              )}
+      {/* 参考图 + 权重（紧凑单行布局，减少纵向占用） */}
+      <div
+        className="mb-3 rounded-sm border border-black/5 bg-black/5 p-2"
+        id="tutorial-step-2"
+      >
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className={cn(
+              'relative h-9 w-9 shrink-0 overflow-hidden rounded-sm border border-black/10 transition-all',
+              attributes.referenceImage
+                ? 'bg-black/10'
+                : 'cursor-pointer bg-black/5 hover:bg-black/10 animate-flash-bw-box hover:animate-none',
+            )}
+            onClick={() => !attributes.referenceImage && referenceInputRef.current?.click()}
+            aria-label="上传参考图"
+          >
+            {attributes.referenceImage ? (
+              <img src={attributes.referenceImage} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-black/35">
+                <ImagePlus size={12} />
+              </span>
+            )}
+          </button>
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[7px] font-bold uppercase tracking-wider text-black">
+                参考图权重
+              </span>
+              <span className="shrink-0 font-mono text-[7px] font-bold text-black/50">
+                {Math.round(attributes.referenceWeight * 100)}%
+              </span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-black text-[8px] font-bold tracking-widest uppercase">参考图 (本地上传)</span>
-              <span className="text-black/40 text-[7px] uppercase">{attributes.referenceImage ? 'Active' : 'Not Set'}</span>
-            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={Math.round(attributes.referenceWeight * 100)}
+              onChange={(e) => updateAttr('referenceWeight', parseInt(e.target.value, 10) / 100)}
+              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-black/10 accent-black"
+            />
           </div>
-          {attributes.referenceImage && (
-            <button 
+          {attributes.referenceImage ? (
+            <button
+              type="button"
               onClick={() => onChange({ ...attributes, referenceImage: null })}
-              className="text-black/20 hover:text-black transition-colors"
+              className="shrink-0 text-black/25 transition-colors hover:text-black"
+              aria-label="清除参考图"
             >
-              <X size={14} />
+              <X size={12} />
             </button>
+          ) : (
+            <span className="w-3 shrink-0" />
           )}
         </div>
-        <AttributeSlider 
-          label="参考图使用权重" 
-          value={Math.round(attributes.referenceWeight * 100)} 
-          min={0} 
-          max={100} 
-          onChange={(v: number) => updateAttr('referenceWeight', v / 100)} 
-        />
       </div>
 
       {attributes.interrogatedPrompt && (

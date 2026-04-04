@@ -46,7 +46,7 @@ export async function addModelFileRecord(input: {
     keywords: input.keywords.trim(),
     uid: input.uid,
     createdAt: Date.now(),
-    isPublic: input.isPublic !== false,
+    isPublic: input.isPublic === true,
   });
   assertDb(res, 'MODELFILE 写入');
 }
