@@ -194,8 +194,12 @@ export default function App() {
         try {
           await new Promise((r) => requestAnimationFrame(() => r(undefined)));
           await new Promise((r) => requestAnimationFrame(() => r(undefined)));
-          await new Promise((r) => setTimeout(r, 120));
-          const cardPng = await mainViewportRef.current?.captureFullModelCardPng();
+          await new Promise((r) => setTimeout(r, 450));
+          let cardPng = await mainViewportRef.current?.captureFullModelCardPng();
+          if (!cardPng || cardPng.length < 2000) {
+            await new Promise((r) => setTimeout(r, 550));
+            cardPng = await mainViewportRef.current?.captureFullModelCardPng();
+          }
           const uploadDataUrl =
             cardPng && cardPng.startsWith('data:image') && cardPng.length > 500 ? cardPng : imageDataUrl;
           await persistMtmGeneration(uploadDataUrl, prompt, cloudUser.uid, {
@@ -333,6 +337,9 @@ export default function App() {
               <div className="mb-8 flex flex-col gap-2">
                 <h2 className="font-display text-2xl font-bold uppercase tracking-tight text-black">设置</h2>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">本应用内置 API</p>
+                <p className="text-[9px] font-mono text-black/50">
+                  构建 ID：<span className="text-black">{__APP_BUILD_ID__}</span>（应与 Vercel 部署 Commit 前 7 位一致）
+                </p>
               </div>
 
               <div className="space-y-4 text-[11px] leading-relaxed text-black/70">

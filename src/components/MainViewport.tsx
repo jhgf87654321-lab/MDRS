@@ -56,11 +56,19 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       }
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
+      try {
+        await document.fonts.ready;
+      } catch {
+        /* ignore */
+      }
       const canvas = await html2canvas(el, {
         useCORS: true,
-        scale: 2,
+        allowTaint: false,
+        scale: Math.min(2, window.devicePixelRatio || 2),
         backgroundColor: '#ffffff',
         logging: false,
+        foreignObjectRendering: false,
+        imageTimeout: 15000,
       });
       return canvas.toDataURL('image/png');
     } catch (err) {
@@ -185,8 +193,9 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
           ) : imageUrl ? (
             <motion.div
               key="model-card"
-              initial={{ opacity: 0 }}
+              initial={false}
               animate={{ opacity: 1 }}
+              transition={{ duration: 0 }}
               className="flex flex-1 flex-col bg-white p-12"
             >
               <div className="mb-12 flex items-end justify-between">
@@ -207,7 +216,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                   alt="Generated model (右键另存为可保存无模卡边框的纯图)"
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                   referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
+                  crossOrigin={imageUrl.startsWith('http') ? 'anonymous' : undefined}
                 />
                 <div className="pointer-events-none absolute inset-0 border border-black/5" />
               </div>

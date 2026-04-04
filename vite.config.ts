@@ -5,7 +5,14 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   loadEnv(mode, '.', '');
+  const buildId =
+    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+    process.env.VERCEL_GIT_COMMIT_REF?.slice(0, 7) ||
+    'dev';
   return {
+    define: {
+      __APP_BUILD_ID__: JSON.stringify(buildId),
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

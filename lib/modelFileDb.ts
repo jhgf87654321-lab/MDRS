@@ -36,6 +36,28 @@ function normalizeIsPublicField(v: unknown): boolean {
   return v === true || v === 'true' || v === 1;
 }
 
+/** 云开发部分环境对 where({ isPublic: true }) 匹配不稳定，优先用 command.eq */
+function whereIsPublicTrue(db: ReturnType<typeof getCloudbaseDb>) {
+  const _ = (db as { command?: { eq: (v: boolean) => unknown } }).command;
+  if (_?.eq) {
+    try {
+      return { isPublic: _.eq(true) };
+    } catch {
+      /* fallthrough */
+    }
+  }
+  return { isPublic: true };
+}
+
+function extractNewDocId(res: unknown): string | undefined {
+  const r = res as Record<string, unknown>;
+  if (typeof r.id === 'string' && r.id.trim()) return r.id.trim();
+  if (typeof r._id === 'string' && r._id.trim()) return r._id.trim();
+  const ids = r.ids;
+  if (Array.isArray(ids) && ids.length > 0 && typeof ids[0] === 'string') return ids[0]!.trim();
+  return undefined;
+}
+
 export async function addModelFileRecord(input: {
   seq: number;
   cosUrl: string;
@@ -55,7 +77,7 @@ export async function addModelFileRecord(input: {
   };
   const res = await db.collection(MODELFILE_COLLECTION).add(payload);
   assertDb(res, 'MODELFILE 写入');
-  const newId = (res as { id?: string; _id?: string })?.id ?? (res as { id?: string; _id?: string })?._id;
+  const newId = extractNewDocId(res);
   if (isPub && newId) {
     try {
       const up = await db.collection(MODELFILE_COLLECTION).doc(newId).update({ isPublic: true });
@@ -84,7 +106,7 @@ export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> 
   const db = getCloudbaseDb();
   const res = await db
     .collection(MODELFILE_COLLECTION)
-    .where({ isPublic: true })
+    .where(whereIsPublicTrue(db))
     .limit(Math.min(limit * 2, 100))
     .get();
   assertDb(res, 'MODELFILE 公开查询');
@@ -129,7 +151,7 @@ export function watchPublicModelFiles(
   const db = getCloudbaseDb();
   const w = db
     .collection(MODELFILE_COLLECTION)
-    .where({ isPublic: true })
+    .where(whereIsPublicTrue(db))
     .watch({
       onChange(snapshot) {
         const rows = snapshotDocsToArray(snapshot)
