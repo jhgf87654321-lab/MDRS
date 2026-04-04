@@ -134,9 +134,9 @@ function rowToModelFileDoc(row: Record<string, unknown>): ModelFileDoc | null {
   };
 }
 
-/** 监听公区 MODELFILE（最新 4 条，排除本人），失败时由调用方回退轮询 */
+/** 监听公区 MODELFILE（最新 4 条，含本人作品），失败时由调用方回退轮询 */
 export function watchPublicModelFiles(
-  uidSelf: string,
+  _uidSelf: string,
   onRows: (rows: ModelFileDoc[]) => void,
   onError?: (e: unknown) => void,
 ): { close: () => void } {
@@ -149,7 +149,6 @@ export function watchPublicModelFiles(
         const rows = snapshotDocsToArray(snapshot)
           .map((r) => rowToModelFileDoc(r))
           .filter((x): x is ModelFileDoc => x !== null && normalizeIsPublicField(x.isPublic))
-          .filter((r) => r.uid !== uidSelf)
           .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
           .slice(0, 4);
         onRows(rows);

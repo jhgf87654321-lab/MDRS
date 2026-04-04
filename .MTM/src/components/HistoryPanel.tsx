@@ -87,7 +87,6 @@ export function HistoryPanel({
       const rows = await listPublicModelFiles(24);
       setPublicFiles(
         rows
-          .filter((r) => r.uid !== uid)
           .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
           .slice(0, GLOBAL_PREVIEW_LIMIT),
       );
@@ -335,7 +334,7 @@ export function HistoryPanel({
               导入公区
             </span>
             <span className="mt-0.5 block text-[7px] font-bold uppercase leading-snug tracking-wide text-black/40">
-              开启后，生成图会写入公开 MODELFILE，并在上方 Global 展示（仅最新 {GLOBAL_PREVIEW_LIMIT} 张预览）
+              开启后，生成图会写入公开 MODELFILE，并在上方 Global 展示（含本人，最新 {GLOBAL_PREVIEW_LIMIT} 张预览）
             </span>
           </span>
         </label>
