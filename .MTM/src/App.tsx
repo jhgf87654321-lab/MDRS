@@ -30,7 +30,8 @@ export default function App() {
   const [cloudUser, setCloudUser] = React.useState<{ uid: string; email?: string } | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = React.useState(0);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
-  const [appGallery, setAppGallery] = React.useState<null | 'personal' | 'global'>(null);
+  const [appGallery, setAppGallery] = React.useState<null | 'personal' | 'global' | 'search'>(null);
+  const [gallerySearchKeyword, setGallerySearchKeyword] = React.useState('');
 
   React.useEffect(() => {
     if (!cloudUser?.uid) setAppGallery(null);
@@ -279,6 +280,14 @@ export default function App() {
             cloudUser?.uid ? () => setAppGallery('personal') : undefined
           }
           onOpenGlobalGallery={cloudUser?.uid ? () => setAppGallery('global') : undefined}
+          onSubmitKeywordSearch={
+            cloudUser?.uid
+              ? (kw) => {
+                  setGallerySearchKeyword(kw);
+                  setAppGallery('search');
+                }
+              : undefined
+          }
         />
       </div>
 
@@ -287,12 +296,16 @@ export default function App() {
           appGallery &&
           cloudUser?.uid &&
           React.createElement(ModelsPage, {
-            key: appGallery,
+            key: `${appGallery}-${gallerySearchKeyword}`,
             variant: appGallery,
             uid: cloudUser.uid,
             email: cloudUser.email,
             listRefreshKey: historyRefreshKey,
-            onBack: () => setAppGallery(null),
+            searchKeyword: appGallery === 'search' ? gallerySearchKeyword : undefined,
+            onBack: () => {
+              setAppGallery(null);
+              setGallerySearchKeyword('');
+            },
           })}
       </AnimatePresence>
 
@@ -374,10 +387,10 @@ export default function App() {
         <button
           type="button"
           onClick={() => setShowAuthModal(true)}
-          className="pointer-events-auto fixed bottom-6 right-6 z-[120] max-w-[240px] border border-black/10 bg-white px-4 py-3 text-left shadow-lg transition hover:border-black"
+          className="pointer-events-auto fixed bottom-4 right-4 z-[120] box-border w-[min(240px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden border border-black/10 bg-white px-3 py-3 text-left shadow-lg transition hover:border-black"
         >
-          <span className="block text-[10px] font-bold uppercase tracking-widest text-black">未登录</span>
-          <span className="mt-1 block text-[9px] font-bold uppercase tracking-wider leading-relaxed text-black/45">
+          <span className="block truncate text-[10px] font-bold uppercase tracking-widest text-black">未登录</span>
+          <span className="mt-1 block truncate text-[9px] font-bold uppercase tracking-wider leading-relaxed text-black/45">
             点击登录 / 注册
           </span>
         </button>
