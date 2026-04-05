@@ -1,16 +1,18 @@
 import { CLOUDBASE_ENV_ID, getCloudbaseApp } from './cloudbase';
 
 /**
- * 直连 MP3（优先）：不依赖 getTempFileURL，适合已托管在站点/CDN 的音频。
- * 例：VITE_LANDING_MUSIC_URL=https://example.com/bgm.mp3
+ * 直连音频（优先）：不依赖 getTempFileURL。支持 mp3 / m4a 等浏览器可播格式。
+ * 例：VITE_LANDING_MUSIC_URL=https://example.com/bgm.m4a
  */
 export function getLandingMusicDirectUrl(): string | null {
   const u = (import.meta.env.VITE_LANDING_MUSIC_URL as string | undefined)?.trim();
   return u || null;
 }
 
-/** 云存储 `music/` 下候选 fileID：先当前环境 envId，再 lokada（与旧配置兼容） */
+/** 默认开屏 BGM：lokada 环境 `music/MM.m4a`，失败时再试同目录其它文件名与当前 CLOUDBASE_ENV_ID */
 const DEFAULT_LANDING_MUSIC_FILE_IDS = [
+  'cloud://lokada-1254090729/music/MM.m4a',
+  `cloud://${CLOUDBASE_ENV_ID}/music/MM.m4a`,
   `cloud://${CLOUDBASE_ENV_ID}/music/bgm.mp3`,
   `cloud://${CLOUDBASE_ENV_ID}/music/opening.mp3`,
   `cloud://${CLOUDBASE_ENV_ID}/music/landing.mp3`,
