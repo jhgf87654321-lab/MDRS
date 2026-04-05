@@ -196,7 +196,6 @@ export function MtmAuth({ open, onClose, onSignedIn }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm"
-          onClick={() => onClose()}
         >
           <motion.div
             key="mtm-auth-card"
@@ -205,7 +204,6 @@ export function MtmAuth({ open, onClose, onSignedIn }: Props) {
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             transition={{ type: 'spring', stiffness: 380, damping: 28 }}
             className="relative w-full max-w-md border border-black/10 bg-white p-8 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"

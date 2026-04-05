@@ -1,4 +1,4 @@
-import { getCloudbaseAuth, getCloudbaseDb } from './cloudbase';
+import { getCloudbaseAuth, getCloudbaseDb, pickWebAuthUserIdEmail } from './cloudbase';
 
 /** 腾讯云开发文档型数据库集合 HMRS：用户模特档案 */
 export const HMRS_COLLECTION = 'HMRS';
@@ -17,19 +17,30 @@ export type HmrsProfileDoc = {
 async function getUidWithRetry(): Promise<string> {
   const auth = getCloudbaseAuth();
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  for (let i = 0; i < 6; i += 1) {
+  for (let i = 0; i < 8; i += 1) {
     const user = await auth.getCurrentUser();
-    const uid = (user as any)?.uid as string | undefined;
-    if (uid) return uid;
+    const picked = pickWebAuthUserIdEmail(user);
+    if (picked?.uid) return picked.uid;
     await sleep(i === 0 ? 0 : 80 * i);
   }
   throw new Error('NOT_SIGNED_IN');
 }
 
+/** 兼容不同版本 SDK / 网关返回的 data 形态 */
+function extractRows(res: unknown): unknown[] {
+  const r = res as Record<string, unknown> | null;
+  if (!r) return [];
+  const raw = (r.data ?? (r as any).Data ?? (r as any).result?.data ?? (r as any).result?.Data) as unknown;
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') return [raw];
+  return [];
+}
+
 function firstRow(res: unknown): HmrsProfileDoc | null {
-  const raw = (res as any)?.data;
-  const row = Array.isArray(raw) ? raw[0] : raw;
-  if (row && typeof row === 'object' && (row as HmrsProfileDoc).uid) return row as HmrsProfileDoc;
+  const row = extractRows(res)[0];
+  if (!row || typeof row !== 'object') return null;
+  const o = row as HmrsProfileDoc;
+  if (typeof o.uid === 'string' && o.uid.trim()) return o;
   return null;
 }
 
@@ -40,14 +51,15 @@ export async function getHmrsProfile(uidHint?: string): Promise<HmrsProfileDoc |
   try {
     const res = await db.collection(HMRS_COLLECTION).where({ uid: '{uid}' }).limit(1).get();
     const doc = firstRow(res);
-    if (doc && doc.uid === uid) return doc;
+    // 条件已含 auth 模板 {uid}，结果必为当前用户文档，勿与 uid 形参强比对（避免 sub / uid 字段不一致导致「写入成功却读不到」）
+    if (doc) return doc;
   } catch {
     /* ignore */
   }
   try {
     const res = await db.collection(HMRS_COLLECTION).where({ _id: uid, uid: '{uid}' }).limit(1).get();
     const doc = firstRow(res);
-    if (doc && doc.uid === uid) return doc;
+    if (doc) return doc;
   } catch {
     /* ignore */
   }
@@ -74,6 +86,7 @@ export async function getHmrsProfile(uidHint?: string): Promise<HmrsProfileDoc |
 async function createHmrsProfileDocument(uid: string, payload: HmrsProfileDoc) {
   const db = getCloudbaseDb();
   const plain = payload as unknown as Record<string, unknown>;
+  const errs: string[] = [];
 
   try {
     const res = await db.collection(HMRS_COLLECTION).add(plain);
@@ -81,6 +94,7 @@ async function createHmrsProfileDocument(uid: string, payload: HmrsProfileDoc) {
     if (typeof code === 'string' && code.length > 0) throw new Error(code);
     return;
   } catch (e) {
+    errs.push(String((e as any)?.message ?? e));
     console.warn('[hmrs] collection.add failed', (e as any)?.code ?? (e as any)?.message ?? e);
   }
 
@@ -88,16 +102,24 @@ async function createHmrsProfileDocument(uid: string, payload: HmrsProfileDoc) {
     await db.collection(HMRS_COLLECTION).doc(uid).set(plain);
     return;
   } catch (e) {
+    errs.push(String((e as any)?.message ?? e));
     console.warn('[hmrs] doc(uid).set failed', (e as any)?.code ?? (e as any)?.message ?? e);
   }
 
   try {
     await db.collection(HMRS_COLLECTION).doc(uid).update(plain);
     return;
-  } catch {
-    /* 文档不存在则 update 失败 */
+  } catch (e) {
+    errs.push(String((e as any)?.message ?? e));
   }
-  await db.collection(HMRS_COLLECTION).doc(uid).set(plain);
+
+  try {
+    await db.collection(HMRS_COLLECTION).doc(uid).set(plain);
+    return;
+  } catch (e) {
+    const last = String((e as any)?.message ?? e);
+    throw new Error(`HMRS_PROFILE_WRITE_FAILED: ${last} (${errs.join('; ')})`);
+  }
 }
 
 /** 注册或首次进入时建立 HMRS 档案（已存在则返回，不覆盖业务字段） */
@@ -105,12 +127,19 @@ export async function ensureHmrsProfile(
   uid: string,
   opts?: { email?: string; displayName?: string },
 ): Promise<HmrsProfileDoc> {
-  const existing = await getHmrsProfile(uid);
+  const authUid = await getUidWithRetry();
+  const hint = uid?.trim() || '';
+  if (hint && hint !== authUid) {
+    console.warn('[hmrs] ensureHmrsProfile: caller uid !== auth uid, using auth uid', { hint, authUid });
+  }
+  const effectiveUid = authUid;
+
+  const existing = await getHmrsProfile(effectiveUid);
   if (existing) return existing;
 
   const now = Date.now();
   const payload: HmrsProfileDoc = {
-    uid,
+    uid: effectiveUid,
     email: opts?.email?.trim() || undefined,
     displayName: opts?.displayName?.trim() || undefined,
     modelImageUrls: [],
@@ -118,15 +147,17 @@ export async function ensureHmrsProfile(
     updatedAt: now,
   };
 
-  await createHmrsProfileDocument(uid, payload);
+  await createHmrsProfileDocument(effectiveUid, payload);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  for (let i = 0; i < 20; i += 1) {
-    const verified = await getHmrsProfile(uid);
+  for (let i = 0; i < 28; i += 1) {
+    const verified = await getHmrsProfile(effectiveUid);
     if (verified) return verified;
-    await sleep(80 + i * 40);
+    await sleep(100 + i * 35);
   }
-  throw new Error('HMRS_PROFILE_CREATE_FAILED');
+  throw new Error(
+    'HMRS_PROFILE_CREATE_FAILED: 写入后仍无法读取 HMRS 档案。请检查集合 HMRS 是否存在、安全规则是否允许「含 uid 模板」的读，且 doc.uid 与 auth.uid 一致。',
+  );
 }
 
 /** 在 HMRS 档案中前置追加一张模特卡 COS 地址（新图在前） */
@@ -135,7 +166,8 @@ export async function prependHmrsModelImageUrl(uid: string, cosUrl: string) {
   if (!url) return;
   await ensureHmrsProfile(uid);
   const db = getCloudbaseDb();
-  const doc = await getHmrsProfile(uid);
+  const authUid = await getUidWithRetry();
+  const doc = await getHmrsProfile(authUid);
   const prev = Array.isArray(doc?.modelImageUrls) ? doc.modelImageUrls : [];
   const next = [url, ...prev.filter((u) => u !== url)].slice(0, 500);
   await db.collection(HMRS_COLLECTION).where({ uid: '{uid}' }).update({
