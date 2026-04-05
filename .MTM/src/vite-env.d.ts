@@ -8,4 +8,6 @@ interface ImportMetaEnv {
   readonly VITE_GEMINI_API_BASE_URL?: string;
   readonly VITE_CLOUDBASE_ENV_ID?: string;
   readonly VITE_CLOUDBASE_ACCESS_KEY?: string;
+  /** 三视图手电筒页底图 URL（可选，覆盖 public/developing-hero-bg.jpg） */
+  readonly VITE_DEVELOPING_HERO_BG?: string;
 }

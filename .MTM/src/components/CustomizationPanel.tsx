@@ -330,7 +330,17 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                 <AttributeSelect 
                   label="脸型 (Face Shape)" 
                   value={attributes.faceShape} 
-                  options={['Oval', 'Round', 'Square', 'Heart', 'Diamond', 'Long', 'High cheekbones', 'Strong jawline']} 
+                  options={[
+                    'Oval',
+                    'Melon-seed',
+                    'Round',
+                    'Square',
+                    'Heart',
+                    'Diamond',
+                    'Long',
+                    'High cheekbones',
+                    'Strong jawline',
+                  ]} 
                   onChange={(v: string) => updateAttr('faceShape', v)} 
                 />
                 <div className="grid grid-cols-2 gap-4">

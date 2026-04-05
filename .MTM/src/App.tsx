@@ -18,6 +18,7 @@ import { persistMtmGeneration } from '@nftt/lib/mtmModelPersist';
 import { translateSearchKeywordIfChinese } from './lib/searchKeywordTranslate';
 import { loadDemoModelSlotUrls, persistDemoModelSlotUrls } from './lib/demoModelSlots';
 import { MtmAuth } from './MtmAuth';
+import { ThreeViewDevelopingPage } from './components/ThreeViewDevelopingPage';
 
 export default function App() {
   const [attributes, setAttributes] = React.useState<CharacterAttributes>(DEFAULT_ATTRIBUTES);
@@ -46,6 +47,7 @@ export default function App() {
   const [gallerySearchKeyword, setGallerySearchKeyword] = React.useState('');
   /** 中文检索时保留原文，与译英并行匹配 MODELFILE.keywords */
   const [gallerySearchAlt, setGallerySearchAlt] = React.useState('');
+  const [threeViewOpen, setThreeViewOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!cloudUser?.uid) {
@@ -276,6 +278,7 @@ export default function App() {
 
       <Sidebar
         onSettingsClick={() => setShowSettings(true)}
+        onThreeViewOpen={() => setThreeViewOpen(true)}
         onSignOut={() => void handleSignOut()}
         userEmail={cloudUser?.email}
         isLoggedIn={!!cloudUser}
@@ -324,6 +327,12 @@ export default function App() {
           }
         />
       </div>
+
+      <AnimatePresence>
+        {threeViewOpen && (
+          <ThreeViewDevelopingPage key="three-view-developing" onClose={() => setThreeViewOpen(false)} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {currentView === 'app' &&
