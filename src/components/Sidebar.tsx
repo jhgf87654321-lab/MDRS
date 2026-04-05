@@ -3,6 +3,9 @@ import { Home, Box, Video, Settings, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 
+/** VIDEO / VI 入口：外站产品页 */
+const VIDEO_NAV_HREF = 'https://shotpace.site/';
+
 const navItems = [
   { icon: Home, label: 'Home', id: 'home', short: 'HO' },
   { icon: Box, label: '三视图生成', id: 'three-view', short: '3D' },
@@ -40,6 +43,11 @@ export function Sidebar({
   }, [accountOpen]);
 
   const handleClick = (id: string) => {
+    if (id === 'video') {
+      setActive(id);
+      window.open(VIDEO_NAV_HREF, '_blank', 'noopener,noreferrer');
+      return;
+    }
     setActive(id);
     if (id === 'settings' && onSettingsClick) {
       onSettingsClick();

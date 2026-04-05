@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Grid, Search, ChevronUp, ChevronDown, Play, Pause } from 'lucide-react';
-import { resolveLandingMusicTempUrl } from '@nftt/lib/landingMusic';
+import { getLandingMusicDirectUrl, resolveLandingMusicTempUrl } from '@nftt/lib/landingMusic';
 
 const LANDING_MUSIC_FALLBACK =
   'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
@@ -16,12 +16,14 @@ interface LandingPageProps {
 export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: LandingPageProps) {
   const images = cylinderImages;
   const [isPlaying, setIsPlaying] = React.useState(true);
-  const [audioSrc, setAudioSrc] = useState(LANDING_MUSIC_FALLBACK);
+  const directMusicUrl = getLandingMusicDirectUrl();
+  const [audioSrc, setAudioSrc] = useState(directMusicUrl || LANDING_MUSIC_FALLBACK);
   const audioRef = useRef<HTMLAudioElement>(null);
   const wantPlayRef = useRef(isPlaying);
   wantPlayRef.current = isPlaying;
 
   useEffect(() => {
+    if (directMusicUrl) return;
     let cancelled = false;
     void (async () => {
       const url = await resolveLandingMusicTempUrl();
@@ -30,7 +32,7 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [directMusicUrl]);
 
   useEffect(() => {
     const a = audioRef.current;

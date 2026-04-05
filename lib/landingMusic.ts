@@ -1,7 +1,19 @@
-import { getCloudbaseApp } from './cloudbase';
+import { CLOUDBASE_ENV_ID, getCloudbaseApp } from './cloudbase';
 
-/** 云存储 `music/` 下候选 fileID，按顺序尝试直至成功（见 VITE_LANDING_MUSIC_FILE_IDS） */
+/**
+ * 直连 MP3（优先）：不依赖 getTempFileURL，适合已托管在站点/CDN 的音频。
+ * 例：VITE_LANDING_MUSIC_URL=https://example.com/bgm.mp3
+ */
+export function getLandingMusicDirectUrl(): string | null {
+  const u = (import.meta.env.VITE_LANDING_MUSIC_URL as string | undefined)?.trim();
+  return u || null;
+}
+
+/** 云存储 `music/` 下候选 fileID：先当前环境 envId，再 lokada（与旧配置兼容） */
 const DEFAULT_LANDING_MUSIC_FILE_IDS = [
+  `cloud://${CLOUDBASE_ENV_ID}/music/bgm.mp3`,
+  `cloud://${CLOUDBASE_ENV_ID}/music/opening.mp3`,
+  `cloud://${CLOUDBASE_ENV_ID}/music/landing.mp3`,
   'cloud://lokada-1254090729/music/bgm.mp3',
   'cloud://lokada-1254090729/music/opening.mp3',
   'cloud://lokada-1254090729/music/landing.mp3',
@@ -35,7 +47,12 @@ export async function resolveLandingMusicTempUrl(): Promise<string | null> {
     });
     const list = res?.fileList ?? [];
     for (const item of list) {
-      if (item.code === 'SUCCESS' && item.tempFileURL) return item.tempFileURL;
+      const row = item as { code?: string; tempFileURL?: string; download_url?: string };
+      const url = row.tempFileURL || row.download_url;
+      if (url && typeof url === 'string') {
+        const c = row.code ? String(row.code).toUpperCase() : '';
+        if (!c || c === 'SUCCESS') return url;
+      }
     }
   } catch (e) {
     console.warn('[landingMusic] getTempFileURL failed', e);
