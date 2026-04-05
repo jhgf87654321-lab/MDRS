@@ -15,6 +15,8 @@ const navItems = [
 
 interface SidebarProps {
   onSettingsClick?: () => void;
+  /** 三视图 / 3D 子页（手电筒 DEVELOPING） */
+  onThreeViewOpen?: () => void;
   onSignOut?: () => void;
   userEmail?: string;
   isLoggedIn?: boolean;
@@ -23,6 +25,7 @@ interface SidebarProps {
 
 export function Sidebar({
   onSettingsClick,
+  onThreeViewOpen,
   onSignOut,
   userEmail,
   isLoggedIn,
@@ -46,6 +49,11 @@ export function Sidebar({
     if (id === 'video') {
       setActive(id);
       window.open(VIDEO_NAV_HREF, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (id === 'three-view') {
+      setActive(id);
+      onThreeViewOpen?.();
       return;
     }
     setActive(id);
