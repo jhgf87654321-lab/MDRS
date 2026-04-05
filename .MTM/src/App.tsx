@@ -59,30 +59,72 @@ export default function App() {
   const bgmWantPlayRef = React.useRef(true);
   bgmWantPlayRef.current = bgmPlaying;
 
+  /** 先静音 play（策略允许），再尝试有声；无手势时静音播放仍可进行，首次交互后解锁声音 */
   const tryPlayBgm = React.useCallback(() => {
     const el = bgmRef.current;
     if (!el || !bgmWantPlayRef.current) return;
-    el.muted = false;
-    void el.play().catch(() => {
-      el.muted = true;
-      void el.play().catch(() => {});
+    el.muted = true;
+    void el.play().then(() => {
+      el.muted = false;
+      void el.play().catch(() => {
+        el.muted = true;
+      });
+    }).catch(() => {
+      el.muted = false;
+      void el.play().catch(() => {
+        el.muted = true;
+        void el.play().catch(() => {});
+      });
     });
   }, []);
+
+  const bgmRefSetter = React.useCallback(
+    (el: HTMLAudioElement | null) => {
+      bgmRef.current = el;
+      if (el && bgmWantPlayRef.current) {
+        el.muted = true;
+        void el.play().catch(() => {});
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const a = bgmRef.current;
+            if (!a || !bgmWantPlayRef.current) return;
+            a.muted = false;
+            void a.play().catch(() => {
+              a.muted = true;
+              void a.play().catch(() => {});
+            });
+          });
+        });
+      }
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const onUnlockSound = () => {
       const a = bgmRef.current;
-      if (!a || !bgmWantPlayRef.current || !a.muted) return;
-      a.muted = false;
-      void a.play().catch(() => {});
+      if (!a || !bgmWantPlayRef.current) return;
+      if (a.muted || a.paused) {
+        a.muted = false;
+        void a.play().catch(() => {});
+      }
     };
-    document.addEventListener('pointerdown', onUnlockSound, { capture: true });
-    document.addEventListener('keydown', onUnlockSound, { capture: true });
-    document.addEventListener('touchend', onUnlockSound, { capture: true, passive: true });
+    const opts: AddEventListenerOptions = { capture: true };
+    document.addEventListener('pointerdown', onUnlockSound, opts);
+    document.addEventListener('pointerup', onUnlockSound, opts);
+    document.addEventListener('click', onUnlockSound, opts);
+    document.addEventListener('keydown', onUnlockSound, opts);
+    document.addEventListener('touchstart', onUnlockSound, { ...opts, passive: true });
+    document.addEventListener('touchend', onUnlockSound, { ...opts, passive: true });
+    document.addEventListener('wheel', onUnlockSound, { ...opts, passive: true });
     return () => {
-      document.removeEventListener('pointerdown', onUnlockSound, { capture: true });
-      document.removeEventListener('keydown', onUnlockSound, { capture: true });
-      document.removeEventListener('touchend', onUnlockSound, { capture: true });
+      document.removeEventListener('pointerdown', onUnlockSound, opts);
+      document.removeEventListener('pointerup', onUnlockSound, opts);
+      document.removeEventListener('click', onUnlockSound, opts);
+      document.removeEventListener('keydown', onUnlockSound, opts);
+      document.removeEventListener('touchstart', onUnlockSound, opts);
+      document.removeEventListener('touchend', onUnlockSound, opts);
+      document.removeEventListener('wheel', onUnlockSound, opts);
     };
   }, []);
 
@@ -99,20 +141,24 @@ export default function App() {
     const onReady = () => {
       if (bgmWantPlayRef.current) tryPlayBgm();
     };
+    el.addEventListener('canplaythrough', onReady);
     el.addEventListener('canplay', onReady);
-    const t = window.setTimeout(onReady, 80);
+    const timers = [0, 100, 400, 1000].map((ms) => window.setTimeout(onReady, ms));
     return () => {
-      window.clearTimeout(t);
+      timers.forEach(clearTimeout);
+      el.removeEventListener('canplaythrough', onReady);
       el.removeEventListener('canplay', onReady);
     };
   }, [tryPlayBgm]);
 
   React.useEffect(() => {
     if (!hydrated) return;
-    const t = window.setTimeout(() => {
-      if (bgmWantPlayRef.current) tryPlayBgm();
-    }, 200);
-    return () => window.clearTimeout(t);
+    const timers = [0, 150, 500].map((ms) =>
+      window.setTimeout(() => {
+        if (bgmWantPlayRef.current) tryPlayBgm();
+      }, ms),
+    );
+    return () => timers.forEach(clearTimeout);
   }, [hydrated, tryPlayBgm]);
 
   React.useEffect(() => {
@@ -310,25 +356,24 @@ export default function App() {
     }
   };
 
-  if (!hydrated) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-white font-sans text-[10px] font-bold uppercase tracking-widest text-black/40">
-        加载中…
-      </div>
-    );
-  }
-
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-white font-sans">
+    <>
       <audio
-        ref={bgmRef}
+        ref={bgmRefSetter}
         src={bgmSrc}
         loop
         playsInline
         preload="auto"
+        autoPlay
         className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
         aria-hidden
       />
+      {!hydrated ? (
+        <div className="flex h-screen w-screen items-center justify-center bg-white font-sans text-[10px] font-bold uppercase tracking-widest text-black/40">
+          加载中…
+        </div>
+      ) : (
+    <div className="relative flex h-screen w-screen overflow-hidden bg-white font-sans">
       <AnimatePresence>
         {currentView === 'landing' && (
           <LandingPage
@@ -530,5 +575,7 @@ export default function App() {
         </button>
       )}
     </div>
+      )}
+    </>
   );
 }
