@@ -1,55 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Grid, Search, ChevronUp, ChevronDown, Upload, Play, Pause } from 'lucide-react';
+import { Grid, Search, ChevronUp, ChevronDown, Play, Pause } from 'lucide-react';
 
 interface LandingPageProps {
+  /** 与 Models 页 demo 网格同一套 8 槽位图（不在本页提供上传） */
+  cylinderImages: string[];
   onEnter: () => void;
   onNavigateToModels: () => void;
 }
 
-const initialPresetImages = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1488161628813-04466f872507?auto=format&fit=crop&w=400&q=80",
-];
-
-const CYLINDER_STORAGE_KEY = 'mtm_landing_cylinder_v1';
-const SLOT_COUNT = initialPresetImages.length;
-
-function loadCylinderImages(): string[] {
-  if (typeof window === 'undefined') return [...initialPresetImages];
-  try {
-    const raw = window.localStorage.getItem(CYLINDER_STORAGE_KEY);
-    if (!raw) return [...initialPresetImages];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [...initialPresetImages];
-    const next = [...initialPresetImages];
-    for (let i = 0; i < SLOT_COUNT; i++) {
-      const v = parsed[i];
-      if (typeof v === 'string' && v.trim().length > 0) next[i] = v;
-    }
-    return next;
-  } catch {
-    return [...initialPresetImages];
-  }
-}
-
-function persistCylinderImages(urls: string[]) {
-  try {
-    window.localStorage.setItem(CYLINDER_STORAGE_KEY, JSON.stringify(urls.slice(0, SLOT_COUNT)));
-  } catch {
-    /* ignore */
-  }
-}
-
-export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
-  const [images, setImages] = useState(loadCylinderImages);
-  const [isPlaying, setIsPlaying] = useState(true);
+export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: LandingPageProps) {
+  const images = cylinderImages;
+  const [isPlaying, setIsPlaying] = React.useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const wantPlayRef = useRef(isPlaying);
   wantPlayRef.current = isPlaying;
@@ -86,23 +48,6 @@ export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
 
   const togglePlay = () => {
     setIsPlaying((v) => !v);
-  };
-
-  const handleSlotFile = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const url = reader.result as string;
-      setImages((prev) => {
-        const next = [...prev];
-        if (index >= 0 && index < next.length) next[index] = url;
-        persistCylinderImages(next);
-        return next;
-      });
-    };
-    reader.readAsDataURL(file);
   };
 
   return (
@@ -208,36 +153,6 @@ export function LandingPage({ onEnter, onNavigateToModels }: LandingPageProps) {
               })}
             </motion.div>
           </div>
-        </div>
-
-        {/* 与转筒每一面一一对应：点击下方缩略图单独替换该槽位（localStorage 持久化） */}
-        <div className="pointer-events-auto absolute bottom-24 left-1/2 z-50 flex max-w-[min(96vw,44rem)] -translate-x-1/2 flex-wrap justify-center gap-2 px-4">
-          {images.map((img, i) => (
-            <label
-              key={`slot-${i}`}
-              className="group relative h-16 w-11 shrink-0 cursor-pointer overflow-hidden border border-black/15 bg-white shadow-sm transition-opacity hover:border-black/30"
-              title={`转筒槽位 ${i + 1}，点击上传替换`}
-            >
-              <img
-                src={img}
-                alt=""
-                className="h-full w-full object-cover opacity-85 group-hover:opacity-100"
-                referrerPolicy="no-referrer"
-              />
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={(ev) => handleSlotFile(i, ev)}
-              />
-              <span className="pointer-events-none absolute left-0 right-0 top-0 bg-black/55 py-0.5 text-center text-[7px] font-bold tracking-wider text-white">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span className="pointer-events-none absolute bottom-0.5 right-0.5 rounded bg-white/90 p-0.5 text-black/50 group-hover:text-black">
-                <Upload size={10} strokeWidth={2.5} />
-              </span>
-            </label>
-          ))}
         </div>
 
         {/* Bottom Player Mock */}

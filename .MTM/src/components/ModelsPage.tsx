@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Search, Filter, X, Download } from 'lucide-react';
+import { ArrowLeft, Search, Filter, X, Download, Upload } from 'lucide-react';
+import { DEMO_MODEL_DEFAULT_URLS } from '../lib/demoModelSlots';
 import { getHmrsProfile } from '@nftt/lib/hmrsDb';
 import {
   listModelFilesByUid,
@@ -10,16 +11,21 @@ import {
   type ModelFileDoc,
 } from '@nftt/lib/modelFileDb';
 
-const mockModels = [
-  { id: 1, name: 'Aria', author: '@studio_x', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
-  { id: 2, name: 'Nova', author: '@digital_dreams', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80' },
-  { id: 3, name: 'Kai', author: '@creator_01', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80' },
-  { id: 4, name: 'Luna', author: '@synth_art', img: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80' },
-  { id: 5, name: 'Orion', author: '@future_faces', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80' },
-  { id: 6, name: 'Stella', author: '@pixel_perfect', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80' },
-  { id: 7, name: 'Atlas', author: '@meta_models', img: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80' },
-  { id: 8, name: 'Lyra', author: '@ai_atelier', img: 'https://images.unsplash.com/photo-1488161628813-04466f872507?auto=format&fit=crop&w=800&q=80' },
-];
+const MOCK_MODEL_META = [
+  { id: 1, name: 'Aria', author: '@studio_x' },
+  { id: 2, name: 'Nova', author: '@digital_dreams' },
+  { id: 3, name: 'Kai', author: '@creator_01' },
+  { id: 4, name: 'Luna', author: '@synth_art' },
+  { id: 5, name: 'Orion', author: '@future_faces' },
+  { id: 6, name: 'Stella', author: '@pixel_perfect' },
+  { id: 7, name: 'Atlas', author: '@meta_models' },
+  { id: 8, name: 'Lyra', author: '@ai_atelier' },
+] as const;
+
+const mockModels = MOCK_MODEL_META.map((m, i) => ({
+  ...m,
+  img: DEMO_MODEL_DEFAULT_URLS[i]!,
+}));
 
 export type ModelsPageVariant = 'demo' | 'personal' | 'global' | 'search';
 
@@ -33,6 +39,10 @@ export type ModelsPageProps = {
   searchKeyword?: string;
   /** 与 searchKeyword 并行匹配（如中文原文），规则见 modelFileDb */
   searchKeywordAlt?: string;
+  /** variant=demo：与开屏滚筒同一套槽位图 */
+  demoSlotUrls?: string[];
+  /** variant=demo：替换第 index 张（会持久化并由 App 同步到开屏滚筒） */
+  onDemoSlotReplace?: (index: number, dataUrl: string) => void;
 };
 
 type GalleryRow = {
@@ -120,6 +130,8 @@ export function ModelsPage({
   listRefreshKey = 0,
   searchKeyword = '',
   searchKeywordAlt,
+  demoSlotUrls,
+  onDemoSlotReplace,
 }: ModelsPageProps) {
   const [rows, setRows] = React.useState<GalleryRow[]>([]);
   const [loading, setLoading] = React.useState(variant !== 'demo');
@@ -232,9 +244,9 @@ export function ModelsPage({
 
   const gridItems: GalleryRow[] =
     variant === 'demo'
-      ? mockModels.map((m) => ({
+      ? mockModels.map((m, i) => ({
           id: String(m.id),
-          img: m.img,
+          img: demoSlotUrls?.[i] ?? m.img,
           keywords: '',
           author: m.author,
         }))
@@ -323,19 +335,45 @@ export function ModelsPage({
                 transition={{ delay: idx * 0.05 }}
                 className="group flex flex-col gap-2"
               >
-                <button
-                  type="button"
-                  onClick={(e) => handleOpenLightbox(e, m)}
-                  className="relative aspect-[3/4] w-full cursor-zoom-in overflow-hidden border border-black/5 bg-black/5 p-0 text-left shadow-sm"
-                >
-                  <img
-                    src={m.img}
-                    alt=""
-                    className="h-full w-full scale-100 object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/10" />
-                </button>
+                <div className="relative aspect-[3/4] w-full">
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenLightbox(e, m)}
+                    className="relative h-full w-full cursor-zoom-in overflow-hidden border border-black/5 bg-black/5 p-0 text-left shadow-sm"
+                  >
+                    <img
+                      src={m.img}
+                      alt=""
+                      className="h-full w-full scale-100 object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/10" />
+                  </button>
+                  {variant === 'demo' && onDemoSlotReplace ? (
+                    <label
+                      className="absolute bottom-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-sm border border-black/15 bg-white/95 p-1.5 text-black/50 shadow-sm transition-colors hover:border-black/30 hover:text-black"
+                      title="上传替换此图（与开屏滚筒同一槽位）"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Upload size={14} strokeWidth={2} />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            onDemoSlotReplace(idx, reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  ) : null}
+                </div>
                 {variant === 'demo' ? (
                   <div className="flex items-center justify-between px-1">
                     <span className="line-clamp-2 text-sm font-bold tracking-wide">

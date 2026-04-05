@@ -9,7 +9,7 @@ export type GeminiPart =
       inlineData: GeminiInlineData;
     };
 
-import { apiUrl, throwIfApiRouteMissing } from './apiBase';
+import { geminiApiUrl, geminiApiUsesDedicatedBase, throwIfApiRouteMissing } from './apiBase';
 
 export type GeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview';
 
@@ -25,14 +25,16 @@ type PartsRequest = {
 };
 
 export async function generateGeminiImage(input: PromptRequest | PartsRequest) {
-  const res = await fetch(apiUrl('/api/gemini'), {
+  const res = await fetch(geminiApiUrl('/api/gemini'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
 
   const text = await res.text();
-  throwIfApiRouteMissing(res, text, '/api/gemini');
+  throwIfApiRouteMissing(res, text, '/api/gemini', {
+    baseUrlEnvVar: geminiApiUsesDedicatedBase() ? 'VITE_GEMINI_API_BASE_URL' : 'VITE_API_BASE_URL',
+  });
   let data: { image?: string; error?: string } = {};
   try {
     data = (text ? (JSON.parse(text) as { image?: string; error?: string }) : {}) ?? {};

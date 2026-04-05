@@ -26,6 +26,9 @@ function formatSignInError(err: unknown): string {
 
 function formatSignUpError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
+  if (msg.includes('PhoneNumber') || msg.includes('phone_number') || msg.includes('INVALID_ARGUMENT')) {
+    return '注册请求异常（已按邮箱注册绕过手机号字段）。若仍失败，请刷新后重试或联系管理员检查 CloudBase 认证配置。';
+  }
   if (msg.includes('HMRS_PROFILE_CREATE_FAILED')) {
     return 'HMRS 档案创建失败：请在云开发创建集合 HMRS 并配置读写规则（uid 与 auth.uid 一致）。';
   }
@@ -137,12 +140,19 @@ export function MtmAuth({ open, onClose, onSignedIn }: Props) {
         });
         const verificationToken = verifyRes?.verification_token ?? verifyRes?.verificationToken;
         if (!verificationToken) throw new Error('验证码校验失败');
-        await (auth as any).signUp({
+        /**
+         * 勿直接调 auth.signUp({ email, verification_* })：SDK 在存在 verification_code 时会执行
+         * formatPhone(phone_number)，未填手机会把 undefined 格式成非法字符串，触发
+         * SignUpRequest.PhoneNumber 正则错误。改为只走 OAuth authApi，不传 phone_number。
+         */
+        const a = auth as any;
+        await a.oauthInstance.authApi.signUp({
           email: email.trim().toLowerCase(),
           password,
           verification_code: code.trim(),
           verification_token: verificationToken,
         });
+        await a.createLoginState();
       }
 
       const user = await auth.getCurrentUser();
