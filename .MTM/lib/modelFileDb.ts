@@ -152,7 +152,7 @@ export async function searchPublicModelFileDocs(
 }
 
 export async function listPublicModelFiles(limit = 40): Promise<ModelFileDoc[]> {
-  await getUidWithRetry();
+  /** 公区只读：未登录也应能拉取 isPublic（需控制台安全规则允许匿名读公开文档） */
   const db = getCloudbaseDb();
   const res = await db
     .collection(MODELFILE_COLLECTION)

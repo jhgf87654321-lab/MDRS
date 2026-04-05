@@ -83,10 +83,6 @@ export function HistoryPanel({
   }, [uid]);
 
   const loadPublic = React.useCallback(async () => {
-    if (!uid) {
-      setPublicFiles([]);
-      return;
-    }
     setPublicError(null);
     try {
       const rows = await listPublicModelFiles(24);
@@ -100,17 +96,15 @@ export function HistoryPanel({
       setPublicFiles([]);
       setPublicError('公开作品（MODELFILE）加载失败');
     }
-  }, [uid]);
+  }, []);
 
   const loadOnce = React.useCallback(async () => {
     if (!uid) {
       setPersonalCards([]);
-      setPublicFiles([]);
       setMineError(null);
-      setPublicError(null);
-      return;
+    } else {
+      await loadPersonal();
     }
-    await loadPersonal();
     await loadPublic();
   }, [uid, loadPersonal, loadPublic]);
 
@@ -147,10 +141,10 @@ export function HistoryPanel({
   }, [watchFallback, loadOnce]);
 
   React.useEffect(() => {
-    if (!uid || publicWatchFallback) return;
+    if (publicWatchFallback) return;
 
     const w = watchPublicModelFiles(
-      uid,
+      uid || '',
       (rows) => {
         setPublicFiles(rows);
         setPublicError(null);

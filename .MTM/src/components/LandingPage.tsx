@@ -1,6 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Grid, Search, ChevronUp, ChevronDown, Play, Pause } from 'lucide-react';
+import { resolveLandingMusicTempUrl } from '@nftt/lib/landingMusic';
+
+const LANDING_MUSIC_FALLBACK =
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
 interface LandingPageProps {
   /** 与 Models 页 demo 网格同一套 8 槽位图（不在本页提供上传） */
@@ -12,9 +16,21 @@ interface LandingPageProps {
 export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: LandingPageProps) {
   const images = cylinderImages;
   const [isPlaying, setIsPlaying] = React.useState(true);
+  const [audioSrc, setAudioSrc] = useState(LANDING_MUSIC_FALLBACK);
   const audioRef = useRef<HTMLAudioElement>(null);
   const wantPlayRef = useRef(isPlaying);
   wantPlayRef.current = isPlaying;
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const url = await resolveLandingMusicTempUrl();
+      if (!cancelled && url) setAudioSrc(url);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const a = audioRef.current;
@@ -26,7 +42,7 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
     } else {
       a.pause();
     }
-  }, [isPlaying]);
+  }, [isPlaying, audioSrc]);
 
   /** 首次点击/触摸或短延迟后尝试播放（绕过浏览器自动播放限制） */
   useEffect(() => {
@@ -174,8 +190,9 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
             </div>
           </div>
           <audio
+            key={audioSrc}
             ref={audioRef}
-            src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+            src={audioSrc}
             loop
             playsInline
             preload="auto"

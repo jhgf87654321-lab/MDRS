@@ -67,7 +67,7 @@ export const DEFAULT_ATTRIBUTES: CharacterAttributes = {
   cameraAngle: 'Close-up',
   style: 'Hyper-realistic',
   clothing: 'T-shirt',
-  background: 'Futuristic studio',
+  background: 'Plain white wall',
   customPrompt: '',
   interrogatedPrompt: null,
   isVirtualRestoration: false,
