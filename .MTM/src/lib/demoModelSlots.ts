@@ -8,7 +8,8 @@ export const DEMO_MODEL_DEFAULT_URLS: readonly string[] = [
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
   'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1488161628813-04466f872507?auto=format&fit=crop&w=800&q=80',
+  /** 本地肖像图，填补外网图偶发缺失或不可达时的槽位 */
+  '/demo-cylinder-portrait.png',
 ];
 
 export const DEMO_MODEL_SLOT_COUNT = DEMO_MODEL_DEFAULT_URLS.length;
