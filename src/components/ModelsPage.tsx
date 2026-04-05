@@ -155,7 +155,7 @@ export function ModelsPage({
       return;
     }
 
-    if (!uid) {
+    if (!uid && variant !== 'global') {
       setRows([]);
       setLoading(false);
       setLoadError('请先登录');
@@ -186,7 +186,7 @@ export function ModelsPage({
             raw.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
           );
           if (!cancelled) setRows(next);
-        } else if (variant === 'search') {
+        } else if (variant === 'search' && uid) {
           const q = searchKeyword.trim();
           const alt = searchKeywordAlt?.trim();
           const [mineDocs, pubDocs] = await Promise.all([

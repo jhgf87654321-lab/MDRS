@@ -48,7 +48,9 @@ export default function App() {
   const [gallerySearchAlt, setGallerySearchAlt] = React.useState('');
 
   React.useEffect(() => {
-    if (!cloudUser?.uid) setAppGallery(null);
+    if (!cloudUser?.uid) {
+      setAppGallery((prev) => (prev === 'personal' || prev === 'search' ? null : prev));
+    }
   }, [cloudUser?.uid]);
 
   const PUBLISH_GLOBAL_KEY = 'mtm_publish_to_global';
@@ -203,6 +205,8 @@ export default function App() {
       flushSync(() => {
         setImageUrl(imageDataUrl);
       });
+      // 教程遮罩 z 高于主视区，会挡住模卡下载；生成成功后关闭，未登录用户也可使用下载
+      setTutorialStep(0);
 
       if (cloudUser?.uid) {
         // 必须先结束 Generating 遮罩，否则 html2canvas 截到的是加载层而非模卡
@@ -305,7 +309,7 @@ export default function App() {
           onOpenPersonalGallery={
             cloudUser?.uid ? () => setAppGallery('personal') : undefined
           }
-          onOpenGlobalGallery={cloudUser?.uid ? () => setAppGallery('global') : undefined}
+          onOpenGlobalGallery={() => setAppGallery('global')}
           onSubmitKeywordSearch={
             cloudUser?.uid
               ? async (kw) => {
@@ -324,12 +328,12 @@ export default function App() {
       <AnimatePresence>
         {currentView === 'app' &&
           appGallery &&
-          cloudUser?.uid &&
+          (appGallery === 'global' || cloudUser?.uid) &&
           React.createElement(ModelsPage, {
             key: `${appGallery}-${gallerySearchKeyword}-${gallerySearchAlt}`,
             variant: appGallery,
-            uid: cloudUser.uid,
-            email: cloudUser.email,
+            uid: cloudUser?.uid,
+            email: cloudUser?.email,
             listRefreshKey: historyRefreshKey,
             searchKeyword: appGallery === 'search' ? gallerySearchKeyword : undefined,
             searchKeywordAlt: appGallery === 'search' ? gallerySearchAlt || undefined : undefined,
