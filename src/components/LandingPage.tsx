@@ -1,56 +1,29 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { Grid, Search, ChevronUp, ChevronDown, Play, Pause } from 'lucide-react';
-import { getLandingMusicResolvedSrc } from '@nftt/lib/landingMusic';
 
 interface LandingPageProps {
   /** 与 Models 页 demo 网格同一套 8 槽位图（不在本页提供上传） */
   cylinderImages: string[];
   onEnter: () => void;
   onNavigateToModels: () => void;
+  /** 全局 BGM，由 App 挂载 `<audio>` */
+  bgmPlaying: boolean;
+  onBgmToggle: () => void;
+  onOpenThreeView: () => void;
+  onOpenVideo: () => void;
 }
 
-export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: LandingPageProps) {
+export function LandingPage({
+  cylinderImages,
+  onEnter,
+  onNavigateToModels,
+  bgmPlaying,
+  onBgmToggle,
+  onOpenThreeView,
+  onOpenVideo,
+}: LandingPageProps) {
   const images = cylinderImages;
-  const [isPlaying, setIsPlaying] = React.useState(true);
-  const audioSrc = getLandingMusicResolvedSrc();
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const wantPlayRef = useRef(isPlaying);
-  wantPlayRef.current = isPlaying;
-
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (isPlaying) {
-      void a.play().catch(() => {
-        /* 浏览器可能拦截自动播放，保持按钮为「可点停」状态，不强行切到停止 */
-      });
-    } else {
-      a.pause();
-    }
-  }, [isPlaying, audioSrc]);
-
-  /** 首次点击/触摸或短延迟后尝试播放（绕过浏览器自动播放限制） */
-  useEffect(() => {
-    const unlock = () => {
-      const el = audioRef.current;
-      if (!el || !wantPlayRef.current) return;
-      void el.play().catch(() => {});
-    };
-    const opts: AddEventListenerOptions = { once: true, capture: true };
-    window.addEventListener('pointerdown', unlock, opts);
-    window.addEventListener('touchend', unlock, { ...opts, passive: true });
-    const t = window.setTimeout(unlock, 400);
-    return () => {
-      window.clearTimeout(t);
-      window.removeEventListener('pointerdown', unlock, { capture: true });
-      window.removeEventListener('touchend', unlock, { capture: true });
-    };
-  }, []);
-
-  const togglePlay = () => {
-    setIsPlaying((v) => !v);
-  };
 
   return (
     <div className="fixed inset-0 bg-white text-black z-[100] flex overflow-hidden font-sans">
@@ -61,12 +34,22 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-16 text-[10px] font-bold tracking-widest uppercase">
           <span className="vertical-text">Home</span>
-          <span className="vertical-text text-black/30 hover:text-black cursor-pointer transition-colors">3D Gen</span>
-          <span className="vertical-text text-black/30 hover:text-black cursor-pointer transition-colors">Video</span>
+          <button
+            type="button"
+            onClick={onOpenThreeView}
+            className="vertical-text cursor-pointer text-black/30 transition-colors hover:text-black"
+          >
+            3D Gen
+          </button>
+          <button
+            type="button"
+            onClick={onOpenVideo}
+            className="vertical-text cursor-pointer text-black/30 transition-colors hover:text-black"
+          >
+            Video
+          </button>
         </div>
-        <div className="pb-8 text-[10px] font-bold tracking-widest uppercase">
-          FAQ
-        </div>
+        <div className="pb-8 text-[10px] font-bold tracking-widest uppercase">FAQ</div>
       </div>
 
       {/* Main Content */}
@@ -75,7 +58,12 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
         <div className="flex justify-between items-center p-8">
           <div className="flex gap-8 text-sm font-bold">
             <span>Digital.</span>
-            <button onClick={onNavigateToModels} className="text-black/40 hover:text-black transition-colors uppercase tracking-widest text-xs">Models</button>
+            <button
+              onClick={onNavigateToModels}
+              className="text-black/40 hover:text-black transition-colors uppercase tracking-widest text-xs"
+            >
+              Models
+            </button>
           </div>
           <Search size={20} />
         </div>
@@ -83,22 +71,24 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
         {/* Content */}
         <div className="flex-1 flex items-center px-16 relative">
           <div className="max-w-xl z-10">
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-[10px] font-bold tracking-[0.3em] uppercase text-black/40 mb-4"
             >
               A I &nbsp; G E N E R A T I O N
             </motion.p>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="text-7xl md:text-9xl font-display font-bold tracking-tighter mb-6 leading-none"
             >
-              Digital<br/>Human
+              Digital
+              <br />
+              Human
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -119,37 +109,54 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
 
           {/* 3D Cylinder - Scaled, Tilted, Top Right */}
           <div className="absolute top-10 right-20 w-[500px] h-[500px] perspective-[1200px] flex items-center justify-center pointer-events-none">
-            <motion.div 
+            <motion.div
               className="relative w-[140px] h-[200px] preserve-3d"
               style={{ rotateX: -20, rotateZ: 20 }}
               animate={{ rotateY: 360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
             >
               {images.map((img, i) => {
                 const angle = (i / images.length) * 360;
-                const radius = 220; // Distance from center
+                const radius = 220;
                 return (
-                  <div 
+                  <div
                     key={`cyl-${i}-${img.slice(0, 48)}`}
                     className="absolute inset-0 preserve-3d"
                     style={{
                       transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
                     }}
                   >
-                    {/* Front */}
-                    <div className="absolute inset-0 bg-white border border-black/10 overflow-hidden" style={{ transform: 'translateZ(5px)', backfaceVisibility: 'hidden' }}>
-                      <img src={img} alt={`Model ${i}`} className="w-full h-full object-cover opacity-90" referrerPolicy="no-referrer" />
+                    <div
+                      className="absolute inset-0 bg-white border border-black/10 overflow-hidden"
+                      style={{ transform: 'translateZ(5px)', backfaceVisibility: 'hidden' }}
+                    >
+                      <img
+                        src={img}
+                        alt={`Model ${i}`}
+                        className="w-full h-full object-cover opacity-90"
+                        referrerPolicy="no-referrer"
+                      />
                     </div>
-                    {/* Back */}
-                    <div className="absolute inset-0 bg-gray-200 border border-black/10" style={{ transform: 'translateZ(-5px) rotateY(180deg)', backfaceVisibility: 'hidden' }}></div>
-                    {/* Left */}
-                    <div className="absolute top-0 bottom-0 left-0 w-[10px] bg-gray-300 border-y border-black/10 origin-left" style={{ transform: 'rotateY(-90deg)' }}></div>
-                    {/* Right */}
-                    <div className="absolute top-0 bottom-0 right-0 w-[10px] bg-gray-300 border-y border-black/10 origin-right" style={{ transform: 'rotateY(90deg)' }}></div>
-                    {/* Top */}
-                    <div className="absolute top-0 left-0 right-0 h-[10px] bg-gray-100 border-x border-black/10 origin-top" style={{ transform: 'rotateX(90deg)' }}></div>
-                    {/* Bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[10px] bg-gray-400 border-x border-black/10 origin-bottom" style={{ transform: 'rotateX(-90deg)' }}></div>
+                    <div
+                      className="absolute inset-0 bg-gray-200 border border-black/10"
+                      style={{ transform: 'translateZ(-5px) rotateY(180deg)', backfaceVisibility: 'hidden' }}
+                    />
+                    <div
+                      className="absolute top-0 bottom-0 left-0 w-[10px] bg-gray-300 border-y border-black/10 origin-left"
+                      style={{ transform: 'rotateY(-90deg)' }}
+                    />
+                    <div
+                      className="absolute top-0 bottom-0 right-0 w-[10px] bg-gray-300 border-y border-black/10 origin-right"
+                      style={{ transform: 'rotateY(90deg)' }}
+                    />
+                    <div
+                      className="absolute top-0 left-0 right-0 h-[10px] bg-gray-100 border-x border-black/10 origin-top"
+                      style={{ transform: 'rotateX(90deg)' }}
+                    />
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-[10px] bg-gray-400 border-x border-black/10 origin-bottom"
+                      style={{ transform: 'rotateX(-90deg)' }}
+                    />
                   </div>
                 );
               })}
@@ -157,13 +164,19 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
           </div>
         </div>
 
-        {/* Bottom Player Mock */}
+        {/* Bottom Player — 控制 App 内全局 BGM */}
         <div className="p-8 flex items-center gap-6">
-          <button 
-            onClick={togglePlay}
+          <button
+            type="button"
+            onClick={onBgmToggle}
             className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white hover:scale-105 transition-transform"
+            title={bgmPlaying ? '暂停 BGM' : '播放 BGM'}
           >
-            {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-1" />}
+            {bgmPlaying ? (
+              <Pause size={16} fill="currentColor" />
+            ) : (
+              <Play size={16} fill="currentColor" className="ml-1" />
+            )}
           </button>
           <div className="flex flex-col gap-2 flex-1 max-w-md">
             <span className="text-xs font-bold">Generation Ready</span>
@@ -175,14 +188,6 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
               <span>4:25</span>
             </div>
           </div>
-          <audio
-            key={audioSrc}
-            ref={audioRef}
-            src={audioSrc}
-            loop
-            playsInline
-            preload="auto"
-          />
         </div>
       </div>
 
@@ -201,12 +206,14 @@ export function LandingPage({ cylinderImages, onEnter, onNavigateToModels }: Lan
         </div>
       </div>
 
-      {/* Global styles for 3D and vertical text */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .perspective-[1200px] { perspective: 1200px; }
         .preserve-3d { transform-style: preserve-3d; }
-        .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 }

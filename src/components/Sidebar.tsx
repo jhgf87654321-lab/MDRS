@@ -1,10 +1,8 @@
 import React from 'react';
-import { Home, Box, Video, Settings, User } from 'lucide-react';
+import { Home, Box, Video, Settings, User, Play, Pause } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-
-/** VIDEO / VI 入口：外站产品页 */
-const VIDEO_NAV_HREF = 'https://shotpace.site/';
+import { VIDEO_NAV_HREF } from '../lib/navConstants';
 
 const navItems = [
   { icon: Home, label: 'Home', id: 'home', short: 'HO' },
@@ -21,6 +19,10 @@ interface SidebarProps {
   userEmail?: string;
   isLoggedIn?: boolean;
   onOpenAuth?: () => void;
+  /** 开屏延续 BGM */
+  bgmPlaying?: boolean;
+  onBgmPlay?: () => void;
+  onBgmStop?: () => void;
 }
 
 export function Sidebar({
@@ -30,6 +32,9 @@ export function Sidebar({
   userEmail,
   isLoggedIn,
   onOpenAuth,
+  bgmPlaying,
+  onBgmPlay,
+  onBgmStop,
 }: SidebarProps) {
   const [active, setActive] = React.useState('home');
   const [accountOpen, setAccountOpen] = React.useState(false);
@@ -102,6 +107,32 @@ export function Sidebar({
             <span className="vertical-text mt-2 text-[10px] font-bold uppercase tracking-widest">{item.short}</span>
           </button>
         ))}
+      </div>
+
+      <div className="mb-6 flex flex-col items-center gap-2 border-t border-black/10 pt-6">
+        <span className="vertical-text text-[8px] font-bold uppercase tracking-widest text-black/35">BGM</span>
+        <button
+          type="button"
+          title="播放 BGM"
+          onClick={() => onBgmPlay?.()}
+          className={cn(
+            'flex h-9 w-9 items-center justify-center border transition-colors',
+            bgmPlaying ? 'border-black/10 text-black/25' : 'border-black bg-black text-white',
+          )}
+        >
+          <Play size={14} fill={bgmPlaying ? 'none' : 'currentColor'} className={bgmPlaying ? '' : 'ml-0.5'} />
+        </button>
+        <button
+          type="button"
+          title="停止 BGM"
+          onClick={() => onBgmStop?.()}
+          className={cn(
+            'flex h-9 w-9 items-center justify-center border transition-colors',
+            bgmPlaying ? 'border-black text-black hover:bg-black hover:text-white' : 'border-black/10 text-black/25',
+          )}
+        >
+          <Pause size={14} />
+        </button>
       </div>
 
       <div className="relative flex flex-col items-center" ref={popoverRef}>

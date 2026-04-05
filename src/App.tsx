@@ -17,6 +17,8 @@ import { generateGeminiText } from '@nftt/lib/geminiTextClient';
 import { persistMtmGeneration } from '@nftt/lib/mtmModelPersist';
 import { translateSearchKeywordIfChinese } from './lib/searchKeywordTranslate';
 import { loadDemoModelSlotUrls, persistDemoModelSlotUrls } from './lib/demoModelSlots';
+import { getLandingMusicResolvedSrc } from '@nftt/lib/landingMusic';
+import { VIDEO_NAV_HREF } from './lib/navConstants';
 import { MtmAuth } from './MtmAuth';
 const ThreeViewDevelopingPage = React.lazy(() =>
   import('./components/ThreeViewDevelopingPage').then((m) => ({ default: m.ThreeViewDevelopingPage })),
@@ -50,6 +52,68 @@ export default function App() {
   /** 中文检索时保留原文，与译英并行匹配 MODELFILE.keywords */
   const [gallerySearchAlt, setGallerySearchAlt] = React.useState('');
   const [threeViewOpen, setThreeViewOpen] = React.useState(false);
+
+  const bgmSrc = React.useMemo(() => getLandingMusicResolvedSrc(), []);
+  const [bgmPlaying, setBgmPlaying] = React.useState(true);
+  const bgmRef = React.useRef<HTMLAudioElement | null>(null);
+  const bgmWantPlayRef = React.useRef(true);
+  bgmWantPlayRef.current = bgmPlaying;
+
+  const tryPlayBgm = React.useCallback(() => {
+    const el = bgmRef.current;
+    if (!el || !bgmWantPlayRef.current) return;
+    el.muted = false;
+    void el.play().catch(() => {
+      el.muted = true;
+      void el.play().catch(() => {});
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const onUnlockSound = () => {
+      const a = bgmRef.current;
+      if (!a || !bgmWantPlayRef.current || !a.muted) return;
+      a.muted = false;
+      void a.play().catch(() => {});
+    };
+    document.addEventListener('pointerdown', onUnlockSound, { capture: true });
+    document.addEventListener('keydown', onUnlockSound, { capture: true });
+    document.addEventListener('touchend', onUnlockSound, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener('pointerdown', onUnlockSound, { capture: true });
+      document.removeEventListener('keydown', onUnlockSound, { capture: true });
+      document.removeEventListener('touchend', onUnlockSound, { capture: true });
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const el = bgmRef.current;
+    if (!el) return;
+    if (bgmPlaying) tryPlayBgm();
+    else el.pause();
+  }, [bgmPlaying, tryPlayBgm]);
+
+  React.useEffect(() => {
+    const el = bgmRef.current;
+    if (!el) return;
+    const onReady = () => {
+      if (bgmWantPlayRef.current) tryPlayBgm();
+    };
+    el.addEventListener('canplay', onReady);
+    const t = window.setTimeout(onReady, 80);
+    return () => {
+      window.clearTimeout(t);
+      el.removeEventListener('canplay', onReady);
+    };
+  }, [tryPlayBgm]);
+
+  React.useEffect(() => {
+    if (!hydrated) return;
+    const t = window.setTimeout(() => {
+      if (bgmWantPlayRef.current) tryPlayBgm();
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [hydrated, tryPlayBgm]);
 
   React.useEffect(() => {
     if (!cloudUser?.uid) {
@@ -256,12 +320,25 @@ export default function App() {
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden bg-white font-sans">
+      <audio
+        ref={bgmRef}
+        src={bgmSrc}
+        loop
+        playsInline
+        preload="auto"
+        className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
+        aria-hidden
+      />
       <AnimatePresence>
         {currentView === 'landing' && (
           <LandingPage
             cylinderImages={demoModelSlotUrls}
             onEnter={handleEnterApp}
             onNavigateToModels={() => setCurrentView('models')}
+            bgmPlaying={bgmPlaying}
+            onBgmToggle={() => setBgmPlaying((v) => !v)}
+            onOpenThreeView={() => setThreeViewOpen(true)}
+            onOpenVideo={() => window.open(VIDEO_NAV_HREF, '_blank', 'noopener,noreferrer')}
           />
         )}
         {currentView === 'models' && (
@@ -285,6 +362,9 @@ export default function App() {
         userEmail={cloudUser?.email}
         isLoggedIn={!!cloudUser}
         onOpenAuth={() => setShowAuthModal(true)}
+        bgmPlaying={bgmPlaying}
+        onBgmPlay={() => setBgmPlaying(true)}
+        onBgmStop={() => setBgmPlaying(false)}
       />
       <div className="relative z-10 ml-24 flex flex-1 gap-0">
         <CustomizationPanel
