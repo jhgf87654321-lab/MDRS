@@ -16,6 +16,7 @@ import { generateGeminiImage } from '@nftt/lib/geminiClient';
 import { generateGeminiText } from '@nftt/lib/geminiTextClient';
 import { persistMtmGeneration } from '@nftt/lib/mtmModelPersist';
 import { translateSearchKeywordIfChinese } from './lib/searchKeywordTranslate';
+import { loadDemoModelSlotUrls, persistDemoModelSlotUrls } from './lib/demoModelSlots';
 import { MtmAuth } from './MtmAuth';
 
 export default function App() {
@@ -26,6 +27,16 @@ export default function App() {
   const [showSettings, setShowSettings] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'landing' | 'models' | 'app'>('landing');
   const [tutorialStep, setTutorialStep] = React.useState(0);
+  /** 开屏滚筒与 Models（demo）共用 8 槽位 */
+  const [demoModelSlotUrls, setDemoModelSlotUrls] = React.useState(loadDemoModelSlotUrls);
+  const handleDemoSlotReplace = React.useCallback((index: number, dataUrl: string) => {
+    setDemoModelSlotUrls((prev) => {
+      const next = [...prev];
+      if (index >= 0 && index < next.length) next[index] = dataUrl;
+      persistDemoModelSlotUrls(next);
+      return next;
+    });
+  }, []);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [cloudUser, setCloudUser] = React.useState<{ uid: string; email?: string } | null>(null);
@@ -239,10 +250,19 @@ export default function App() {
     <div className="relative flex h-screen w-screen overflow-hidden bg-white font-sans">
       <AnimatePresence>
         {currentView === 'landing' && (
-          <LandingPage onEnter={handleEnterApp} onNavigateToModels={() => setCurrentView('models')} />
+          <LandingPage
+            cylinderImages={demoModelSlotUrls}
+            onEnter={handleEnterApp}
+            onNavigateToModels={() => setCurrentView('models')}
+          />
         )}
         {currentView === 'models' && (
-          <ModelsPage variant="demo" onBack={() => setCurrentView('landing')} />
+          <ModelsPage
+            variant="demo"
+            demoSlotUrls={demoModelSlotUrls}
+            onDemoSlotReplace={handleDemoSlotReplace}
+            onBack={() => setCurrentView('landing')}
+          />
         )}
       </AnimatePresence>
 
@@ -374,6 +394,11 @@ export default function App() {
                   <code className="text-black">MODELCARD/public/</code>，走 <code className="text-black">/api/mtm-modelcard-upload</code>。请配置{' '}
                   <code className="text-black">GEMINI_API_KEY</code> 与 <code className="text-black">COS_*</code>。云数据库需集合{' '}
                   <code className="text-black">HMRS</code>、<code className="text-black">MODELFILE</code>。
+                </p>
+                <p>
+                  前端在国内域名、关 VPN 无法访问 Gemini 时：构建变量设{' '}
+                  <code className="text-black">VITE_GEMINI_API_BASE_URL</code> 为可访问 Google 的 Vercel 根 URL（无尾斜杠）；COS 上传等仍用同源或{' '}
+                  <code className="text-black">VITE_API_BASE_URL</code> 指向国内可达的 API。
                 </p>
                 <p>
                   本地开发：在本应用目录放 <code className="text-black">.env.local</code>（含 <code className="text-black">GEMINI_API_KEY</code>
