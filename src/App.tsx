@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { Sidebar } from './components/Sidebar';
 import { HistoryPanel } from './components/HistoryPanel';
@@ -18,7 +18,9 @@ import { persistMtmGeneration } from '@nftt/lib/mtmModelPersist';
 import { translateSearchKeywordIfChinese } from './lib/searchKeywordTranslate';
 import { loadDemoModelSlotUrls, persistDemoModelSlotUrls } from './lib/demoModelSlots';
 import { MtmAuth } from './MtmAuth';
-import { ThreeViewDevelopingPage } from './components/ThreeViewDevelopingPage';
+const ThreeViewDevelopingPage = React.lazy(() =>
+  import('./components/ThreeViewDevelopingPage').then((m) => ({ default: m.ThreeViewDevelopingPage })),
+);
 
 export default function App() {
   const [attributes, setAttributes] = React.useState<CharacterAttributes>(DEFAULT_ATTRIBUTES);
@@ -330,7 +332,9 @@ export default function App() {
 
       <AnimatePresence>
         {threeViewOpen && (
-          <ThreeViewDevelopingPage key="three-view-developing" onClose={() => setThreeViewOpen(false)} />
+          <Suspense fallback={null}>
+            <ThreeViewDevelopingPage key="three-view-developing" onClose={() => setThreeViewOpen(false)} />
+          </Suspense>
         )}
       </AnimatePresence>
 
