@@ -37,4 +37,10 @@
   .animate-flash-bw-box {
     animation: flash-bw-box 3s ease-in-out infinite;
   }
+
+  .vertical-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+  }
 }
