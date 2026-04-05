@@ -13,6 +13,8 @@ export interface CharacterAttributes {
   eyeColor: string;
   eyeShape: string;
   skinTone: string;
+  /** 0–100：越高面部越多雀斑、胎记等天然斑驳；越低越干净 */
+  faceMarkingDetail: number;
   faceShape: string;
   noseHeight: string;
   noseWidth: string;
@@ -56,6 +58,7 @@ export const DEFAULT_ATTRIBUTES: CharacterAttributes = {
   eyeColor: 'Brown',
   eyeShape: 'Almond',
   skinTone: 'Fair',
+  faceMarkingDetail: 20,
   faceShape: 'Strong jawline',
   noseHeight: 'Medium',
   noseWidth: 'Average',

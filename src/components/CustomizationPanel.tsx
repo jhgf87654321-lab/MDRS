@@ -462,6 +462,13 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                     ))}
                   </div>
                 </div>
+                <AttributeSlider
+                  label="面容细节 (雀斑 / 胎记等天然斑驳)"
+                  value={attributes.faceMarkingDetail ?? 20}
+                  min={0}
+                  max={100}
+                  onChange={(v: number) => updateAttr('faceMarkingDetail', v)}
+                />
                 <AttributeSelect 
                   label="体型 (Body Type)" 
                   value={attributes.bodyType} 
