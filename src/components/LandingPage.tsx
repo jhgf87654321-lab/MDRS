@@ -108,16 +108,16 @@ export function LandingPage({
           </div>
 
           {/* 3D Cylinder - Scaled, Tilted, Top Right */}
-          <div className="absolute top-10 right-20 w-[500px] h-[500px] perspective-[1200px] flex items-center justify-center pointer-events-none">
+          <div className="absolute top-10 right-36 w-[560px] h-[560px] perspective-[1200px] flex items-center justify-center pointer-events-none">
             <motion.div
-              className="relative w-[140px] h-[200px] preserve-3d"
+              className="relative w-[158px] h-[226px] preserve-3d"
               style={{ rotateX: -20, rotateZ: 20 }}
               animate={{ rotateY: 360 }}
               transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
             >
               {images.map((img, i) => {
                 const angle = (i / images.length) * 360;
-                const radius = 220;
+                const radius = 248;
                 return (
                   <div
                     key={`cyl-${i}-${img.slice(0, 48)}`}
