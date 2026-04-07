@@ -72,6 +72,83 @@ export default function App() {
       }
     });
   }, []);
+  const removeNearBlackLetterbox = React.useCallback(async (dataUrl: string): Promise<string> => {
+    // 部分模型会返回带黑边的图（letterbox）；这里做一次轻量自动裁边，避免模卡出现黑条。
+    if (!dataUrl?.startsWith('data:image')) return dataUrl;
+    if (typeof document === 'undefined') return dataUrl;
+    return await new Promise<string>((resolve) => {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          const w = img.naturalWidth || 0;
+          const h = img.naturalHeight || 0;
+          if (!w || !h) return resolve(dataUrl);
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          if (!ctx) return resolve(dataUrl);
+          ctx.drawImage(img, 0, 0, w, h);
+          const pix = ctx.getImageData(0, 0, w, h).data;
+
+          const rowNearBlackRatio = (y: number) => {
+            let nearBlack = 0;
+            for (let x = 0; x < w; x += 2) {
+              const i = (y * w + x) * 4;
+              const r = pix[i] ?? 255;
+              const g = pix[i + 1] ?? 255;
+              const b = pix[i + 2] ?? 255;
+              if (r < 22 && g < 22 && b < 22) nearBlack += 1;
+            }
+            return nearBlack / Math.ceil(w / 2);
+          };
+
+          const colNearBlackRatio = (x: number) => {
+            let nearBlack = 0;
+            for (let y = 0; y < h; y += 2) {
+              const i = (y * w + x) * 4;
+              const r = pix[i] ?? 255;
+              const g = pix[i + 1] ?? 255;
+              const b = pix[i + 2] ?? 255;
+              if (r < 22 && g < 22 && b < 22) nearBlack += 1;
+            }
+            return nearBlack / Math.ceil(h / 2);
+          };
+
+          const isBlackRow = (y: number) => rowNearBlackRatio(y) > 0.95;
+          const isBlackCol = (x: number) => colNearBlackRatio(x) > 0.95;
+
+          let top = 0;
+          let bottom = h - 1;
+          let left = 0;
+          let right = w - 1;
+
+          while (top < h - 2 && isBlackRow(top)) top += 1;
+          while (bottom > 1 && isBlackRow(bottom)) bottom -= 1;
+          while (left < w - 2 && isBlackCol(left)) left += 1;
+          while (right > 1 && isBlackCol(right)) right -= 1;
+
+          const cw = Math.max(1, right - left + 1);
+          const ch = Math.max(1, bottom - top + 1);
+          const removedAny = top > 0 || left > 0 || right < w - 1 || bottom < h - 1;
+          const removedRatio = 1 - (cw * ch) / (w * h);
+          if (!removedAny || removedRatio < 0.015) return resolve(dataUrl);
+
+          const out = document.createElement('canvas');
+          out.width = cw;
+          out.height = ch;
+          const octx = out.getContext('2d');
+          if (!octx) return resolve(dataUrl);
+          octx.drawImage(canvas, left, top, cw, ch, 0, 0, cw, ch);
+          resolve(out.toDataURL('image/jpeg', 0.95));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      } catch {
+        resolve(dataUrl);
+      }
+    });
+  }, []);
   const [showSettings, setShowSettings] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'landing' | 'models' | 'app'>('landing');
   const [tutorialStep, setTutorialStep] = React.useState(0);
@@ -360,6 +437,7 @@ export default function App() {
       } else {
         imageDataUrl = await generateGeminiImage({ model, prompt });
       }
+      imageDataUrl = await removeNearBlackLetterbox(imageDataUrl);
 
       flushSync(() => {
         setImageUrl(imageDataUrl);
