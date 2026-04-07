@@ -39,6 +39,9 @@ type Props = {
 };
 
 const GLOBAL_PREVIEW_LIMIT = 4;
+/** 实时 watch 在弱网/跨境链路上易触发 ws timeout；默认关闭，按需通过环境变量显式开启。 */
+const REALTIME_WATCH_ENABLED =
+  String(import.meta.env.VITE_ENABLE_DB_WATCH || '').trim() === '1';
 
 export function HistoryPanel({
   uid,
@@ -113,6 +116,10 @@ export function HistoryPanel({
   }, [loadOnce, refreshKey]);
 
   React.useEffect(() => {
+    if (!REALTIME_WATCH_ENABLED) {
+      setWatchFallback(true);
+      return;
+    }
     if (!uid || watchFallback) return;
 
     const w = watchHmrsModelImageUrls(
@@ -141,6 +148,10 @@ export function HistoryPanel({
   }, [watchFallback, loadOnce]);
 
   React.useEffect(() => {
+    if (!REALTIME_WATCH_ENABLED) {
+      setPublicWatchFallback(true);
+      return;
+    }
     if (publicWatchFallback) return;
 
     const w = watchPublicModelFiles(
