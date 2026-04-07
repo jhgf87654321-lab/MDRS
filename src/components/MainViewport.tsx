@@ -231,16 +231,43 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 
               <div
                 data-mtm-image-slot
-                className="group relative min-h-0 flex-1 cursor-crosshair overflow-hidden transition-all duration-700"
+                className="group relative min-h-0 flex-1 cursor-crosshair overflow-hidden bg-white transition-all duration-700"
               >
                 <img
                   src={imageUrl}
                   alt="Generated model (右键另存为可保存无模卡边框的纯图)"
-                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  className="h-full w-full object-contain"
                   referrerPolicy="no-referrer"
                   crossOrigin={imageUrl.startsWith('http') ? 'anonymous' : undefined}
                 />
                 <div className="pointer-events-none absolute inset-0 border border-black/5" />
+              </div>
+
+              {/* 下载按钮：绝对定位，避免被内容挤出/裁掉 */}
+              <div className="download-buttons absolute bottom-6 right-6 z-20 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadModelCard()}
+                  className="flex h-9 w-9 items-center justify-center border border-black/10 bg-white text-black shadow-sm transition-all hover:bg-black hover:text-white"
+                  title="下载整张模卡（含外圈摩卡）"
+                >
+                  <Download size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadRawImage()}
+                  className="flex h-9 w-9 items-center justify-center border border-black/10 bg-white text-black shadow-sm transition-all hover:bg-black hover:text-white"
+                  title="仅下载 AI 生成图（无模卡）"
+                >
+                  <ImageDown size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="flex h-9 w-9 items-center justify-center border border-black/10 bg-white text-black shadow-sm transition-all hover:bg-black hover:text-white"
+                  title="分享"
+                >
+                  <Share2 size={14} />
+                </button>
               </div>
 
               <div className="mt-12 flex items-center justify-between">
@@ -266,31 +293,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                     <span>{t(attributes.skinTone)}</span>
                   </div>
                 </div>
-                <div className="download-buttons flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void handleDownloadModelCard()}
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
-                    title="下载整张模卡（含外圈摩卡）"
-                  >
-                    <Download size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDownloadRawImage()}
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
-                    title="仅下载 AI 生成图（无模卡）"
-                  >
-                    <ImageDown size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
-                    title="分享"
-                  >
-                    <Share2 size={14} />
-                  </button>
-                </div>
+                <div />
               </div>
             </motion.div>
           ) : error ? (
