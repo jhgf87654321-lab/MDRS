@@ -149,6 +149,53 @@ export default function App() {
       }
     });
   }, []);
+
+  const normalizeToPortrait34 = React.useCallback(async (dataUrl: string): Promise<string> => {
+    // 参考图模式下模型偶发输出 1:1；这里把最终图稳定到 3:4（白底补齐，不裁主体）。
+    if (!dataUrl?.startsWith('data:image')) return dataUrl;
+    if (typeof document === 'undefined') return dataUrl;
+    const TARGET_ASPECT = 3 / 4; // width/height
+    return await new Promise<string>((resolve) => {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          const w = img.naturalWidth || 0;
+          const h = img.naturalHeight || 0;
+          if (!w || !h) return resolve(dataUrl);
+          const a = w / h;
+          // 已接近 3:4 就不处理
+          if (Math.abs(a - TARGET_ASPECT) < 0.02) return resolve(dataUrl);
+
+          let outW = w;
+          let outH = h;
+          if (a > TARGET_ASPECT) {
+            // 过宽（例如 1:1）：保持宽度，增加高度做白边补齐
+            outH = Math.round(outW / TARGET_ASPECT);
+          } else {
+            // 过窄：保持高度，增加宽度做白边补齐
+            outW = Math.round(outH * TARGET_ASPECT);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = outW;
+          canvas.height = outH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(dataUrl);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, outW, outH);
+
+          const dx = Math.round((outW - w) / 2);
+          const dy = Math.round((outH - h) / 2);
+          ctx.drawImage(img, dx, dy, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.95));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      } catch {
+        resolve(dataUrl);
+      }
+    });
+  }, []);
   const [showSettings, setShowSettings] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'landing' | 'models' | 'app'>('landing');
   const [tutorialStep, setTutorialStep] = React.useState(0);
@@ -429,7 +476,7 @@ export default function App() {
         const refDataUrl = await shrinkImageDataUrlForReference(attributes.referenceImage);
         const base64Data = refDataUrl.split(',')[1];
         const mimeType = refDataUrl.split(';')[0].split(':')[1];
-        const weightText = `\n\nIMPORTANT: Use the provided image as a strong reference for the SUBJECT ONLY (the person). The influence weight of this reference image should be considered as ${Math.round(attributes.referenceWeight * 100)}%.\nCRITICAL: Extract ONLY the person's identity and physical details (face, skin texture, freckles/moles/birthmarks, hair, proportions). IGNORE and DO NOT replicate any text, UI, subtitles, watermarks, logos, frames, interface elements, phone screens, posters, or background typography from the reference image.\nCRITICAL: The layout must follow the SAME fixed MTM template as non-reference mode: portrait 3:4 and a strict 2x2 grid with four equal-size cells.`;
+        const weightText = `\n\nIMPORTANT: Use the provided image as a strong reference for the SUBJECT ONLY (the person). The influence weight of this reference image should be considered as ${Math.round(attributes.referenceWeight * 100)}%.\nCRITICAL: Extract ONLY the person's identity and physical details (face, skin texture, freckles/moles/birthmarks, hair, proportions). IGNORE and DO NOT replicate any text, UI, subtitles, watermarks, logos, frames, interface elements, phone screens, posters, or background typography from the reference image.\nCRITICAL LAYOUT: Follow the SAME fixed MTM template as non-reference mode: overall portrait 3:4 and a strict 2x2 grid.\nCRITICAL PER-CELL: Each quadrant must be square 1:1 (NOT 3:4).`;
         imageDataUrl = await generateGeminiImage({
           model,
           parts: [{ inlineData: { data: base64Data, mimeType } }, { text: prompt + weightText }],
