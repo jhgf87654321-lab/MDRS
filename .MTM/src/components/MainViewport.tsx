@@ -326,6 +326,28 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 
       <div className="mt-8 flex w-full max-w-2xl flex-col items-center pb-12">
         {imageUrl && !isGenerating && (
+          <div className="mb-3 flex w-full items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleDownloadModelCard()}
+              className="flex h-8 items-center gap-2 border border-black/10 px-3 text-[9px] font-bold uppercase tracking-widest text-black transition-all hover:bg-black hover:text-white"
+              title="下载整张模卡（含外圈摩卡）"
+            >
+              <Download size={14} />
+              下载模卡
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDownloadRawImage()}
+              className="flex h-8 items-center gap-2 border border-black/10 px-3 text-[9px] font-bold uppercase tracking-widest text-black transition-all hover:bg-black hover:text-white"
+              title="仅下载 AI 生成图（无模卡）"
+            >
+              <ImageDown size={14} />
+              下载原图
+            </button>
+          </div>
+        )}
+        {imageUrl && !isGenerating && (
           <p className="mb-3 text-center text-[8px] font-bold uppercase tracking-widest text-black/35">
             右键上方大图「图片另存为」可保存不含模卡装饰的纯生成图；左侧按钮下载整张模卡
           </p>

@@ -429,7 +429,7 @@ export default function App() {
         const refDataUrl = await shrinkImageDataUrlForReference(attributes.referenceImage);
         const base64Data = refDataUrl.split(',')[1];
         const mimeType = refDataUrl.split(';')[0].split(':')[1];
-        const weightText = `\n\nIMPORTANT: Use the provided image as a strong reference for the SUBJECT ONLY (the person). The influence weight of this reference image should be considered as ${Math.round(attributes.referenceWeight * 100)}%.\nCRITICAL: Extract ONLY the person's identity and physical details (face, skin texture, freckles/moles/birthmarks, hair, proportions). IGNORE and DO NOT replicate any text, UI, subtitles, watermarks, logos, frames, interface elements, phone screens, posters, or background typography from the reference image.`;
+        const weightText = `\n\nIMPORTANT: Use the provided image as a strong reference for the SUBJECT ONLY (the person). The influence weight of this reference image should be considered as ${Math.round(attributes.referenceWeight * 100)}%.\nCRITICAL: Extract ONLY the person's identity and physical details (face, skin texture, freckles/moles/birthmarks, hair, proportions). IGNORE and DO NOT replicate any text, UI, subtitles, watermarks, logos, frames, interface elements, phone screens, posters, or background typography from the reference image.\nCRITICAL LAYOUT: Keep the SAME fixed model-card layout as non-reference generation: strict 2x2 grid, all four cells equal size, no cell stretching/merging, and overall portrait 3:4 framing.`;
         imageDataUrl = await generateGeminiImage({
           model,
           parts: [{ inlineData: { data: base64Data, mimeType } }, { text: prompt + weightText }],
