@@ -231,7 +231,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
               initial={false}
               animate={{ opacity: 1 }}
               transition={{ duration: 0 }}
-              className="flex flex-col bg-white p-8 lg:p-10"
+              className="flex h-full flex-1 flex-col bg-white p-8 lg:p-10"
             >
               <div className="mb-8 flex items-end justify-between">
                 <div className="flex flex-col gap-1">
@@ -247,8 +247,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 
               <div
                 data-mtm-image-slot
-                className="group relative min-h-0 w-full cursor-crosshair overflow-hidden transition-all duration-700"
-                style={useAdaptiveCard ? { aspectRatio: `${imageAspect}` } : undefined}
+                className="group relative min-h-0 w-full flex-1 cursor-crosshair overflow-hidden transition-all duration-700"
               >
                 <img
                   src={imageUrl}
