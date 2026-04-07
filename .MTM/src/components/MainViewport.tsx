@@ -38,6 +38,29 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 ) {
   /** 含外圈白底、阴影、边框的完整模卡区域 */
   const fullCardRef = useRef<HTMLDivElement>(null);
+  const [imageAspect, setImageAspect] = React.useState<number>(3 / 4);
+
+  React.useEffect(() => {
+    if (!imageUrl || typeof document === 'undefined') return;
+    let cancelled = false;
+    const img = new Image();
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      if (cancelled) return;
+      const w = img.naturalWidth || 0;
+      const h = img.naturalHeight || 0;
+      if (!w || !h) return;
+      const a = w / h;
+      // 约束一个合理范围，避免极端值把布局撑坏（例如异常返回的超宽条图）
+      const clamped = Math.max(0.55, Math.min(0.95, a));
+      setImageAspect(clamped);
+    };
+    img.onerror = () => {};
+    img.src = imageUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [imageUrl]);
 
   const handlePromptChange = (val: string) => {
     onAttributesChange({ ...attributes, customPrompt: val });
@@ -188,7 +211,8 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       >
       <div
         data-mtm-card-root
-        className="relative mx-auto flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
+        className="relative mx-auto flex w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
+        style={{ aspectRatio: `${imageAspect}` }}
       >
         <AnimatePresence mode="wait">
           {isGenerating ? (
