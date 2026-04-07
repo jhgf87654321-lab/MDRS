@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef, useCallback, useEffect, useState } from 'react';
 import { Plus, ArrowDown, Download, Share2, ImageDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2canvas from 'html2canvas';
@@ -38,6 +38,21 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 ) {
   /** 含外圈白底、阴影、边框的完整模卡区域 */
   const fullCardRef = useRef<HTMLDivElement>(null);
+  const [imageAspect, setImageAspect] = useState<number>(3 / 4);
+  const useAdaptiveCard = Boolean(attributes.referenceImage);
+
+  useEffect(() => {
+    if (!imageUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 0;
+      const h = img.naturalHeight || 0;
+      if (!w || !h) return;
+      const ratio = w / h;
+      setImageAspect(Math.max(0.7, Math.min(1.25, ratio)));
+    };
+    img.src = imageUrl;
+  }, [imageUrl]);
 
   const handlePromptChange = (val: string) => {
     onAttributesChange({ ...attributes, customPrompt: val });
@@ -188,7 +203,8 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       >
       <div
         data-mtm-card-root
-        className="relative mx-auto flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
+        className="relative mx-auto flex w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)] min-h-[44rem]"
+        style={useAdaptiveCard ? { aspectRatio: `${imageAspect}` } : { aspectRatio: '3 / 4' }}
       >
         <AnimatePresence mode="wait">
           {isGenerating ? (
@@ -215,7 +231,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
               initial={false}
               animate={{ opacity: 1 }}
               transition={{ duration: 0 }}
-              className="flex flex-1 flex-col bg-white p-8 lg:p-10"
+              className="flex flex-col bg-white p-8 lg:p-10"
             >
               <div className="mb-8 flex items-end justify-between">
                 <div className="flex flex-col gap-1">
@@ -231,12 +247,15 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
 
               <div
                 data-mtm-image-slot
-                className="group relative min-h-0 flex-1 cursor-crosshair overflow-hidden transition-all duration-700"
+                className="group relative min-h-0 w-full cursor-crosshair overflow-hidden transition-all duration-700"
+                style={useAdaptiveCard ? { aspectRatio: `${imageAspect}` } : undefined}
               >
                 <img
                   src={imageUrl}
                   alt="Generated model (右键另存为可保存无模卡边框的纯图)"
-                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  className={`h-full w-full ${
+                    useAdaptiveCard ? 'object-contain' : 'object-cover transition-transform duration-1000 group-hover:scale-105'
+                  }`}
                   referrerPolicy="no-referrer"
                   crossOrigin={imageUrl.startsWith('http') ? 'anonymous' : undefined}
                 />
