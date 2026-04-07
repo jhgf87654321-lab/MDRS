@@ -29,6 +29,49 @@ export default function App() {
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [persistNotice, setPersistNotice] = React.useState<string | null>(null);
+  const [isPersisting, setIsPersisting] = React.useState(false);
+  const lastPersistRef = React.useRef<null | { dataUrl: string; prompt: string; uid: string; publishToPublic: boolean }>(
+    null,
+  );
+
+  const shrinkImageDataUrlForReference = React.useCallback(async (dataUrl: string): Promise<string> => {
+    // 参考图过大时：Gemini inlineData 传输与解码容易失败；这里做一次轻量缩边 + JPEG 压缩
+    if (!dataUrl?.startsWith('data:image')) return dataUrl;
+    if (typeof document === 'undefined') return dataUrl;
+    const MAX_EDGE = 1536;
+    const JPEG_QUALITY = 0.88;
+    return await new Promise<string>((resolve) => {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          const w0 = img.naturalWidth || 0;
+          const h0 = img.naturalHeight || 0;
+          if (!w0 || !h0) return resolve(dataUrl);
+          const scale = Math.max(w0, h0) > MAX_EDGE ? MAX_EDGE / Math.max(w0, h0) : 1;
+          const w = Math.max(1, Math.round(w0 * scale));
+          const h = Math.max(1, Math.round(h0 * scale));
+          if (scale === 1 && dataUrl.length < 1_500_000) {
+            // 小图不必重复压缩（避免画质损失）
+            return resolve(dataUrl);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(dataUrl);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      } catch {
+        resolve(dataUrl);
+      }
+    });
+  }, []);
   const [showSettings, setShowSettings] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'landing' | 'models' | 'app'>('landing');
   const [tutorialStep, setTutorialStep] = React.useState(0);
@@ -291,6 +334,7 @@ export default function App() {
   const handleGenerate = async (customPrompt?: string) => {
     setError(null);
     setIsGenerating(true);
+    setPersistNotice(null);
     try {
       const prompt = customPrompt || generatePrompt(attributes);
       const model = 'gemini-2.5-flash-image' as const;
@@ -305,9 +349,10 @@ export default function App() {
           parts: [{ inlineData: { data: base64Data, mimeType } }, { text: prompt }],
         });
       } else if (attributes.referenceImage) {
-        const base64Data = attributes.referenceImage.split(',')[1];
-        const mimeType = attributes.referenceImage.split(';')[0].split(':')[1];
-        const weightText = `\n\nIMPORTANT: Use the provided image as a strong reference for the subject's face, features, and overall vibe. The influence weight of this reference image should be considered as ${Math.round(attributes.referenceWeight * 100)}%.`;
+        const refDataUrl = await shrinkImageDataUrlForReference(attributes.referenceImage);
+        const base64Data = refDataUrl.split(',')[1];
+        const mimeType = refDataUrl.split(';')[0].split(':')[1];
+        const weightText = `\n\nIMPORTANT: Use the provided image as a strong reference for the SUBJECT ONLY (the person). The influence weight of this reference image should be considered as ${Math.round(attributes.referenceWeight * 100)}%.\nCRITICAL: Extract ONLY the person's identity and physical details (face, skin texture, freckles/moles/birthmarks, hair, proportions). IGNORE and DO NOT replicate any text, UI, subtitles, watermarks, logos, frames, interface elements, phone screens, posters, or background typography from the reference image.`;
         imageDataUrl = await generateGeminiImage({
           model,
           parts: [{ inlineData: { data: base64Data, mimeType } }, { text: prompt + weightText }],
@@ -328,6 +373,7 @@ export default function App() {
           setIsGenerating(false);
         });
         try {
+          setIsPersisting(true);
           await new Promise((r) => requestAnimationFrame(() => r(undefined)));
           await new Promise((r) => requestAnimationFrame(() => r(undefined)));
           await new Promise((r) => setTimeout(r, 450));
@@ -338,13 +384,21 @@ export default function App() {
           }
           const uploadDataUrl =
             cardPng && cardPng.startsWith('data:image') && cardPng.length > 500 ? cardPng : imageDataUrl;
-          await persistMtmGeneration(uploadDataUrl, prompt, cloudUser.uid, {
-            publishToPublic: publishToGlobalRef.current === true,
-          });
+          const publishToPublic = publishToGlobalRef.current === true;
+          lastPersistRef.current = { dataUrl: uploadDataUrl, prompt, uid: cloudUser.uid, publishToPublic };
+          await persistMtmGeneration(uploadDataUrl, prompt, cloudUser.uid, { publishToPublic });
+          setPersistNotice(null);
           setHistoryRefreshKey((k) => k + 1);
         } catch (persistErr) {
           console.error('Persist image failed:', persistErr);
-          setError('图片已生成，但保存到 MODELCARD / 数据库失败，请检查 COS 与 HMRS、MODELFILE 权限。');
+          const msg = persistErr instanceof Error ? persistErr.message : String(persistErr);
+          setPersistNotice(
+            msg.includes('HMRS_PROFILE_CREATE_FAILED')
+              ? '图片已生成，但同步失败：HMRS 档案创建/读取失败（可重试同步或检查 HMRS 权限）。'
+              : '图片已生成，但同步到后端失败（可重试同步）。',
+          );
+        } finally {
+          setIsPersisting(false);
         }
       }
     } catch (err: unknown) {
@@ -355,6 +409,31 @@ export default function App() {
       setIsGenerating(false);
     }
   };
+
+  const handleRetryPersist = React.useCallback(async () => {
+    const payload = lastPersistRef.current;
+    if (!payload) {
+      setPersistNotice('没有可重试的同步任务（请先生成一张模卡）。');
+      return;
+    }
+    setPersistNotice(null);
+    setIsPersisting(true);
+    try {
+      await persistMtmGeneration(payload.dataUrl, payload.prompt, payload.uid, { publishToPublic: payload.publishToPublic });
+      setPersistNotice(null);
+      setHistoryRefreshKey((k) => k + 1);
+    } catch (e) {
+      console.error('Retry persist failed:', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      setPersistNotice(
+        msg.includes('HMRS_PROFILE_CREATE_FAILED')
+          ? '重试同步仍失败：HMRS 档案异常（请检查 HMRS 集合与规则）。'
+          : '重试同步仍失败，请稍后再试或检查后端权限。',
+      );
+    } finally {
+      setIsPersisting(false);
+    }
+  }, []);
 
   return (
     <>
@@ -426,6 +505,9 @@ export default function App() {
             isGenerating={isGenerating}
             onGenerate={() => void handleGenerate()}
             error={error}
+            persistNotice={persistNotice}
+            isPersisting={isPersisting}
+            onRetryPersist={() => void handleRetryPersist()}
             attributes={attributes}
             onAttributesChange={(attrs) => setAttributes(attrs)}
           />

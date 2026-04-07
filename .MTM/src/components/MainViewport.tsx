@@ -16,6 +16,9 @@ interface MainViewportProps {
   isGenerating: boolean;
   onGenerate: () => void;
   error: string | null;
+  persistNotice?: string | null;
+  isPersisting?: boolean;
+  onRetryPersist?: () => void;
   attributes: CharacterAttributes;
   onAttributesChange: (attrs: CharacterAttributes) => void;
 }
@@ -30,7 +33,7 @@ async function dataUrlToDownload(dataUrl: string, filename: string) {
 }
 
 export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(function MainViewport(
-  { imageUrl, isGenerating, onGenerate, error, attributes, onAttributesChange },
+  { imageUrl, isGenerating, onGenerate, error, persistNotice, isPersisting, onRetryPersist, attributes, onAttributesChange },
   ref,
 ) {
   /** 含外圈白底、阴影、边框的完整模卡区域 */
@@ -326,6 +329,21 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
           <p className="mb-3 text-center text-[8px] font-bold uppercase tracking-widest text-black/35">
             右键上方大图「图片另存为」可保存不含模卡装饰的纯生成图；左侧按钮下载整张模卡
           </p>
+        )}
+        {persistNotice && !isGenerating && !error && (
+          <div className="mb-3 flex w-full items-center justify-between gap-3 border border-black/10 bg-white px-4 py-3 text-[10px] font-bold tracking-widest text-black">
+            <span className="text-black/60">{persistNotice}</span>
+            {onRetryPersist && (
+              <button
+                type="button"
+                onClick={() => onRetryPersist()}
+                disabled={isPersisting}
+                className="shrink-0 border border-black px-4 py-2 text-[9px] font-bold uppercase tracking-widest transition-all hover:bg-black hover:text-white disabled:opacity-40"
+              >
+                {isPersisting ? 'Syncing…' : 'Retry Sync'}
+              </button>
+            )}
+          </div>
         )}
         <div className="relative min-h-[40px] w-full">
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex w-full flex-col gap-2">
