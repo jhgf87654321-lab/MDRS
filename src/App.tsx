@@ -149,6 +149,66 @@ export default function App() {
       }
     });
   }, []);
+  const enforceSquareCells2x2 = React.useCallback(async (dataUrl: string): Promise<string> => {
+    // 参考图模式下：把模型返回的 2x2 结果后处理为“每格严格 1:1”。
+    if (!dataUrl?.startsWith('data:image')) return dataUrl;
+    if (typeof document === 'undefined') return dataUrl;
+    return await new Promise<string>((resolve) => {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          const sw = img.naturalWidth || 0;
+          const sh = img.naturalHeight || 0;
+          if (!sw || !sh) return resolve(dataUrl);
+
+          const srcQw = sw / 2;
+          const srcQh = sh / 2;
+          const srcSquare = Math.floor(Math.max(1, Math.min(srcQw, srcQh)));
+
+          const canvas = document.createElement('canvas');
+          canvas.width = sw;
+          canvas.height = sh;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(dataUrl);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, sw, sh);
+
+          const cell = Math.floor(Math.max(1, Math.min(sw / 2, sh / 2)));
+          const totalW = cell * 2;
+          const totalH = cell * 2;
+          const startX = Math.floor((sw - totalW) / 2);
+          const startY = Math.floor((sh - totalH) / 2);
+
+          const srcBoxes: Array<[number, number]> = [
+            [0, 0],
+            [srcQw, 0],
+            [0, srcQh],
+            [srcQw, srcQh],
+          ];
+          const dstBoxes: Array<[number, number]> = [
+            [startX, startY],
+            [startX + cell, startY],
+            [startX, startY + cell],
+            [startX + cell, startY + cell],
+          ];
+
+          for (let i = 0; i < 4; i += 1) {
+            const [sx0, sy0] = srcBoxes[i]!;
+            const sx = Math.floor(sx0 + (srcQw - srcSquare) / 2);
+            const sy = Math.floor(sy0 + (srcQh - srcSquare) / 2);
+            const [dx, dy] = dstBoxes[i]!;
+            ctx.drawImage(img, sx, sy, srcSquare, srcSquare, dx, dy, cell, cell);
+          }
+
+          resolve(canvas.toDataURL('image/jpeg', 0.95));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      } catch {
+        resolve(dataUrl);
+      }
+    });
+  }, []);
 
   const normalizeToPortrait34 = React.useCallback(async (dataUrl: string): Promise<string> => {
     // 参考图模式下模型偶发输出 1:1；这里把最终图稳定到 3:4（白底补齐，不裁主体）。
@@ -485,6 +545,9 @@ export default function App() {
         imageDataUrl = await generateGeminiImage({ model, prompt });
       }
       imageDataUrl = await removeNearBlackLetterbox(imageDataUrl);
+      if (attributes.referenceImage) {
+        imageDataUrl = await enforceSquareCells2x2(imageDataUrl);
+      }
 
       flushSync(() => {
         setImageUrl(imageDataUrl);
