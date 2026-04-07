@@ -133,7 +133,7 @@ export function LandingPage({
                       <img
                         src={img}
                         alt={`Model ${i}`}
-                        className="w-full h-full object-cover opacity-90"
+                        className="w-full h-full object-contain bg-white opacity-90"
                         referrerPolicy="no-referrer"
                       />
                     </div>
