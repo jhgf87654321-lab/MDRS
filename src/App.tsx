@@ -163,8 +163,6 @@ export default function App() {
 
           const srcQw = sw / 2;
           const srcQh = sh / 2;
-          const srcSquare = Math.floor(Math.max(1, Math.min(srcQw, srcQh)));
-
           const canvas = document.createElement('canvas');
           canvas.width = sw;
           canvas.height = sh;
@@ -194,10 +192,14 @@ export default function App() {
 
           for (let i = 0; i < 4; i += 1) {
             const [sx0, sy0] = srcBoxes[i]!;
-            const sx = Math.floor(sx0 + (srcQw - srcSquare) / 2);
-            const sy = Math.floor(sy0 + (srcQh - srcSquare) / 2);
             const [dx, dy] = dstBoxes[i]!;
-            ctx.drawImage(img, sx, sy, srcSquare, srcSquare, dx, dy, cell, cell);
+            // 关键：每格保持 1:1，同时不再强裁切人物，按 contain 方式缩放到方格内。
+            const scale = Math.min(cell / srcQw, cell / srcQh);
+            const dw = Math.max(1, Math.floor(srcQw * scale));
+            const dh = Math.max(1, Math.floor(srcQh * scale));
+            const ddx = Math.floor(dx + (cell - dw) / 2);
+            const ddy = Math.floor(dy + (cell - dh) / 2);
+            ctx.drawImage(img, Math.floor(sx0), Math.floor(sy0), Math.floor(srcQw), Math.floor(srcQh), ddx, ddy, dw, dh);
           }
 
           resolve(canvas.toDataURL('image/jpeg', 0.95));
