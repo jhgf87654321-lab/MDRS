@@ -392,11 +392,18 @@ export default function App() {
         } catch (persistErr) {
           console.error('Persist image failed:', persistErr);
           const msg = persistErr instanceof Error ? persistErr.message : String(persistErr);
-          setPersistNotice(
-            msg.includes('HMRS_PROFILE_CREATE_FAILED')
-              ? '图片已生成，但同步失败：HMRS 档案创建/读取失败（可重试同步或检查 HMRS 权限）。'
-              : '图片已生成，但同步到后端失败（可重试同步）。',
-          );
+          const lower = msg.toLowerCase();
+          if (msg.includes('HMRS_PROFILE_CREATE_FAILED')) {
+            setPersistNotice('图片已生成，但同步失败：HMRS 档案创建/读取失败（可重试同步或检查 HMRS 权限）。');
+          } else if (msg.includes('API 响应为 HTML')) {
+            setPersistNotice('图片已生成，但同步失败：当前 /api/mtm-modelcard-upload 返回的是网页而非接口（部署/域名/API 路由配置异常）。');
+          } else if (msg.includes('NOT_SIGNED_IN') || lower.includes('auth') || lower.includes('unauthorized')) {
+            setPersistNotice('图片已生成，但同步失败：登录态无效或已过期，请重新登录后重试同步。');
+          } else if (msg.includes('图片体积超过当前接口单次上传上限')) {
+            setPersistNotice('图片已生成，但同步失败：上传体积超过接口限制（已压缩仍不足），建议降低生成分辨率后再试。');
+          } else {
+            setPersistNotice(`图片已生成，但同步到后端失败：${msg.slice(0, 140)}`);
+          }
         } finally {
           setIsPersisting(false);
         }
@@ -425,11 +432,16 @@ export default function App() {
     } catch (e) {
       console.error('Retry persist failed:', e);
       const msg = e instanceof Error ? e.message : String(e);
-      setPersistNotice(
-        msg.includes('HMRS_PROFILE_CREATE_FAILED')
-          ? '重试同步仍失败：HMRS 档案异常（请检查 HMRS 集合与规则）。'
-          : '重试同步仍失败，请稍后再试或检查后端权限。',
-      );
+      const lower = msg.toLowerCase();
+      if (msg.includes('HMRS_PROFILE_CREATE_FAILED')) {
+        setPersistNotice('重试同步仍失败：HMRS 档案异常（请检查 HMRS 集合与规则）。');
+      } else if (msg.includes('API 响应为 HTML')) {
+        setPersistNotice('重试同步仍失败：/api/mtm-modelcard-upload 返回网页（API 未命中或被网关拦截）。');
+      } else if (msg.includes('NOT_SIGNED_IN') || lower.includes('auth') || lower.includes('unauthorized')) {
+        setPersistNotice('重试同步仍失败：登录态无效，请重新登录后再试。');
+      } else {
+        setPersistNotice(`重试同步仍失败：${msg.slice(0, 140)}`);
+      }
     } finally {
       setIsPersisting(false);
     }

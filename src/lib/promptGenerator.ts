@@ -27,6 +27,8 @@ export function faceMarkingPromptDirective(level: number): string {
 }
 
 export function generatePrompt(attrs: CharacterAttributes): string {
+  const aspectDirective =
+    'Output framing: STRICT portrait 3:4 aspect ratio (width:height = 3:4). Never inherit landscape or square framing from any reference image.';
   const baseDescription = `A ${attrs.age}-year-old ${attrs.gender} ${attrs.ethnicity} model. 
     Height: ${attrs.height} cm.
     Face: ${attrs.faceShape} face shape, ${attrs.eyeShape} eyes (${attrs.eyeColor}), ${attrs.noseHeight} nose height, ${attrs.noseWidth} nose width, ${attrs.mouthShape} mouth shape.
@@ -42,6 +44,7 @@ export function generatePrompt(attrs: CharacterAttributes): string {
     return `A professional model comp card (model card) featuring the SAME CHARACTER in 4 DIFFERENT POSES. 
     The character is a real-life human version of the virtual character in the reference image.
     Layout: A 2x2 grid of 4 photos.
+    ${aspectDirective}
     Pose 1 (Top Left): Standard front-facing portrait, head to chest, looking at camera.
     Pose 2 (Top Right): Half-body side profile, relaxed pose.
     Pose 3 (Bottom Left): 2/3 body shot, relaxed pose.
@@ -54,6 +57,7 @@ export function generatePrompt(attrs: CharacterAttributes): string {
   return `A professional model comp card (model card) featuring the SAME CHARACTER in 4 DIFFERENT POSES.
     Character Description: ${baseDescription}
     Layout: A 2x2 grid of 4 photos.
+    ${aspectDirective}
     Pose 1 (Top Left): Standard front-facing portrait, head to chest, looking at camera.
     Pose 2 (Top Right): Half-body side profile, relaxed pose.
     Pose 3 (Bottom Left): 2/3 body shot, relaxed pose.
