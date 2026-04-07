@@ -27,10 +27,13 @@ export function faceMarkingPromptDirective(level: number): string {
 }
 
 export function generatePrompt(attrs: CharacterAttributes): string {
-  const aspectDirective =
-    'Output framing: STRICT portrait 3:4 aspect ratio (width:height = 3:4). Never inherit landscape or square framing from any reference image.';
-  const gridDirective =
-    'Grid constraint: STRICT 2x2 with four equal-size quadrants (same width and height per cell), perfectly aligned rows/columns, consistent margins; do not merge cells or change per-cell size.';
+  const hasLayoutReference = !!attrs.referenceImage;
+  const aspectDirective = hasLayoutReference
+    ? 'Output framing: Match the reference image layout and overall framing. Do NOT force a different aspect ratio.'
+    : 'Output framing: STRICT portrait 3:4 aspect ratio (width:height = 3:4). Never inherit landscape or square framing from any reference image.';
+  const gridDirective = hasLayoutReference
+    ? 'Grid constraint: STRICT 2x2 grid that matches the reference image’s per-cell sizing, margins, gutters, and relative subject scale. Do NOT merge cells.'
+    : 'Grid constraint: STRICT 2x2 with four equal-size quadrants (same width and height per cell), perfectly aligned rows/columns, consistent margins; do not merge cells or change per-cell size.';
   const baseDescription = `A ${attrs.age}-year-old ${attrs.gender} ${attrs.ethnicity} model. 
     Height: ${attrs.height} cm.
     Face: ${attrs.faceShape} face shape, ${attrs.eyeShape} eyes (${attrs.eyeColor}), ${attrs.noseHeight} nose height, ${attrs.noseWidth} nose width, ${attrs.mouthShape} mouth shape.
