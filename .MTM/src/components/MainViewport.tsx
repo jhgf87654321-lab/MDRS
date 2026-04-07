@@ -190,9 +190,6 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
         data-mtm-card-root
         className="relative mx-auto flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
       >
-        <div className="pointer-events-none absolute left-2 top-2 z-[60] rounded border border-black/20 bg-white/90 px-2 py-1 text-[8px] font-bold tracking-wide text-black/70">
-          hasImageUrl={imageUrl ? '1' : '0'} | isGenerating={isGenerating ? '1' : '0'} | hasError={error ? '1' : '0'}
-        </div>
         <AnimatePresence mode="wait">
           {isGenerating ? (
             <motion.div
@@ -218,9 +215,9 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
               initial={false}
               animate={{ opacity: 1 }}
               transition={{ duration: 0 }}
-              className="flex flex-1 flex-col bg-white p-12"
+              className="flex flex-1 flex-col bg-white p-8 lg:p-10"
             >
-              <div className="mb-12 flex items-end justify-between">
+              <div className="mb-8 flex items-end justify-between">
                 <div className="flex flex-col gap-1">
                   <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-black/40">Model Profile</p>
                   <h1 className="font-display text-4xl font-bold uppercase leading-none tracking-tighter text-black">
@@ -246,7 +243,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                 <div className="pointer-events-none absolute inset-0 border border-black/5" />
               </div>
 
-              <div className="mt-12 flex items-center justify-between">
+              <div className="mt-8 flex items-center justify-between">
                 <div className="flex gap-8 text-[9px] font-bold uppercase tracking-[0.2em] text-black">
                   <div className="flex flex-col gap-1">
                     <span className="text-black/30">Age</span>
