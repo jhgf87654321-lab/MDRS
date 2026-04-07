@@ -190,6 +190,9 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
         data-mtm-card-root
         className="relative mx-auto flex aspect-[3/4] w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]"
       >
+        <div className="pointer-events-none absolute left-2 top-2 z-[60] rounded border border-black/20 bg-white/90 px-2 py-1 text-[8px] font-bold tracking-wide text-black/70">
+          hasImageUrl={imageUrl ? '1' : '0'} | isGenerating={isGenerating ? '1' : '0'} | hasError={error ? '1' : '0'}
+        </div>
         <AnimatePresence mode="wait">
           {isGenerating ? (
             <motion.div
