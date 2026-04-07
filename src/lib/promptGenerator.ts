@@ -28,6 +28,10 @@ export function faceMarkingPromptDirective(level: number): string {
 
 export function generatePrompt(attrs: CharacterAttributes): string {
   const hasLayoutReference = !!attrs.referenceImage;
+  const structureDirective =
+    'STRUCTURE (NON-NEGOTIABLE): Output EXACTLY 4 photos arranged as a 2x2 grid (2 columns, 2 rows). No third row. No extra thumbnails. No filmstrip. No contact sheet. No additional images anywhere. If you cannot comply, regenerate until you can.';
+  const noFakeUiDirective =
+    'NO FAKE UI/TEXT: Do not add any extra captions, labels, names, heights, metadata, logos, watermarks, UI bars, buttons, icons, borders with text, or interface elements inside the generated image. The image should be clean photography only.';
   const aspectDirective = hasLayoutReference
     ? 'Output framing: Match the reference image layout and overall framing. Do NOT force a different aspect ratio.'
     : 'Output framing: STRICT portrait 3:4 aspect ratio (width:height = 3:4). Never inherit landscape or square framing from any reference image.';
@@ -49,8 +53,10 @@ export function generatePrompt(attrs: CharacterAttributes): string {
     return `A professional model comp card (model card) featuring the SAME CHARACTER in 4 DIFFERENT POSES. 
     The character is a real-life human version of the virtual character in the reference image.
     Layout: A 2x2 grid of 4 photos.
+    ${structureDirective}
     ${aspectDirective}
     ${gridDirective}
+    ${noFakeUiDirective}
     Pose 1 (Top Left): Standard front-facing portrait, head to chest, looking at camera.
     Pose 2 (Top Right): Half-body side profile, relaxed pose.
     Pose 3 (Bottom Left): 2/3 body shot, relaxed pose.
@@ -63,8 +69,10 @@ export function generatePrompt(attrs: CharacterAttributes): string {
   return `A professional model comp card (model card) featuring the SAME CHARACTER in 4 DIFFERENT POSES.
     Character Description: ${baseDescription}
     Layout: A 2x2 grid of 4 photos.
+    ${structureDirective}
     ${aspectDirective}
     ${gridDirective}
+    ${noFakeUiDirective}
     Pose 1 (Top Left): Standard front-facing portrait, head to chest, looking at camera.
     Pose 2 (Top Right): Half-body side profile, relaxed pose.
     Pose 3 (Bottom Left): 2/3 body shot, relaxed pose.

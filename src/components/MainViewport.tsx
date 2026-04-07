@@ -266,31 +266,8 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                     <span>{t(attributes.skinTone)}</span>
                   </div>
                 </div>
-                <div className="download-buttons flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void handleDownloadModelCard()}
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
-                    title="下载整张模卡（含外圈摩卡）"
-                  >
-                    <Download size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDownloadRawImage()}
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
-                    title="仅下载 AI 生成图（无模卡）"
-                  >
-                    <ImageDown size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
-                    title="分享"
-                  >
-                    <Share2 size={14} />
-                  </button>
-                </div>
+                {/* 下载入口统一放到卡片外的固定工具栏，避免参考图模式/不同图像构图导致按钮可见性不一致 */}
+                <div />
               </div>
             </motion.div>
           ) : error ? (
@@ -330,20 +307,26 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
             <button
               type="button"
               onClick={() => void handleDownloadModelCard()}
-              className="flex h-8 items-center gap-2 border border-black/10 px-3 text-[9px] font-bold uppercase tracking-widest text-black transition-all hover:bg-black hover:text-white"
+              className="flex h-9 w-9 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
               title="下载整张模卡（含外圈摩卡）"
             >
               <Download size={14} />
-              下载模卡
             </button>
             <button
               type="button"
               onClick={() => void handleDownloadRawImage()}
-              className="flex h-8 items-center gap-2 border border-black/10 px-3 text-[9px] font-bold uppercase tracking-widest text-black transition-all hover:bg-black hover:text-white"
+              className="flex h-9 w-9 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
               title="仅下载 AI 生成图（无模卡）"
             >
               <ImageDown size={14} />
-              下载原图
+            </button>
+            <button
+              type="button"
+              className="flex h-9 w-9 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
+              title="分享（开发中）"
+              disabled
+            >
+              <Share2 size={14} className="opacity-40" />
             </button>
           </div>
         )}
