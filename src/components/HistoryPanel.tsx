@@ -122,11 +122,11 @@ export function HistoryPanel({
           setPersonalCards(buildPersonalCards(urls, files));
           setMineError(null);
         } catch (e) {
-          console.error(e);
+          console.warn('load personal files after HMRS watch event failed', e);
         }
       },
       (err) => {
-        console.error('watch HMRS', err);
+        console.warn('watch HMRS unavailable; fallback to polling', err);
         setWatchFallback(true);
       },
     );
@@ -150,7 +150,7 @@ export function HistoryPanel({
         setPublicError(null);
       },
       (err) => {
-        console.error('watch MODELFILE public', err);
+        console.warn('watch MODELFILE public unavailable; fallback to polling', err);
         setPublicWatchFallback(true);
       },
     );

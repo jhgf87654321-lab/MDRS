@@ -102,6 +102,16 @@ export async function persistMtmGeneration(
   });
   const text = await res.text();
   throwIfApiRouteMissing(res, text, '/api/mtm-modelcard-upload');
+  const contentType = (res.headers.get('content-type') || '').toLowerCase();
+  const maybeHtml =
+    contentType.includes('text/html') ||
+    /^\s*<!doctype html/i.test(text) ||
+    /^\s*<html[\s>]/i.test(text);
+  if (maybeHtml) {
+    throw new Error(
+      'API 响应为 HTML 而非 JSON：/api/mtm-modelcard-upload 当前不可用。请检查部署是否包含 api 路由、VITE_API_BASE_URL 是否指向正确后端，或网络/网关是否拦截了 API 请求。',
+    );
+  }
   let data: UploadJson = {};
   try {
     data = text ? (JSON.parse(text) as UploadJson) : {};
