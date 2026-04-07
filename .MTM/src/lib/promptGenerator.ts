@@ -35,6 +35,8 @@ export function generatePrompt(attrs: CharacterAttributes): string {
     'Output framing: STRICT portrait 3:4 aspect ratio (width:height = 3:4).';
   const gridDirective =
     'Grid constraint: STRICT 2x2 with four equal-size quadrants (same width and height per cell), perfectly aligned rows/columns, consistent margins; do not merge cells or change per-cell size.';
+  const perCellAspectDirective =
+    'PER-CELL FRAMING (NON-NEGOTIABLE): Each of the 4 quadrants must be square 1:1 tiles. Keep all four cells exactly square and equal-sized.';
   const noFakeUiDirective =
     'NO EXTRA TEXT/UI: Do not add any captions, labels, names, heights, metadata, watermarks, logos, UI bars, buttons, icons, or interface elements inside the generated image.';
   const baseDescription = `A ${attrs.age}-year-old ${attrs.gender} ${attrs.ethnicity} model. 
@@ -55,6 +57,7 @@ export function generatePrompt(attrs: CharacterAttributes): string {
     ${structureDirective}
     ${aspectDirective}
     ${gridDirective}
+    ${perCellAspectDirective}
     ${noFakeUiDirective}
     Pose 1 (Top Left): Standard front-facing portrait, head to chest, looking at camera.
     Pose 2 (Top Right): Half-body side profile, relaxed pose.
@@ -71,6 +74,7 @@ export function generatePrompt(attrs: CharacterAttributes): string {
     ${structureDirective}
     ${aspectDirective}
     ${gridDirective}
+    ${perCellAspectDirective}
     ${noFakeUiDirective}
     Pose 1 (Top Left): Standard front-facing portrait, head to chest, looking at camera.
     Pose 2 (Top Right): Half-body side profile, relaxed pose.
