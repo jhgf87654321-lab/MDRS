@@ -209,25 +209,6 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
               </div>
               <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-black">Generating Card</p>
             </motion.div>
-          ) : error ? (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-white p-12 text-center"
-            >
-              <div className="flex h-12 w-12 items-center justify-center border border-black/10">
-                <div className="h-2 w-2 animate-ping rounded-full bg-black" />
-              </div>
-              <p className="text-[10px] font-bold uppercase leading-relaxed tracking-widest text-black">{error}</p>
-              <button
-                type="button"
-                onClick={() => onGenerate()}
-                className="border border-black px-8 py-3 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-black hover:text-white"
-              >
-                Retry
-              </button>
-            </motion.div>
           ) : imageUrl ? (
             <motion.div
               key="model-card"
@@ -312,6 +293,25 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                 </div>
               </div>
             </motion.div>
+          ) : error ? (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-white p-12 text-center"
+            >
+              <div className="flex h-12 w-12 items-center justify-center border border-black/10">
+                <div className="h-2 w-2 animate-ping rounded-full bg-black" />
+              </div>
+              <p className="text-[10px] font-bold uppercase leading-relaxed tracking-widest text-black">{error}</p>
+              <button
+                type="button"
+                onClick={() => onGenerate()}
+                className="border border-black px-8 py-3 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-black hover:text-white"
+              >
+                Retry
+              </button>
+            </motion.div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-white">
               <div className="flex h-12 w-12 items-center justify-center border border-black/5">
@@ -325,10 +325,13 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       </div>
 
       <div className="mt-8 flex w-full max-w-2xl flex-col items-center pb-12">
-        {imageUrl && !isGenerating && !error && (
+        {imageUrl && !isGenerating && (
           <p className="mb-3 text-center text-[8px] font-bold uppercase tracking-widest text-black/35">
             右键上方大图「图片另存为」可保存不含模卡装饰的纯生成图；左侧按钮下载整张模卡
           </p>
+        )}
+        {imageUrl && !isGenerating && error && (
+          <p className="mb-3 text-center text-[9px] font-bold text-red-600">{error}</p>
         )}
         {persistNotice && !isGenerating && !error && (
           <div className="mb-3 flex w-full items-center justify-between gap-3 border border-black/10 bg-white px-4 py-3 text-[10px] font-bold tracking-widest text-black">
