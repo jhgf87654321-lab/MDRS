@@ -163,6 +163,63 @@ export default function App() {
 
           const srcQw = sw / 2;
           const srcQh = sh / 2;
+
+          // 先读一次像素，用于“象限内去白边”，让人物更大而不硬裁主体
+          const srcCanvas = document.createElement('canvas');
+          srcCanvas.width = sw;
+          srcCanvas.height = sh;
+          const sctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+          if (!sctx) return resolve(dataUrl);
+          sctx.drawImage(img, 0, 0, sw, sh);
+          const pix = sctx.getImageData(0, 0, sw, sh).data;
+          const isNearWhite = (i: number) => {
+            const r = pix[i] ?? 255;
+            const g = pix[i + 1] ?? 255;
+            const b = pix[i + 2] ?? 255;
+            return r > 245 && g > 245 && b > 245;
+          };
+          const rowFgRatio = (x0: number, y: number, w: number) => {
+            let fg = 0;
+            for (let x = 0; x < w; x += 2) {
+              const i = ((y * sw + (x0 + x)) * 4) | 0;
+              if (!isNearWhite(i)) fg += 1;
+            }
+            return fg / Math.ceil(w / 2);
+          };
+          const colFgRatio = (x: number, y0: number, h: number) => {
+            let fg = 0;
+            for (let y = 0; y < h; y += 2) {
+              const i = (((y0 + y) * sw + x) * 4) | 0;
+              if (!isNearWhite(i)) fg += 1;
+            }
+            return fg / Math.ceil(h / 2);
+          };
+          const cropQuadrant = (qx: number, qy: number, qw: number, qh: number) => {
+            const TH = 0.02;
+            let top = qy;
+            let bottom = qy + qh - 1;
+            let left = qx;
+            let right = qx + qw - 1;
+
+            while (top < qy + qh - 2 && rowFgRatio(qx, top, qw) < TH) top += 1;
+            while (bottom > qy + 1 && rowFgRatio(qx, bottom, qw) < TH) bottom -= 1;
+            while (left < qx + qw - 2 && colFgRatio(left, qy, qh) < TH) left += 1;
+            while (right > qx + 1 && colFgRatio(right, qy, qh) < TH) right -= 1;
+
+            const cw = Math.max(1, right - left + 1);
+            const ch = Math.max(1, bottom - top + 1);
+            const removedRatio = 1 - (cw * ch) / (qw * qh);
+            if (removedRatio < 0.04) {
+              return { sx: qx, sy: qy, sw: qw, sh: qh };
+            }
+
+            const pad = Math.floor(Math.min(qw, qh) * 0.04);
+            const sx = Math.max(qx, left - pad);
+            const sy = Math.max(qy, top - pad);
+            const ex = Math.min(qx + qw, right + 1 + pad);
+            const ey = Math.min(qy + qh, bottom + 1 + pad);
+            return { sx, sy, sw: Math.max(1, ex - sx), sh: Math.max(1, ey - sy) };
+          };
           const canvas = document.createElement('canvas');
           canvas.width = sw;
           canvas.height = sh;
@@ -193,13 +250,24 @@ export default function App() {
           for (let i = 0; i < 4; i += 1) {
             const [sx0, sy0] = srcBoxes[i]!;
             const [dx, dy] = dstBoxes[i]!;
-            // 关键：每格保持 1:1，同时不再强裁切人物，按 contain 方式缩放到方格内。
-            const scale = Math.min(cell / srcQw, cell / srcQh);
-            const dw = Math.max(1, Math.floor(srcQw * scale));
-            const dh = Math.max(1, Math.floor(srcQh * scale));
+            const cropped = cropQuadrant(Math.floor(sx0), Math.floor(sy0), Math.floor(srcQw), Math.floor(srcQh));
+            // 每格保持 1:1：先去白边，再 contain-fit 到方格内
+            const scale = Math.min(cell / cropped.sw, cell / cropped.sh);
+            const dw = Math.max(1, Math.floor(cropped.sw * scale));
+            const dh = Math.max(1, Math.floor(cropped.sh * scale));
             const ddx = Math.floor(dx + (cell - dw) / 2);
             const ddy = Math.floor(dy + (cell - dh) / 2);
-            ctx.drawImage(img, Math.floor(sx0), Math.floor(sy0), Math.floor(srcQw), Math.floor(srcQh), ddx, ddy, dw, dh);
+            ctx.drawImage(
+              srcCanvas,
+              cropped.sx,
+              cropped.sy,
+              cropped.sw,
+              cropped.sh,
+              ddx,
+              ddy,
+              dw,
+              dh,
+            );
           }
 
           resolve(canvas.toDataURL('image/jpeg', 0.95));
